@@ -1,3 +1,4 @@
+from pyske.errors import NotEqualSizeError
 from abc import ABC # abstract classes library
 
 class BTree(ABC):
@@ -37,7 +38,7 @@ class BTree(ABC):
 		Indicates if the BTree is a node
 		"""
 		return False
-
+		
 
 class Leaf(BTree):
 	"""
@@ -165,13 +166,13 @@ class Leaf(BTree):
 
 		Raises
 		------
-		Exception
+		NotEqualSizeError
 			If the type of t is not the same one than the current instance
 		"""
 		if t.is_leaf():
 			return Leaf((self.get_value(), t.get_value()))
 		else:
-			raise Exception('The two types of BTree cannot me zipped')
+			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
 
 
 class Node(BTree):
@@ -283,7 +284,7 @@ class Node(BTree):
 		"""
 		left = self.get_left().reduce(k)
 		right = self.get_right().reduce(k)
-		return k(self.get_value(), left, right)
+		return k(left, self.get_value(), right)
 
 	def uacc(self, k):
 		"""
@@ -328,7 +329,7 @@ class Node(BTree):
 
 		Raises
 		------
-		Exception
+		NotEqualSizeError
 			If the type of t is not the same one than the current instance
 		"""
 		if t.is_node():
@@ -337,4 +338,4 @@ class Node(BTree):
 			right = self.get_right().zip(t.get_right())
 			return Node(v, left, right)
 		else:
-			raise Exception('The two types of BTree cannot me zipped')
+			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
