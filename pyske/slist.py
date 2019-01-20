@@ -15,6 +15,8 @@ class SList(list):
 		Removes all the elements that don't verify a predicate
 	empty()
 		Indicates if a list is empty
+	reverse()
+		Reverse a list
 	map(f)
 		Applies f to every element of the current instance
 	reduce(f)
@@ -22,9 +24,11 @@ class SList(list):
 	scan(f, c)
 		Makes an accumulation of the element on the current instance from an initial value
 	scan2(f)
-		Makes an accumulation of the element on the current instance only using the contained values
+		TODO
 	zip(l)
 		Creates a list of pairs from the element of the current instance and another one
+	zipwith(l, f)
+		Creates a list of new elements using a function from the element of the current instance and another one
 	"""
 
 	def length(self):
@@ -40,7 +44,7 @@ class SList(list):
 
 		Parameters
 		----------
-		p : predicate (x -> bool)
+		p : predicate (x => bool)
 			A predicate that all elements in the result must verify 
 		"""
 		return SList(filter(p,self))
@@ -51,6 +55,16 @@ class SList(list):
 		Indicates if a list is empty
 		"""
 		return self.length() == 0
+
+
+	def reverse(self):
+		"""
+		Reverse a list
+		"""
+		rev = SList()
+		for i in range(self.length()-1, -1 , -1):
+			rev.append(self[i])
+		return rev
 
 
 	def map(self, f):
@@ -108,28 +122,28 @@ class SList(list):
 			return res
 
 
-	def scan2(self, f):
+	def scan2(self, f, c):
 		"""
-		Makes an accumulation of the element on the current instance only using the contained values
+		TODO
 
 		BMF definition:
-		scan2 f [x1, x2, ..., xn] = [x1, f(x1, x2), ..., f(f(f(x1, x2),...), xn)]
+		scan2 f [x1, x2, ..., xn] = [f(x2, f(x3 , f(..., xn)), f(x3 , f(..., xn)), ..., an, unit_f]
 
 		Parameters
 		----------
+		TODO
 		f : lambda x,y => z
-			A function to make a new accumulation from the previous accumulation and a current value
 		"""
 		res = SList()
 		if self.empty():
 			return res
 		else:
-			acc = self[0]
-			res.append(acc)
-			for i in range(1, self.length()):
-				acc = f(acc, self[i])
-				res.append(acc)
-			return res	
+			res.append(c)
+			for i in range(self.length()-1, 0, -1):
+				c = f(self[i], c)
+				res.append(c)
+			return res.reverse()
+
 
 	def zip(self, l):
 		"""
@@ -150,4 +164,28 @@ class SList(list):
 		res = SList()
 		for i in range(0, self.length()):
 			res.append((self[i],l[i]))
+		return res
+
+
+	def zipwith(self, l, f):
+		"""
+		Creates a list of new elements using a function from the element of the current instance and another one
+
+		Parameters
+		----------
+		l : list
+			A list to merge the values of the current instance with
+		f : lambda x, y => z
+			A function to zip the values
+
+		Raises
+		-----
+		NotEqualSizeError
+			If the current instance doesn't have the same number than the input
+		"""
+		if l.length() != self.length():
+			raise NotEqualSizeError("The lists cannot be zipped (not the same size)")
+		res = SList()
+		for i in range(0, self.length()):
+			res.append(f(self[i],l[i]))
 		return res

@@ -1,6 +1,7 @@
 from pyske.errors import NotEqualSizeError
 from abc import ABC # abstract classes library
 
+
 class BTree(ABC):
 	"""
 	An abstract class used to represent a Binary Tree
@@ -38,7 +39,7 @@ class BTree(ABC):
 		Indicates if the BTree is a node
 		"""
 		return False
-		
+
 
 class Leaf(BTree):
 	"""
@@ -72,21 +73,38 @@ class Leaf(BTree):
 		Makes an downward accumulation of the values in a BTree using gl, gr and c
 	zip(t)
 		Zip the values contained in t with the ones in the current instance
+	zipwith(t, f)
+		Zip the values contained in a tree with the ones in the current instance using a function
+	getchl(c)
+		TODO
+	getchr(c)
+		TODO
 	"""
 	def __init__(self, value):
 		self.value = value
 
+
 	def __str__(self):
 		return "leaf " + str(self.value)
+
+
+	def __eq__(self, other):
+		if isinstance(other, Leaf):
+			return (self.get_value() == other.get_value())
+		return False
+
 
 	def is_leaf(self):
 		return True
 
+
 	def get_value(self):
 		return self.value
 
+
 	def set_value(self, v):
 		self.value = v
+
 
 	def map(self, kl, kn):
 		"""
@@ -101,6 +119,7 @@ class Leaf(BTree):
 		"""
 		return Leaf(kl(self.get_value()))
 
+
 	def mapt(self, kl, kn):
 		"""
 		Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
@@ -113,6 +132,7 @@ class Leaf(BTree):
 			The function to apply to every node subtrees of the current instance
 		"""
 		return Leaf(kl(self.get_value()))
+
 
 	def reduce(self, k):
 		"""
@@ -127,6 +147,7 @@ class Leaf(BTree):
 		"""
 		return self.get_value()
 
+
 	def uacc(self, k):
 		"""
 		Makes an upward accumulation of the values in the current instance using k
@@ -139,6 +160,7 @@ class Leaf(BTree):
 			The function used to reduce a BTree into a single value 
 		"""
 		return Leaf(self.get_value())
+
 
 	def dacc(self, gl, gr, c):
 		"""
@@ -154,6 +176,7 @@ class Leaf(BTree):
 			Accumulator for the downward computation
 		"""
 		return Leaf(c)
+
 
 	def zip(self, t):
 		"""
@@ -173,6 +196,43 @@ class Leaf(BTree):
 			return Leaf((self.get_value(), t.get_value()))
 		else:
 			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
+
+
+	def zipwith(self, t, f):
+		"""
+		Zip the values contained in a tree with the ones in the current instance using a function
+
+		Parameters
+		----------
+		t : BTree
+			The BTree to zip with the current instance
+		f : lambda x,y => z
+			A function to zip values
+			
+		Raises
+		------
+		NotEqualSizeError
+			If the type of t is not the same one than the current instance
+		"""
+		if t.is_leaf():
+			v = f(self.get_value(), t.get_value())
+			return Leaf(v)
+		else:
+			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
+
+
+	def getchl(self, c):
+		"""
+		TODO documentation
+		"""
+		return Leaf(c)
+
+
+	def getchr(self, c):
+		"""
+		TODO documentation
+		"""
+		return Leaf(c)
 
 
 class Node(BTree):
@@ -215,29 +275,50 @@ class Node(BTree):
 		Makes an downward accumulation of the values in a BTree using gl, gr and c
 	zip(t)
 		Zip the values contained in t with the ones in the current instance
+	zipwith(t, f)
+		Zip the values contained in a tree with the ones in the current instance using a function
+	getchl(c)
+		TODO
+	getchr(c)
+		TODO
 	"""
+
+
 	def __init__(self, value, left, right):
 		self.value = value
 		self.left = left
 		self.right = right
 
+
 	def __str__(self):
 		return "node " +  str(self.value) +" (" + str(self.left) + ") (" + str(self.right) + ")"
+
+
+	def __eq__(self, other):
+		if isinstance(other, Node):
+			return (self.get_value() == other.get_value()) and (self.get_left() == other.get_left()) and (self.get_right() == other.get_right())
+		return False
+
 
 	def is_node(self):
 		return True
 
+
 	def set_value(self, param):
 		self.value = param
+
 
 	def get_value(self):
 		return self.value
 
+
 	def get_right(self):
 		return self.right
 
+
 	def get_left(self):
 		return self.left
+
 
 	def map(self, kl, kn):
 		"""
@@ -255,6 +336,7 @@ class Node(BTree):
 		right = self.get_right().map(kl, kn)
 		return Node(new_val, left, right)
 
+
 	def mapt(self, kl, kn):
 		"""
 		Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
@@ -271,6 +353,7 @@ class Node(BTree):
 		right = self.get_right().mapt(kl, kn)
 		return Node(new_val, left, right)
 
+
 	def reduce(self, k):
 		"""
 		Reduces a BTree into a single value using k
@@ -286,6 +369,7 @@ class Node(BTree):
 		right = self.get_right().reduce(k)
 		return k(left, self.get_value(), right)
 
+
 	def uacc(self, k):
 		"""
 		Makes an upward accumulation of the values in the current instance using k
@@ -299,6 +383,7 @@ class Node(BTree):
 		"""
 		r = self.reduce(k)
 		return Node(r, self.get_left().uacc(k), self.get_right().uacc(k))
+
 
 	def dacc(self, gl, gr, c):
 		"""
@@ -317,6 +402,7 @@ class Node(BTree):
 		left = self.get_left().dacc(gl, gr, gl(c, a))
 		right = self.get_right().dacc(gl, gr, gr(c, a))
 		return Node(k, self.get_left().uacc(k),  self.get_right().uacc(k))
+
 
 	def zip(self, t):
 		"""
@@ -339,3 +425,48 @@ class Node(BTree):
 			return Node(v, left, right)
 		else:
 			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
+
+
+	def zipwith(self, t, f):
+		"""
+		Zip the values contained in a tree with the ones in the current instance using a function
+
+		Parameters
+		----------
+		t : BTree
+			The BTree to zip with the current instance
+		f : lambda x,y => z
+			A function to zip values
+
+		Raises
+		------
+		NotEqualSizeError
+			If the type of t is not the same one than the current instance
+		"""
+		if t.is_node():
+			v = f(self.get_value(), t.get_value())
+			left = self.get_left().zip(t.get_left())
+			right = self.get_right().zip(t.get_right())
+			return Node(v, left, right)
+		else:
+			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
+
+
+	def getchl(self, c):
+		"""
+		TODO documentation
+		"""
+		v = self.get_left().get_value()
+		left = self.get_left().getchl(c)
+		right = self.get_right().getchl(c)
+		return Node(v, left, right)
+
+
+	def getchr(self, c):
+		"""
+		TODO documentation
+		"""
+		v = self.get_right().get_value()
+		left = self.get_left().getchl(c)
+		right = self.get_right().getchl(c)
+		return Node(v, left, right)

@@ -18,6 +18,12 @@ except NotEqualSizeError as e:
 
 # ------------------------------------ #
 
+l0 = SList([1, 1, 1, 1, 1, 1, 1, 1, 1])
+l1 = l0.scan2(lambda x, y: x + y, 0)
+print(l1)
+
+# ------------------------------------ #
+
 bt0 = Node(1,Leaf(2),Node(3,Leaf(4),Leaf(4)))
 bt1 = bt0.map(lambda x: 1, lambda x: 1)
 size = bt1.reduce(lambda x,y,z: x+y+z)

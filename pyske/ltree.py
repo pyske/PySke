@@ -10,6 +10,7 @@ class VTag(Enum):
 	def __str__(self):
 		return self.value[0]
 
+
 def parseVTag(vt):
 	"""
 	Get a VTag from a label
@@ -67,6 +68,7 @@ class TaggedValue:
 			except UnknownTypeError as e:
 				print(str(e))
 
+
 	def __str__(self):
 		return "("+str(self.val)+"^"+str(self.tag)+")"
 
@@ -122,6 +124,7 @@ class Segment(SList):
 				res = res + ", "
 		return res + "]"
 
+
 	def has_critical(self):
 		for v in self:
 			if v.get_vtype() == VTag.CRITICAL:
@@ -146,6 +149,7 @@ class LTree(SList):
 					return False
 			return True
 		return False
+
 
 	def __str__(self):
 		res = "["
