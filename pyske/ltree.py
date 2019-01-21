@@ -1,11 +1,12 @@
 from enum import Enum
 from pyske.errors import NotEqualSizeError, UnknownTypeError
 from pyske.slist import SList
+from pyske.btree import BTree
 
 class VTag(Enum):
-	LEAF = "L", 'tag used represent a leaf in a linearized tree'
-	NODE = "N", 'tag used represent a node in a linearized tree'
-	CRITICAL = "C", 'tag used represent a critical node in a linearized tree'
+	LEAF = "L" #'tag used represent a leaf in a linearized tree'
+	NODE = "N" #'tag used represent a node in a linearized tree'
+	CRITICAL = "C" #'tag used represent a critical node in a linearized tree'
 
 	def __str__(self):
 		return self.value[0]
@@ -51,11 +52,11 @@ class TaggedValue:
 		Get the VTag tag of the current instance
 	getValue()
 		Get the value contained in the current instance
-	isLeaf()
+	is_leaf()
 		Indicates if the current instance is tagged by the Leaf VTag
-	isCritical()
+	is_critical()
 		Indicates if the current instance is tagged by the Critical VTag
-	isNode()
+	is_node()
 		Indicates if the current instance is tagged by the Node VTag
 	"""
 	def __init__(self, val, t):
@@ -80,29 +81,48 @@ class TaggedValue:
 
 
 	def get_tag(self):
+		"""
+		Get the VTag value used to describe the tag of the current instance
+		"""
 		return self.tag
 
 
 	def get_value(self):
+		"""
+		Get the VTag tag of the current instance
+		"""
 		return self.val
 
 
 	def is_leaf(self):
+		"""
+		Indicates if the current instance is tagged by the Leaf VTag
+		"""
 		return self.tag == VTag.LEAF
 
 
 	def is_critical(self):
+		"""
+		Indicates if the current instance is tagged by the Critical VTag
+		"""
 		return self.tag == VTag.CRITICAL    
 
 
 	def is_node(self):
+		"""
+		Indicates if the current instance is tagged by the Node VTag
+		"""
 		return self.tag == VTag.NODE
 
 
 class Segment(SList):
 	"""
 	A list of TaggedValue
-	TODO documentation
+	
+	Methods
+	-------
+	has_critical()
+		Indicates if the current instance contains a value tagged by the Critical VTag
 	"""
 
 	def __eq__(self, other):
@@ -126,19 +146,27 @@ class Segment(SList):
 
 
 	def has_critical(self):
+		"""
+		Indicates if the current instance contains a value tagged by the Critical VTag
+		"""
 		for v in self:
 			if v.get_vtype() == VTag.CRITICAL:
 				return True
 		return False
 
+		#TODO implement primitives for skeletons
 
 class LTree(SList):
 	"""
 	A list of Segment
-	TODO documentation
+	
+	Methods
+	-------
+	nb_values()
+		Counts the total number of value contained in the current instance
+	replace_values(l)
+		Replaces all the values contained in a linearized tree by a list of new values
 	"""
-
-	# TODO Create a constructor which takes a bt as a parameter
 
 	def __eq__(self, other):
 		if isinstance(other, LTree):
@@ -162,7 +190,7 @@ class LTree(SList):
 
 	def nb_values(self):
 		"""
-		Count the total number of value contained in the current instance
+		Counts the total number of value contained in the current instance
 		"""
 		n = 0
 		for seg in self:
@@ -172,7 +200,7 @@ class LTree(SList):
 
 	def replace_values(self, l):
 		"""
-		Replace all the values contained in a linearized tree by a list of new value
+		Replaces all the values contained in a linearized tree by a list of new values
 
 		Parameters
 		----------
@@ -193,3 +221,42 @@ class LTree(SList):
 				res_seg.append(TaggedValue(l.pop(), seg[i].get_tag()))
 			res.append(res_seg)
 		return res
+
+		#TODO implement sequential version of skeletons
+
+def __tv2lv(bt_val):
+	val = bt_val.get_value()
+	res = Segment()
+	res_0 = Segment()
+	if bt_val.is_leaf():
+		res_0.append(val)
+		res.append(res_0)
+	else: #bt_val.is_node()
+		res_left = Segment(__tv2lv(bt_val.get_left()))
+		res_right = Segment(__tv2lv(bt_val.get_right()))
+		if val.is_critical():
+			res_0.append(val)
+			res.append(res_0)
+			res.extend(res_left)
+			res.extend(res_right)
+		else: # val.is_node()
+			res_0.append(val)
+			res_0.extend(res_left[0])
+			res_0.extend(res_right[0])
+			res.append(res_0)
+			res.extend(res_left[1:])
+			res.extend(res_right[1:])
+	return res
+
+
+def serialization(bt, m):
+	# Get a LTree from a BTree
+	up_div = lambda n,m: (int(n / m) + (0 if n % m == 0 else 1))
+	bt_one = bt.map(lambda x : 1, lambda x : 1)
+	bt_size = bt_one.uacc(lambda x,y,z : x+y+z)
+	bt_tags = bt_size.mapt(lambda x: VTag.LEAF, 
+		lambda x, y, z: VTag.CRITICAL if up_div(x,m) > up_div(y.get_value(),m) and up_div(x,m) > up_div(z.get_value(),m) else VTag.NODE)
+	bt_val = bt.zipwith(bt_tags, lambda x,y: TaggedValue(x,y))
+	return LTree(__tv2lv(bt_val))
+
+#TODO deserialization

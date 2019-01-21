@@ -1,7 +1,6 @@
 from pyske.errors import NotEqualSizeError
 from abc import ABC # abstract classes library
 
-
 class BTree(ABC):
 	"""
 	An abstract class used to represent a Binary Tree
@@ -14,25 +13,17 @@ class BTree(ABC):
 		Indicates if the BTree is a leaf   
 	is_node()
 		Indicates if the BTree is a node
-	map(kl, kn)
-		Applies kl to every leaf values of the Btree, and kn to every node values
-	mapt(kl, kn)
-		Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
-	reduce(k)
-		Reduces a BTree into a single value using k
-	uacc(k)
-		Makes an upward accumulation of the values in a BTree using k
-	dacc(gl, gr, c)
-		Makes an downward accumulation of the values in a BTree using gl, gr and c
-	zip(t)
-		Zip the values contained in t with the ones in the current instance
+	b2r()
+		Get a rose tree (RTree) from the current instance
 	"""
+
 
 	def is_leaf(self):
 		"""
 		Indicates if the BTree is a leaf
 		"""
 		return False
+
 
 	def is_node(self):
 		"""
@@ -72,13 +63,13 @@ class Leaf(BTree):
 	dacc(gl, gr, c)
 		Makes an downward accumulation of the values in a BTree using gl, gr and c
 	zip(t)
-		Zip the values contained in t with the ones in the current instance
+		Zip the values contained in a second BTree with the ones in the current instance
 	zipwith(t, f)
 		Zip the values contained in a tree with the ones in the current instance using a function
 	getchl(c)
-		TODO
+		Shift all the values contained in the current instance by the left
 	getchr(c)
-		TODO
+		Shift all the values contained in the current instance by the right
 	"""
 	def __init__(self, value):
 		self.value = value
@@ -223,14 +214,24 @@ class Leaf(BTree):
 
 	def getchl(self, c):
 		"""
-		TODO documentation
+		Shift all the values contained in the current instance by the left
+
+		Parameters
+		----------
+		c :
+			The default value for elements that doesn't have left children
 		"""
 		return Leaf(c)
 
 
 	def getchr(self, c):
 		"""
-		TODO documentation
+		Shift all the values contained in the current instance by the right
+
+		Parameters
+		----------
+		c :
+			The default value for elements that doesn't have right children
 		"""
 		return Leaf(c)
 
@@ -278,9 +279,9 @@ class Node(BTree):
 	zipwith(t, f)
 		Zip the values contained in a tree with the ones in the current instance using a function
 	getchl(c)
-		TODO
+		Shift all the values contained in the current instance by the left
 	getchr(c)
-		TODO
+		Shift all the values contained in the current instance by the right
 	"""
 
 
@@ -445,8 +446,8 @@ class Node(BTree):
 		"""
 		if t.is_node():
 			v = f(self.get_value(), t.get_value())
-			left = self.get_left().zip(t.get_left())
-			right = self.get_right().zip(t.get_right())
+			left = self.get_left().zipwith(t.get_left(), f)
+			right = self.get_right().zipwith(t.get_right(), f)
 			return Node(v, left, right)
 		else:
 			raise NotEqualSizeError('The two types of BTree cannot me zipped (not the same shape)')
@@ -454,7 +455,12 @@ class Node(BTree):
 
 	def getchl(self, c):
 		"""
-		TODO documentation
+		Shift all the values contained in the current instance by the left
+
+		Parameters
+		----------
+		c :
+			The default value for elements that doesn't have left children
 		"""
 		v = self.get_left().get_value()
 		left = self.get_left().getchl(c)
@@ -464,7 +470,12 @@ class Node(BTree):
 
 	def getchr(self, c):
 		"""
-		TODO documentation
+		Shift all the values contained in the current instance by the right
+
+		Parameters
+		----------
+		c :
+			The default value for elements that doesn't have right children
 		"""
 		v = self.get_right().get_value()
 		left = self.get_left().getchl(c)

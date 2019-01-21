@@ -9,6 +9,10 @@ class SList(list):
 
 	Methods
 	-------
+	head()
+		Gives the first element of the current instance
+	tail()
+		Gives the the current instance without its first element 
 	length()
 		Gives the number of element in the current instance
 	filter(f)
@@ -17,19 +21,36 @@ class SList(list):
 		Indicates if a list is empty
 	reverse()
 		Reverse a list
+	flat_map(f)
+		TODO
 	map(f)
 		Applies f to every element of the current instance
 	reduce(f)
 		Reduce the current instance using a reduction function
 	scan(f, c)
-		Makes an accumulation of the element on the current instance from an initial value
+		Makes an rightward accumulation of the element on the current instance from an initial value
 	scan2(f)
-		TODO
+		Makes an rightward accumulation of the element on the current instance from an initial value
 	zip(l)
 		Creates a list of pairs from the element of the current instance and another one
 	zipwith(l, f)
 		Creates a list of new elements using a function from the element of the current instance and another one
 	"""
+	def head(self):
+		"""
+		Gives the first element of the current instance
+		"""
+		if self.empty():
+			return None
+		else:
+			return self[0]
+
+	def tail(self):
+		"""
+		Gives the the current instance without its first element 
+		"""
+		return SList(self[1:])
+
 
 	def length(self):
 		"""
@@ -81,6 +102,14 @@ class SList(list):
 		"""
 		return SList(map(f, self))
 
+	def flat_map(self, f):
+		"""
+		TODO
+		"""
+		if self.empty():
+			return SList()
+		else:
+			return f(self.head()) + self.tail().flat_map(f)
 
 	def reduce(self, f):
 		"""
@@ -99,7 +128,7 @@ class SList(list):
 
 	def scan(self, f, c):
 		"""
-		Makes an accumulation of the element on the current instance from an initial value
+		Makes an rightward accumulation of the element on the current instance from an initial value
 
 		BMF definition:
 		scan f c [x1, x2, ..., xn] = [c, f(c, x1), f(f(c, x1), x2), ..., f(f(...,f(f(c, x1), x2)), xn)]
@@ -124,15 +153,17 @@ class SList(list):
 
 	def scan2(self, f, c):
 		"""
-		TODO
+		Makes an leftward accumulation of the element on the current instance from an initial value
 
 		BMF definition:
 		scan2 f [x1, x2, ..., xn] = [f(x2, f(x3 , f(..., xn)), f(x3 , f(..., xn)), ..., an, unit_f]
 
 		Parameters
 		----------
-		TODO
 		f : lambda x,y => z
+			A function to make a new accumulation from the previous accumulation and a current value
+		c :
+			Initial value for the accumulator
 		"""
 		res = SList()
 		if self.empty():
