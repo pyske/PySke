@@ -1,5 +1,6 @@
 from pyske.ltree import VTag, parseVTag
 from pyske.errors import UnknownTypeError 
+from pyske.test.run import run_tests
 
 def test_parseVTag_leaf():
 	tag = "L"
@@ -19,6 +20,8 @@ def test_parseVTag_critical():
 	tag = "C"
 	exp = VTag.CRITICAL
 	res = parseVTag(tag)
+	tag = "C"
+	
 	assert exp == res
 
 
@@ -33,10 +36,4 @@ def test_parseVTag_unknown():
 
 fcts = [test_parseVTag_leaf, test_parseVTag_node, test_parseVTag_critical, test_parseVTag_unknown]
 
-for f in fcts:
-	try :
-		f()
-		print("\033[32m[OK] " +str(f) + "\033[0m")
-	except Exception:
-		print("\033[31m[KO] " +str(f)+ "\033[0m")
-
+run_tests(fcts)

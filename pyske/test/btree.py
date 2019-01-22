@@ -1,43 +1,44 @@
 from pyske.btree import BTree, Leaf, Node
 from pyske.errors import NotEqualSizeError
+from pyske.test.run import run_tests
 
 # -------------------------- #
 
-def test_is_leaf_1():
+def test_is_leaf_true():
 	bt = Leaf(1)
 	exp = True
 	res = bt.is_leaf()
 	assert exp == res
 
 
-def test_is_leaf_2():
+def test_is_leaf_false():
 	bt = Node(1, Leaf(1), Leaf(1))
 	exp = False
 	res = bt.is_leaf()
 	assert exp == res
 
-tests_is_leaf = [test_is_leaf_1, test_is_leaf_2]
+tests_is_leaf = [test_is_leaf_true, test_is_leaf_false]
 
 # -------------------------- #
 
-def test_is_node_1():
+def test_is_node_false():
 	bt = Leaf(1)
 	exp = False
 	res = bt.is_node()
 	assert exp == res
 
 
-def test_is_node_2():
+def test_is_node_true():
 	bt = Node(1, Leaf(1), Leaf(1))
 	exp = True
 	res = bt.is_node()
 	assert exp == res
 
-tests_is_node = [test_is_node_1, test_is_node_2]
+tests_is_node = [test_is_node_false, test_is_node_true]
 
 # -------------------------- #
 
-def test_map_1():
+def test_map_leaf():
 	bt = Leaf(1)
 	kl = lambda x : x + 1
 	kn = lambda x : x - 1
@@ -46,7 +47,7 @@ def test_map_1():
 	assert exp == res
 
 
-def test_map_2():
+def test_map_node():
 	bt = Node(1, Leaf(2), Leaf(3))
 	kl = lambda x : x + 1
 	kn = lambda x : x - 1
@@ -54,11 +55,11 @@ def test_map_2():
 	exp = Node(0, Leaf(3), Leaf(4))
 	assert exp == res
 
-tests_map = [test_map_1, test_map_2]
+tests_map = [test_map_leaf, test_map_node]
 
 # -------------------------- #
 
-def test_mapt_1():
+def test_mapt_leaf():
 	bt = Leaf(1)
 	kl = lambda x : x + 1
 	kn = lambda x,y,z : max(x,max(y.get_value(),z.get_value()))
@@ -67,7 +68,7 @@ def test_mapt_1():
 	assert exp == res
 
 
-def test_mapt_2():
+def test_mapt_node():
 	bt = Node(1, Leaf(2), Leaf(3))
 	kl = lambda x : x + 1
 	kn = lambda x,y,z : max(x,max(y.get_value(),z.get_value()))
@@ -75,11 +76,11 @@ def test_mapt_2():
 	exp = Node(3, Leaf(3), Leaf(4))
 	assert exp == res
 
-tests_mapt = [test_mapt_1, test_mapt_2]
+tests_mapt = [test_mapt_leaf, test_mapt_node]
 
 # -------------------------- #
 
-def test_reduce_1():
+def test_reduce_leaf():
 	bt = Leaf(2)
 	k = lambda x,y,z : max(x,max(y,z))
 	res = bt.reduce(k)
@@ -87,7 +88,7 @@ def test_reduce_1():
 	assert exp == res
 
 
-def test_reduce_2():
+def test_reduce_node():
 	bt = Node(1, Leaf(2), Leaf(3))
 	k = lambda x,y,z : max(x,max(y,z))
 	res = bt.reduce(k)
@@ -95,11 +96,11 @@ def test_reduce_2():
 	assert exp == res
 
 
-tests_reduce = [test_reduce_1, test_reduce_2]
+tests_reduce = [test_reduce_leaf, test_reduce_node]
 
 # -------------------------- #
 
-def test_uacc_1():
+def test_uacc_leaf():
 	bt = Leaf(1)
 	k = lambda x,y,z : x + y + z
 	res = bt.uacc(k)
@@ -107,18 +108,18 @@ def test_uacc_1():
 	assert exp == res
 
 
-def test_uacc_2():
+def test_uacc_node():
 	bt = Node(1, Leaf(2), Leaf(3))
 	k = lambda x,y,z : x + y + z
 	res = bt.uacc(k)
 	exp =  Node(6, Leaf(2), Leaf(3))
 	assert exp == res
 
-tests_uacc = [test_uacc_1, test_uacc_2]
+tests_uacc = [test_uacc_leaf, test_uacc_node]
 
 # -------------------------- #
 
-def test_dacc_1():
+def test_dacc_leaf():
 	c = 0
 	bt = Leaf(1)
 	gl = lambda x, y : x+y
@@ -128,7 +129,7 @@ def test_dacc_1():
 	assert exp == res
 
 
-def test_dacc_2():
+def test_dacc_node():
 	c = 0
 	bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
 	gl = lambda x, y : x+y
@@ -137,11 +138,11 @@ def test_dacc_2():
 	exp = Node(0, Node(1, Leaf(3), Leaf(0)), Leaf(0))
 	assert exp == res
 
-tests_dacc = [test_dacc_1, test_dacc_2]
+tests_dacc = [test_dacc_leaf, test_dacc_node]
 
 # -------------------------- #
 
-def test_zip_1():
+def test_zip_leaf():
 	bt1 = Leaf(1) 
 	bt2 = Leaf(2)
 	exp = Leaf((1,2))
@@ -149,7 +150,7 @@ def test_zip_1():
 	assert exp == res
 
 
-def test_zip_2():
+def test_zip_node():
 	bt1 = Node(1, Leaf(2), Leaf(3))
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	exp = Node((1,4), Leaf((2,5)), Leaf((3,6)))
@@ -157,7 +158,7 @@ def test_zip_2():
 	assert exp == res
 
 
-def test_zip_3():
+def test_zip_leaf_node():
 	bt1 = Leaf(1) 
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	try:
@@ -167,7 +168,7 @@ def test_zip_3():
 		assert True
 
 
-def test_zip_4():
+def test_zip_node_leaf():
 	bt1 = Node(1, Leaf(2), Leaf(3))
 	bt2 = Leaf(2)
 	try:
@@ -176,11 +177,11 @@ def test_zip_4():
 	except NotEqualSizeError as e:
 		assert True
 
-tests_zip = [test_zip_1, test_zip_2, test_zip_3, test_zip_4]
+tests_zip = [test_zip_leaf, test_zip_node, test_zip_leaf_node, test_zip_node_leaf]
 
 # -------------------------- #
 
-def test_zipwith_1():
+def test_zipwith_leaf():
 	bt1 = Leaf(1) 
 	bt2 = Leaf(2)
 	f = lambda x,y : x + y
@@ -189,7 +190,7 @@ def test_zipwith_1():
 	assert exp == res
 
 
-def test_zipwith_2():
+def test_zipwith_node():
 	bt1 = Node(1, Leaf(2), Leaf(3))
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	f = lambda x,y : x + y
@@ -198,7 +199,7 @@ def test_zipwith_2():
 	assert exp == res
 
 
-def test_zipwith_3():
+def test_zipwith_leaf_node():
 	bt1 = Leaf(1) 
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	f = lambda x,y : x + y
@@ -209,7 +210,7 @@ def test_zipwith_3():
 		assert True
 
 
-def test_zipwith_4():
+def test_zipwith_node_leaf():
 	bt1 = Node(1, Leaf(2), Leaf(3))
 	bt2 = Leaf(2)
 	f = lambda x,y : x + y
@@ -219,11 +220,11 @@ def test_zipwith_4():
 	except NotEqualSizeError as e:
 		assert True
 
-tests_zipwith = [test_zipwith_1, test_zipwith_2, test_zipwith_3, test_zipwith_4]
+tests_zipwith = [test_zipwith_leaf, test_zipwith_node, test_zipwith_leaf_node, test_zipwith_node_leaf]
 
 # -------------------------- #
 
-def test_getchl_1():
+def test_getchl_leaf():
 	c = 1
 	bt = Leaf(3)
 	res = bt.getchl(c)
@@ -231,7 +232,7 @@ def test_getchl_1():
 	assert res == exp
 
 
-def test_getchl_2():
+def test_getchl_node_right():
 	c = 1
 	bt = Node(3, Leaf(2), Node(4, Leaf(2), Leaf(6)))
 	res = bt.getchl(c)
@@ -239,7 +240,7 @@ def test_getchl_2():
 	assert res == exp
 
 
-def test_getchl_3():
+def test_getchl_node_left():
 	c = 1
 	bt = Node(3, Node(4, Leaf(2), Leaf(6)), Leaf(2))
 	res = bt.getchl(c)
@@ -247,11 +248,11 @@ def test_getchl_3():
 	assert res == exp
 
 
-tests_getchl = [test_getchl_1, test_getchl_2, test_getchl_3]
+tests_getchl = [test_getchl_leaf, test_getchl_node_right, test_getchl_node_left]
 
 # -------------------------- #
 
-def test_getchr_1():
+def test_getchr_leaf():
 	c = 1
 	bt = Leaf(3)
 	res = bt.getchr(c)
@@ -259,7 +260,7 @@ def test_getchr_1():
 	assert res == exp
 
 
-def test_getchr_2():
+def test_getchr_node_right():
 	c = 1
 	bt = Node(3, Leaf(2), Node(4, Leaf(2), Leaf(6)))
 	res = bt.getchr(c)
@@ -267,7 +268,7 @@ def test_getchr_2():
 	assert res == exp
 
 
-def test_getchr_3():
+def test_getchr_node_left():
 	c = 1
 	bt = Node(3, Node(4, Leaf(2), Leaf(6)), Leaf(2))
 	res = bt.getchr(c)
@@ -275,7 +276,7 @@ def test_getchr_3():
 	assert res == exp
 
 
-tests_getchr = [test_getchr_1, test_getchr_2, test_getchr_3]
+tests_getchr = [test_getchr_leaf, test_getchr_node_right, test_getchr_node_left]
 
 # -------------------------- #
 
@@ -283,9 +284,5 @@ fcts = tests_is_leaf + tests_is_node + tests_map + tests_mapt\
 	+ tests_reduce + tests_uacc + tests_dacc + tests_zip\
 	+ tests_zipwith + tests_getchl + tests_getchr
 
-for f in fcts:
-	try :
-		f()
-		print("\033[32m[OK] " +str(f) + "\033[0m")
-	except Exception:
-		print("\033[31m[KO] " +str(f)+ "\033[0m")
+
+run_tests(fcts)
