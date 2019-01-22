@@ -126,7 +126,24 @@ class Segment(SList):
 	-------
 	has_critical()
 		Indicates if the current instance contains a value tagged by the Critical VTag
-	TODO add methods for skeletons
+	map_local(kl, kn)
+		TODO
+	reduce_local(k, phi, psi_l, psi_r)
+		TODO
+	reduce_global(psi_n)
+		TODO
+	uacc_local(k, phi, psi_l, psi_r)
+		TODO
+	uacc_global(psi_n)
+		TODO
+	uacc_update(seg, k, lc, rc)
+		TODO
+	dacc_path(phi_l, phi_r, psi_u)
+		TODO
+	dacc_global(psi_d, c)
+		TODO
+	dacc_local(gl, gr, c)
+		TODO
 	"""
 
 	def __eq__(self, other):
@@ -157,6 +174,7 @@ class Segment(SList):
 			if v.is_critical():
 				return True
 		return False
+
 
 	def map_local(self, kl, kn):
 		"""
@@ -410,7 +428,6 @@ class Segment(SList):
 		return res
 
 
-
 class LTree(SList):
 	"""
 	A list of Segment
@@ -421,6 +438,14 @@ class LTree(SList):
 		Counts the total number of value contained in the current instance
 	replace_values(l)
 		Replaces all the values contained in a linearized tree by a list of new values
+	map(kl, kn)
+		TODO
+	reduce(k, phi, psi_n, psi_l, psi_r)
+		TODO
+	uacc(k, phi, psi_n, psi_l, psi_r)
+		TODO
+	dacc(gl, gr, c, phi_l, phi_r, psi_u, psi_d)
+		TODO
 	"""
 
 	def __eq__(self, other):
@@ -477,7 +502,67 @@ class LTree(SList):
 			res.append(res_seg)
 		return res
 
-		#TODO implement sequential version of skeletons
+
+	def map(self, kl, kn):
+		"""
+		TODO
+		"""
+		res = LTree()
+		for seg in self:
+			res.append(seg.map_local(kl,kn))
+		return res
+
+
+	def reduce(self, k, phi, psi_n, psi_l, psi_r):
+		"""
+		TODO
+		"""
+		tops = Segment()
+		for seg in self:
+			tops.append(seg.reduce_local(k, phi, psi_l, psi_r))
+		return tops.reduce_global(psi_n)
+
+
+	def uacc(self, k, phi, psi_n, psi_l, psi_r):
+		"""
+		TODO
+		"""
+		gt = Segment()
+		lt2 = LTree()
+		for seg in self:
+			(top, res) = seg.uacc_local(k, phi, psi_l, psi_r)
+			gt.append(top)
+			lt2.append(res)
+		gt2 = gt.uacc_global(psi_n)
+		res = Segment()
+		for i in range(0, gt.length()):
+			if gt[i].is_node():
+				seg_res = self[i].uacc_update(k, lt2[i], gt2[i])
+				res.append(seg_res)
+			else:
+				res.append(lt2[i])
+		return res
+
+
+	def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
+		"""
+		TODO
+		"""
+		gt = Segment()
+		res = LTree()
+		for seg in self:
+			if seg.has_critical():
+				gt.append(seg.dacc_path(phi_l, phi_r, psi_u))
+			else:
+				v = seg[0]
+				gt.append(TaggedValue(v.get_value(), "L"))
+
+		gt2 = gt.dacc_global(psi_d, c)
+
+		for i in range(0, gt.length()):
+			res.append(self[i].dacc_local(gl, gr, gt2[i].get_value()))
+		return res
+
 
 def __tv2lv(bt_val):
 	val = bt_val.get_value()
