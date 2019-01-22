@@ -399,10 +399,12 @@ class Node(BTree):
 		c : 
 			Accumulator for the downward computation
 		"""
-		a = self.get_value()
-		left = self.get_left().dacc(gl, gr, gl(c, a))
-		right = self.get_right().dacc(gl, gr, gr(c, a))
-		return Node(k, self.get_left().uacc(k),  self.get_right().uacc(k))
+		b = self.get_value()
+		l = self.get_left()
+		r = self.get_right()
+		left = l.dacc(gl, gr, gl(c,b))
+		right = r.dacc(gl, gr, gr(c,b))
+		return Node(c, left, right)
 
 
 	def zip(self, t):
@@ -478,6 +480,6 @@ class Node(BTree):
 			The default value for elements that doesn't have right children
 		"""
 		v = self.get_right().get_value()
-		left = self.get_left().getchl(c)
-		right = self.get_right().getchl(c)
+		left = self.get_left().getchr(c)
+		right = self.get_right().getchr(c)
 		return Node(v, left, right)

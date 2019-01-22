@@ -1,5 +1,5 @@
 import functools
-from pyske.errors import NotEqualSizeError
+from pyske.errors import NotEqualSizeError, EmptyError
 
 class SList(list):
 	"""
@@ -109,7 +109,7 @@ class SList(list):
 		if self.empty():
 			return SList()
 		else:
-			return f(self.head()) + self.tail().flat_map(f)
+			return SList(f(self.head())) + self.tail().flat_map(f)
 
 	def reduce(self, f):
 		"""
@@ -122,7 +122,15 @@ class SList(list):
 		----------
 		f : lambda x,y => z
 			The used function to reduce the current instance
+
+		Raises
+		------
+		EmptyError
+			If the SList is empty
 		"""
+		if self.empty():
+			raise EmptyError("An empty SList cannot be reduced")
+
 		return functools.reduce(f,self)
 
 
@@ -142,7 +150,8 @@ class SList(list):
 		"""
 		res = SList()
 		if self.empty():
-			return res.append(c)
+			res.append(c)
+			return res
 		else:
 			res.append(c)
 			for i in range(0, self.length()-1):
@@ -166,10 +175,10 @@ class SList(list):
 			Initial value for the accumulator
 		"""
 		res = SList()
+		res.append(c)
 		if self.empty():
 			return res
 		else:
-			res.append(c)
 			for i in range(self.length()-1, 0, -1):
 				c = f(self[i], c)
 				res.append(c)
