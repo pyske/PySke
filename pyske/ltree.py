@@ -1,7 +1,10 @@
+import sys
 from enum import Enum
-from pyske.errors import NotEqualSizeError, UnknownTypeError
+from pyske.errors import NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError
 from pyske.slist import SList
 from pyske.btree import BTree
+
+MINUS_INFINITY = -sys.maxsize - 1
 
 class VTag(Enum):
 	LEAF = "L" #'tag used represent a leaf in a linearized tree'
@@ -123,6 +126,7 @@ class Segment(SList):
 	-------
 	has_critical()
 		Indicates if the current instance contains a value tagged by the Critical VTag
+	TODO add methods for skeletons
 	"""
 
 	def __eq__(self, other):
@@ -150,11 +154,262 @@ class Segment(SList):
 		Indicates if the current instance contains a value tagged by the Critical VTag
 		"""
 		for v in self:
-			if v.get_vtype() == VTag.CRITICAL:
+			if v.is_critical():
 				return True
 		return False
 
-		#TODO implement primitives for skeletons
+	def map_local(self, kl, kn):
+		"""
+		TODO
+		"""
+		res = Segment()
+		for tv in self:
+			if tv.is_leaf():
+				v = TaggedValue(kl(v.get_value()), v.get_tag())
+			else: # v.is_node() or v.is_critical()
+				v = TaggedValue(kn(v.get_value()), v.get_tag())
+			res.append(v)
+		return res
+
+
+	def reduce_local(self, k, phi, psi_l, psi_r):
+		"""
+		TODO
+		"""
+		if self.empty():
+			raise IllFormedError("reduce_local cannot be applied to an empty segments")
+		stack = []
+		d = MINUS_INFINITY
+		has_critical = False
+		for v in self.reverse():
+			if v.is_leaf():
+				stack.append(v.get_value())
+				d = d+1
+			elif v.is_node():
+				if len(stack) < 2:
+					raise IllFormedError("reduce_local cannot be applied to a ill-formed segment")
+				lv = stack.pop()
+				rv = stack.pop()
+				if d == 0:
+					stack.append(psi_l(lv, phi(v.get_value()), rv))
+				elif d == 1:
+					stack.append(psi_r(lv, phi(v.get_value()), rv))
+					d = 0
+				else :
+					stack.append(k(lv, v.get_value(), rv))
+			else: #v.is_critical()
+				stack.append(phi(v.get_value()))
+				has_critical = True
+				d = 0
+		top = stack.pop()
+		if has_critical:
+			return TaggedValue(top,"N")
+		else:
+			return TaggedValue(top,"L")
+
+
+	def reduce_global(self, psi_n):
+		"""
+		TODO
+		"""
+		if self.has_critical():
+			raise IllFormedError("reduce_global cannot be applied to a segments which contains a critical")
+		if self.empty():
+			raise IllFormedError("reduce_global cannot be applied to an empty global segment")
+		stack = []
+		for g in self.reverse():
+			if g.is_leaf():
+				stack.append(g.get_value())
+			else : #g.is_node()
+				if len(stack) < 2:
+					raise IllFormedError("reduce_global cannot be applied to ill-formed reduced segments")
+				lv = stack.pop()
+				rv = stack.pop()
+				stack.append(psi_n(lv, g.get_value(), rv))
+		top = stack.pop()
+		return top
+
+
+	def uacc_local(self, k, phi, psi_l, psi_r):
+		"""
+		TODO
+		"""
+		stack = []
+		d = MINUS_INFINITY
+		res = Segment()
+		for v in self.reverse():
+
+			if v.is_leaf():
+				res.insert(0, v)
+				stack.append(v.get_value())
+				d = d+1
+
+			elif v.is_node():
+				if len(stack) < 2:
+					raise IllFormedError("uacc_local cannot be applied to a ill-formed segment")
+				lv = stack.pop()
+				rv = stack.pop()
+				if d == 0:
+					stack.append(psi_l(lv, phi(v.get_value()), rv))
+					res.insert(0, v)
+				elif d == 1:
+					stack.append(psi_r(lv, phi(v.get_value()), rv))
+					res.insert(0, v)
+					d = 0
+				else :
+					val = k(lv, v.get_value(), rv)
+					res.insert(0, TaggedValue(val, v.get_tag()))
+					stack.append(val)
+					d = d-1
+
+			else: #v.is_critical()
+				stack.append(phi(v.get_value()))
+				res.insert(0,v)
+				d = 0
+
+		top = stack.pop()
+		return (top, res)
+
+
+	def uacc_global(self, psi_n):
+		"""
+		TODO
+		"""
+		stack = []
+		res = Segment()
+		if self.has_critical():
+			raise IllFormedError("uacc_global cannot be applied to a segments which contains a critical")
+		if self.empty():
+			raise IllFormedError("uacc_global cannot be applied to an empty global segment")
+		for g in self.reverse():
+			if g.is_leaf():
+				res.insert(0, g)
+			else: # g.is_node()
+				if len(stack) < 2:
+					raise IllFormedError("uacc_global cannot be applied to ill-formed segment of accumulation")
+				lv = stack.pop()
+				rv = stack.pop()
+				val = psi_n(lv, g.get_value(), rv)
+				res.insert(0, TaggedValue(val, g.get_tag()))
+		return res
+
+
+	def uacc_update(self, seg, k, lc, rc):
+		"""
+		TODO
+		"""
+		stack = [rc.get_value(), lc.get_value()]
+		d = MINUS_INFINITY
+		res = Segment()
+		for i in range(seg.length() - 1, -1, -1):
+			v1 = self[i]
+			v2 = seg[i]
+			if v1.is_leaf():
+				res.append(v2)
+				stack.append(v2.get_value())
+				d = d+1
+			elif v1.is_node():
+				if len(stack) < 2:
+					raise IllFormedError("uacc_update cannot be applied to ill-formed segments")
+				lv = stack.pop()
+				rv = stack.pop()
+				if d == 0 | d == 1:
+					val = k(lv, v1.get_value(), rv)
+					res.append(TaggedValue(val, v1.get_tag()))
+					stack.append(val)
+					d = 0
+				else:
+					res.append(v2)
+					stack.append(v2.get_value())
+					d = d-1
+			else: #v1.is_critical()
+				if len(stack) < 2:
+					raise IllFormedError("uacc_update cannot be applied to ill-formed segments")
+				lv = stack.pop()
+				rv = stack.pop()
+				val = k(lv, v1.get_value(), rv)
+				res.append(TaggedValue(val, v1.get_tag()))
+				stack.append(val)
+				d = 0
+		return res
+
+
+	def dacc_path(self, phi_l, phi_r, psi_u):
+		"""
+		TODO
+		"""
+		d = MINUS_INFINITY
+		to_l = None
+		to_r = None
+		has_critical = False
+		for v in self.reverse():
+			if v.is_leaf():
+				d = d+1
+			elif v.is_node():
+				if d == 0:
+					if to_l == None | to_r == None:
+						raise IllFormedError("dacc_path cannot be applied to a ill-formed segment")
+					to_l = psi_u(phi_l(v.get_value()), to_l)
+					to_r = psi_u(phi_l(v.get_value()), to_r)
+				elif d == 1:
+					if to_l == None | to_r == None:
+						raise IllFormedError("dacc_path cannot be applied to a ill-formed segment")
+					to_l = psi_u(phi_l(v.get_value()), to_l)
+					to_r = psi_u(phi_l(v.get_value()), to_r)
+				else: 
+					d = d-1
+			else : #v.is_critical()
+				has_critical = True
+				to_l = phi_l(v.get_value())
+				to_r = phi_r(v.get_value())
+				d = 0
+		if not has_critical:
+			raise ApplicationError("dacc_path must be imperatively applied to a segment which contains a critical node")
+		return TaggedValue((to_l, to_r), "N")
+
+
+	def dacc_global(self, psi_d, c):
+		"""
+		TODO
+		"""
+		stack = [c]
+		res = Segment()
+		if self.has_critical():
+			raise IllFormedError("dacc_global cannot be applied to segment which contains a critical node")
+		for v in self:
+			if len(stack) == 0 :
+				raise IllFormedError("dacc_global cannot be applied to ill-formed segments")
+			val = stack.pop()
+			res.append(TaggedValue(val, v.get_tag()))
+			if v.is_node():
+				(to_l, to_r) = v.get_value()
+				stack.append(psi_d(v, to_r))
+				stack.append(psi_d(v, to_l))
+		return res
+
+
+	def dacc_local(self, gl, gr, c):
+		"""
+		TODO
+		"""
+		stack = [c]
+		res = Segment()
+		for v in self:
+			if v.is_leaf() | v.is_critical():
+				if len(stack) == 0 :
+					raise IllFormedError("dacc_local cannot be applied to a ill-formed segment")
+				val = stack.pop()
+				res.append(TaggedValue(val, v.get_tag()))
+			else : #v.is_node()
+				if len(stack) == 0 :
+					raise IllFormedError("dacc_local cannot be applied to a ill-formed segment")
+				val = stack.pop()
+				res.append(TaggedValue(val, v.get_tag()))
+				stack.append(gr(val, v.get_value()))
+				stack.append(gl(val, v.get_value()))
+		return res
+
+
 
 class LTree(SList):
 	"""
