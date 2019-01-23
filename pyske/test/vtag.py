@@ -36,4 +36,4 @@ def test_parseVTag_unknown():
 
 fcts = [test_parseVTag_leaf, test_parseVTag_node, test_parseVTag_critical, test_parseVTag_unknown]
 
-run_tests(fcts)
+run_tests(fcts, "vtag")

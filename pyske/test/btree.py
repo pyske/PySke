@@ -285,4 +285,4 @@ fcts = tests_is_leaf + tests_is_node + tests_map + tests_mapt\
 	+ tests_zipwith + tests_getchl + tests_getchr
 
 
-run_tests(fcts)
+run_tests(fcts, "btree")

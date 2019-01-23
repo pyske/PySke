@@ -127,7 +127,7 @@ class Segment(SList):
 	has_critical()
 		Indicates if the current instance contains a value tagged by the Critical VTag
 	map_local(kl, kn)
-		TODO
+		Applies functions to every values of the current instance
 	reduce_local(k, phi, psi_l, psi_r)
 		TODO
 	reduce_global(psi_n)
@@ -178,14 +178,21 @@ class Segment(SList):
 
 	def map_local(self, kl, kn):
 		"""
-		TODO
+		Applies functions to every values of the current instance
+
+		Parameters
+		----------
+		kl : lambda x => y
+			The function to apply to every values tagged by LEAF of the current instance
+		kn : lambda x => y
+			The function to apply to every values tagged by CRITICAL or NODE of the current instance
 		"""
 		res = Segment()
 		for tv in self:
 			if tv.is_leaf():
-				v = TaggedValue(kl(v.get_value()), v.get_tag())
+				v = TaggedValue(kl(tv.get_value()), tv.get_tag())
 			else: # v.is_node() or v.is_critical()
-				v = TaggedValue(kn(v.get_value()), v.get_tag())
+				v = TaggedValue(kn(tv.get_value()), tv.get_tag())
 			res.append(v)
 		return res
 

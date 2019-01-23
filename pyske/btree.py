@@ -53,7 +53,7 @@ class Leaf(BTree):
 	set_value(v)
 		Set the value contained in the leaf
 	map(kl, kn)
-		Applies kl to every leaf values of the Btree, and kn to every node values
+		Applies functions to every leaf and to every node values
 	mapt(kl, kn)
 		Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
 	reduce(k)
@@ -99,7 +99,7 @@ class Leaf(BTree):
 
 	def map(self, kl, kn):
 		"""
-		Applies kl to every leaf values of the current instance, and kn to every node values
+		Applies functions to every leaf and to every node values
 
 		Parameters
 		----------
@@ -265,7 +265,7 @@ class Node(BTree):
 	get_right()
 		Get the right subtree of the current node 
 	map(kl, kn)
-		Applies kl to every leaf values of the Btree, and kn to every node values
+		Applies functions to every leaf and to every node values
 	mapt(kl, kn)
 		Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
 	reduce(k)
@@ -323,7 +323,7 @@ class Node(BTree):
 
 	def map(self, kl, kn):
 		"""
-		Applies kl to every leaf values of the current instance, and kn to every node values
+		Applies functions to every leaf and to every node values
 
 		Parameters
 		----------

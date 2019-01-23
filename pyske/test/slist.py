@@ -318,6 +318,6 @@ fcts = tests_head + tests_tail + tests_length + \
 	tests_map + tests_flat_map + tests_reduce + \
 	tests_scan + tests_scan2 + tests_zip + tests_zipwith
 
-run_tests(fcts)
+run_tests(fcts, "slist")
 	
 

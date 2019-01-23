@@ -4,4 +4,4 @@ from pyske.test.run import run_tests
 
 fcts = []
 
-run_tests(fcts)
+run_tests(fcts, "rtree")

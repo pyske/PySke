@@ -44,4 +44,4 @@ tests_dacc = []
 
 fcts = tests_nb_values + tests_replace_value + tests_map + tests_reduce + tests_uacc + tests_dacc
 
-run_tests(fcts)
+run_tests(fcts, "ltree")
