@@ -2,7 +2,7 @@
 # 	for f in tests:
 # 		f()
 
-def run_tests(tests, filename):
+def run_tests(tests, filename = ""):
 	for f in tests:
 		try :
 			f()

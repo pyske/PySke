@@ -259,6 +259,9 @@ class Segment(SList):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise IllFormedError("reduce_local cannot be applied to an empty global segment")
+		
 		stack = []
 		d = MINUS_INFINITY
 		res = Segment()
@@ -309,6 +312,7 @@ class Segment(SList):
 		for g in self.reverse():
 			if g.is_leaf():
 				res.insert(0, g)
+				val = g.get_value()
 			else: # g.is_node()
 				if len(stack) < 2:
 					raise IllFormedError("uacc_global cannot be applied to ill-formed segment of accumulation")
@@ -316,6 +320,7 @@ class Segment(SList):
 				rv = stack.pop()
 				val = psi_n(lv, g.get_value(), rv)
 				res.insert(0, TaggedValue(val, g.get_tag()))
+			stack.append(val)
 		return res
 
 
@@ -323,14 +328,20 @@ class Segment(SList):
 		"""
 		TODO
 		"""
-		stack = [rc.get_value(), lc.get_value()]
+		if self.empty():
+			raise IllFormedError("uacc_update cannot be applied to an empty global segment")
+		
+		if self.length() != seg.length():
+			raise NotEqualSizeError("uacc_update cannot needs to segment of same size as input")
+		
+		stack = [rc, lc]
 		d = MINUS_INFINITY
 		res = Segment()
 		for i in range(seg.length() - 1, -1, -1):
 			v1 = self[i]
 			v2 = seg[i]
 			if v1.is_leaf():
-				res.append(v2)
+				res.insert(0,v2)
 				stack.append(v2.get_value())
 				d = d+1
 			elif v1.is_node():
@@ -340,11 +351,11 @@ class Segment(SList):
 				rv = stack.pop()
 				if d == 0 | d == 1:
 					val = k(lv, v1.get_value(), rv)
-					res.append(TaggedValue(val, v1.get_tag()))
+					res.insert(0,TaggedValue(val, v1.get_tag()))
 					stack.append(val)
 					d = 0
 				else:
-					res.append(v2)
+					res.insert(0,v2)
 					stack.append(v2.get_value())
 					d = d-1
 			else: #v1.is_critical()
@@ -353,7 +364,7 @@ class Segment(SList):
 				lv = stack.pop()
 				rv = stack.pop()
 				val = k(lv, v1.get_value(), rv)
-				res.append(TaggedValue(val, v1.get_tag()))
+				res.insert(0,TaggedValue(val, v1.get_tag()))
 				stack.append(val)
 				d = 0
 		return res
@@ -363,6 +374,8 @@ class Segment(SList):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise IllFormedError("dacc_path cannot be applied to an empty segment")
 		d = MINUS_INFINITY
 		to_l = None
 		to_r = None
@@ -372,15 +385,12 @@ class Segment(SList):
 				d = d+1
 			elif v.is_node():
 				if d == 0:
-					if to_l == None | to_r == None:
-						raise IllFormedError("dacc_path cannot be applied to a ill-formed segment")
 					to_l = psi_u(phi_l(v.get_value()), to_l)
 					to_r = psi_u(phi_l(v.get_value()), to_r)
 				elif d == 1:
-					if to_l == None | to_r == None:
-						raise IllFormedError("dacc_path cannot be applied to a ill-formed segment")
 					to_l = psi_u(phi_l(v.get_value()), to_l)
 					to_r = psi_u(phi_l(v.get_value()), to_r)
+					d = 0
 				else: 
 					d = d-1
 			else : #v.is_critical()
@@ -408,8 +418,8 @@ class Segment(SList):
 			res.append(TaggedValue(val, v.get_tag()))
 			if v.is_node():
 				(to_l, to_r) = v.get_value()
-				stack.append(psi_d(v, to_r))
-				stack.append(psi_d(v, to_l))
+				stack.append(psi_d(val, to_r))
+				stack.append(psi_d(val, to_l))
 		return res
 
 
@@ -417,6 +427,8 @@ class Segment(SList):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise IllFormedError("dacc_path cannot be applied to an empty segment")
 		stack = [c]
 		res = Segment()
 		for v in self:
@@ -544,7 +556,7 @@ class LTree(SList):
 		res = Segment()
 		for i in range(0, gt.length()):
 			if gt[i].is_node():
-				seg_res = self[i].uacc_update(k, lt2[i], gt2[i])
+				seg_res = self[i].uacc_update(k, lt2[i].get_value(), gt2[i].get_value())
 				res.append(seg_res)
 			else:
 				res.append(lt2[i])
