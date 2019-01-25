@@ -1,5 +1,5 @@
 from pyske.btree import BTree, Leaf, Node
-from pyske.errors import NotEqualSizeError
+from pyske.errors import NotEqualSizeError, TestFailure
 from pyske.test.run import run_tests
 
 # -------------------------- #
@@ -163,7 +163,7 @@ def test_zip_leaf_node():
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	try:
 		bt1.zip(bt2)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -173,7 +173,7 @@ def test_zip_node_leaf():
 	bt2 = Leaf(2)
 	try:
 		bt1.zip(bt2)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -205,7 +205,7 @@ def test_zipwith_leaf_node():
 	f = lambda x,y : x + y
 	try:
 		bt1.zipwith(bt2,f)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -216,7 +216,7 @@ def test_zipwith_node_leaf():
 	f = lambda x,y : x + y
 	try:
 		bt1.zipwith(bt2,f)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 

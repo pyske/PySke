@@ -1,4 +1,4 @@
-from pyske.errors import NotEqualSizeError, EmptyError
+from pyske.errors import NotEqualSizeError, EmptyError, TestFailure
 from pyske.test.run import run_tests
 from pyske.slist import SList
 
@@ -173,7 +173,7 @@ def test_reduce_nil():
 	f = lambda x,y : x + y
 	try:
 		res = sl.reduce(f)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except EmptyError as e:
 		assert True
 
@@ -252,7 +252,7 @@ def test_zip_one_gt():
 	sl2 = SList([2, 3])
 	try:
 		res = sl1.zip(sl2)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -262,7 +262,7 @@ def test_zip_one_lt():
 	sl2 = SList([2, 3, 4])
 	try:
 		res = sl1.zip(sl2)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -294,7 +294,7 @@ def test_zipwith_one_gt():
 	f = lambda x,y : x + y
 	try:
 		res = sl1.zipwith(sl2,f)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -305,7 +305,7 @@ def test_zipwith_one_lt():
 	f = lambda x,y : x + y
 	try:
 		res = sl1.zipwith(sl2,f)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 

@@ -1,5 +1,5 @@
 from pyske.test.run import run_tests
-from pyske.errors import IllFormedError, NotEqualSizeError, ApplicationError
+from pyske.errors import IllFormedError, NotEqualSizeError, ApplicationError, EmptyError, TestFailure
 from pyske.ltree import VTag, Segment, TaggedValue
 
 
@@ -32,13 +32,20 @@ tests_has_critical = [test_has_critical_empty, test_has_critical_no, test_has_cr
 	
 # -------------------------- #
 
+def test_map_local_empty():
+	seg = Segment()
+	res = seg.map_local(lambda x : x + 1, lambda x : x - 1 )
+	exp = Segment()
+	assert exp == res
+
+
 def test_map_local():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"C")])
 	res = seg.map_local(lambda x : x + 1, lambda x : x - 1 )
 	exp = Segment([TaggedValue(0,"N"), TaggedValue(3,"L"), TaggedValue(2,"C")])
 	assert exp == res
 
-tests_map_local = [test_map_local] 
+tests_map_local = [test_map_local_empty, test_map_local] 
 
 # -------------------------- #
 
@@ -48,8 +55,8 @@ def test_reduce_local_empty():
 	seg = Segment()
 	try:
 		res = seg.reduce_local(sum3, id_f, sum3, sum3)
-		raise Exception("Test failure")
-	except IllFormedError as e:
+		raise TestFailure()
+	except EmptyError as e:
 		assert True
 
 
@@ -59,7 +66,7 @@ def test_reduce_local_illformed():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2,"C")])
 	try:
 		res = seg.reduce_local(sum3, id_f, sum3, sum3)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -91,7 +98,7 @@ def test_reduce_global_has_critical():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2, "L"), TaggedValue(2,"C")])
 	try:
 		res = seg.reduce_global(sum3)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -101,8 +108,8 @@ def test_reduce_global_empty():
 	seg = Segment()
 	try:
 		res = seg.reduce_global(sum3)
-		raise Exception("Test failure")
-	except IllFormedError as e:
+		raise TestFailure()
+	except EmptyError as e:
 		assert True
 
 
@@ -111,7 +118,7 @@ def test_reduce_global_illformed():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2, "L")])
 	try:
 		res = seg.reduce_global(sum3)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -140,10 +147,10 @@ def test_uacc_local_empty():
 	sum3 = lambda x,y,z : x + y + z
 	id_f = lambda x : x
 	seg = Segment()
-	try:
-		res = seg.uacc_local(sum3, id_f, sum3, sum3)
-		raise Exception("Test failure")
-	except IllFormedError as e:
+	try :
+		seg.uacc_local(sum3, id_f, sum3, sum3)
+		raise TestFailure()
+	except EmptyError as e:
 		assert True
 
 
@@ -153,7 +160,7 @@ def test_uacc_local_illformed():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2,"C")])
 	try:
 		res = seg.uacc_local(sum3, id_f, sum3, sum3)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -163,7 +170,7 @@ def test_uacc_local_node():
 	id_f = lambda x : x
 	seg = Segment([TaggedValue(1,"N"),  TaggedValue(2,"L"), TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"C")])
 	res = seg.uacc_local(sum3, id_f, sum3, sum3)
-	exp = (9, Segment([TaggedValue(1,"N"),  TaggedValue(2,"L"), TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"C")]))
+	exp = (TaggedValue(9,"N"), Segment([TaggedValue(1,"N"),  TaggedValue(2,"L"), TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"C")]))
 	assert res == exp
 
 def test_uacc_local_leaf():
@@ -171,7 +178,7 @@ def test_uacc_local_leaf():
 	id_f = lambda x : x
 	seg = Segment([TaggedValue(1,"N"),  TaggedValue(2,"L"), TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"L")])
 	res = seg.uacc_local(sum3, id_f, sum3, sum3)
-	exp = (9, Segment([TaggedValue(9,"N"),  TaggedValue(2,"L"), TaggedValue(6,"N"), TaggedValue(2,"L"), TaggedValue(3,"L")]))
+	exp = (TaggedValue(9,"L"), Segment([TaggedValue(9,"N"),  TaggedValue(2,"L"), TaggedValue(6,"N"), TaggedValue(2,"L"), TaggedValue(3,"L")]))
 	assert res == exp
 
 tests_uacc_local = [test_uacc_local_empty, test_uacc_local_illformed, test_uacc_local_node, test_uacc_local_leaf] 
@@ -183,7 +190,7 @@ def test_uacc_global_has_critical():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2,"C"), TaggedValue(2,"L")])
 	try:
 		res = seg.uacc_global(sum3)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -191,11 +198,9 @@ def test_uacc_global_has_critical():
 def test_uacc_global_empty():
 	sum3 = lambda x,y,z : x + y + z
 	seg = Segment()
-	try:
-		res = seg.uacc_global(sum3)
-		raise Exception("Test failure")
-	except IllFormedError as e:
-		assert True
+	exp = Segment()
+	res = seg.uacc_global(sum3)
+	assert exp == res
 
 
 def test_uacc_global_illformed():
@@ -203,7 +208,7 @@ def test_uacc_global_illformed():
 	seg = Segment([TaggedValue(1,"N"), TaggedValue(2,"L")])
 	try:
 		res = seg.uacc_global(sum3)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -235,11 +240,9 @@ def test_uacc_update_empty():
 	gt = Segment()
 	lc = 1
 	rc = 2
-	try:
-		res = seg.uacc_update(gt, sum3, lc, rc)
-		raise Exception("Test failure")
-	except IllFormedError as e:
-		assert True
+	res = seg.uacc_update(gt, sum3, lc, rc)
+	exp = Segment()
+	assert res == exp
 
 
 def test_uacc_update_not_same_size():
@@ -250,7 +253,7 @@ def test_uacc_update_not_same_size():
 	rc = 2
 	try:
 		res = seg.uacc_update(gt, sum3, lc, rc)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
 
@@ -263,7 +266,7 @@ def test_uacc_update_illformed_node():
 	rc = 2
 	try:
 		res = seg.uacc_update(gt, sum3, lc, rc)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -276,7 +279,7 @@ def test_uacc_update_illformed_critical():
 	rc = 2
 	try:
 		res = seg.uacc_update(gt, sum3, lc, rc)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -312,8 +315,8 @@ def test_dacc_path_empty():
 	id_f = lambda x : x
 	try:
 		res = seg.dacc_path(id_f, id_f, sum2)
-		raise Exception("Test failure")
-	except IllFormedError as e:
+		raise TestFailure()
+	except EmptyError as e:
 		assert True
 
 
@@ -323,7 +326,7 @@ def test_dacc_path_has_no_critical():
 	id_f = lambda x : x
 	try:
 		res = seg.dacc_path(id_f, id_f, sum2)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except ApplicationError as e:
 		assert True
 
@@ -347,9 +350,18 @@ def test_dacc_global_double_leaf():
 	c = 2
 	try:
 		seg.dacc_global(sum2, c)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e :
 		assert True
+
+
+def test_dacc_global_empty():
+	seg = Segment()
+	sum2 = lambda x,y : x + y
+	c = 2
+	res = seg.dacc_global(sum2, c)
+	exp = Segment()
+	assert res == exp
 
 
 def test_dacc_global_has_critical():
@@ -358,7 +370,7 @@ def test_dacc_global_has_critical():
 	c = 2
 	try:
 		seg.dacc_global(sum2, c)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e :
 		assert True
 
@@ -370,7 +382,7 @@ def test_dacc_global():
 	exp = Segment([TaggedValue(2,"N"),  TaggedValue(3,"L"), TaggedValue(3,"N"), TaggedValue(4,"L"), TaggedValue(5,"L")])
 	assert res == exp
 
-tests_dacc_global = [test_dacc_global_double_leaf, test_dacc_global_has_critical, test_dacc_global] 
+tests_dacc_global = [test_dacc_global_empty, test_dacc_global_double_leaf, test_dacc_global_has_critical, test_dacc_global] 
 
 # -------------------------- #
 
@@ -378,11 +390,9 @@ def test_dacc_local_empty():
 	seg = Segment()
 	sum2 = lambda x, y: x + y
 	c = 4
-	try:
-		seg.dacc_local(sum2, sum2, c)
-		raise Exception("Test failure")
-	except IllFormedError as e:
-		assert True
+	res = seg.dacc_local(sum2, sum2, c)
+	exp = Segment()
+	assert res == exp
 
 
 def test_dacc_local_stack_empty_leaf():
@@ -391,7 +401,7 @@ def test_dacc_local_stack_empty_leaf():
 	c = 4
 	try:
 		seg.dacc_local(sum2, sum2, c)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -402,7 +412,7 @@ def test_dacc_local_stack_empty_critical():
 	c = 4
 	try:
 		seg.dacc_local(sum2, sum2, c)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except IllFormedError as e:
 		assert True
 
@@ -420,10 +430,102 @@ tests_dacc_local = [test_dacc_local_stack_empty_leaf, test_dacc_local_stack_empt
 
 # -------------------------- #
 
+def test_get_left_has_critical():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"C"),TaggedValue(2,"L")])
+	i = 0
+	try:
+		gt.get_left(i)
+		raise TestFailure()
+	except ApplicationError as e:
+		assert True
+
+
+def test_get_left_is_leaf():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	i = 1
+	try:
+		gt.get_left(i)
+		raise TestFailure()
+	except ApplicationError as e:
+		assert True
+
+
+def test_get_left_illformed():
+	gt = Segment([TaggedValue(2,"N")])
+	i = 0
+	try:
+		gt.get_left(i)
+		raise TestFailure()
+	except IllFormedError as e:
+		assert True
+
+
+def test_get_left():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	i = 0
+	res = gt.get_left(i)
+	exp = TaggedValue(1,"L")
+	assert res == exp
+
+
+tests_get_left = [test_get_left_has_critical, test_get_left_is_leaf, test_get_left_illformed, test_get_left]
+
+# -------------------------- #
+
+def test_get_right_has_critical():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"C"),TaggedValue(2,"L")])
+	i = 0
+	try:
+		gt.get_right(i)
+		raise TestFailure()
+	except ApplicationError as e:
+		assert True
+
+
+def test_get_right_is_leaf():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	i = 1
+	try:
+		gt.get_right(i)
+		raise TestFailure()
+	except ApplicationError as e:
+		assert True
+
+
+def test_get_right_illformed():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"L")])
+	i = 0
+	try:
+		gt.get_right(i)
+		raise TestFailure()
+	except IllFormedError as e:
+		assert True
+
+
+def test_get_right_direct():
+	gt = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	i = 0
+	res = gt.get_right(i)
+	exp = TaggedValue(2,"L")
+	assert res == exp
+
+
+def test_get_right_not_direct():
+	gt = Segment([TaggedValue(1,"N"),TaggedValue(3,"N"),TaggedValue(8,"L"),TaggedValue(4,"L"),TaggedValue(2,"L")])
+	i = 0
+	res = gt.get_right(i)
+	exp = TaggedValue(2,"L")
+	assert res == exp
+
+
+tests_get_right = [test_get_right_has_critical, test_get_right_is_leaf, test_get_right_illformed, test_get_right_direct, test_get_right_not_direct]
+# -------------------------- #
+
 
 fcts = tests_has_critical + tests_map_local \
 	+ tests_reduce_local + tests_reduce_global \
 	+ tests_uacc_local + tests_uacc_global + tests_uacc_update \
-	+ tests_dacc_path + tests_dacc_global + tests_dacc_local
+	+ tests_dacc_path + tests_dacc_global + tests_dacc_local \
+	+ tests_get_left + tests_get_right
 
 run_tests(fcts, "segment")

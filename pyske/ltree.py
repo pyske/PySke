@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from pyske.errors import NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError
+from pyske.errors import EmptyError, NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError
 from pyske.slist import SList
 from pyske.btree import BTree
 
@@ -202,7 +202,7 @@ class Segment(SList):
 		TODO
 		"""
 		if self.empty():
-			raise IllFormedError("reduce_local cannot be applied to an empty segments")
+			raise EmptyError("reduce_local cannot be applied to an empty segment")
 		stack = []
 		d = MINUS_INFINITY
 		has_critical = False
@@ -240,7 +240,7 @@ class Segment(SList):
 		if self.has_critical():
 			raise IllFormedError("reduce_global cannot be applied to a segments which contains a critical")
 		if self.empty():
-			raise IllFormedError("reduce_global cannot be applied to an empty global segment")
+			raise EmptyError("reduce_global cannot be applied to an empty segment")
 		stack = []
 		for g in self.reverse():
 			if g.is_leaf():
@@ -259,12 +259,14 @@ class Segment(SList):
 		"""
 		TODO
 		"""
+
 		if self.empty():
-			raise IllFormedError("reduce_local cannot be applied to an empty global segment")
-		
+			raise EmptyError("uacc_local cannot be applied to an empty segment")
 		stack = []
 		d = MINUS_INFINITY
 		res = Segment()
+		has_critical = False
+
 		for v in self.reverse():
 
 			if v.is_leaf():
@@ -294,9 +296,11 @@ class Segment(SList):
 				stack.append(phi(v.get_value()))
 				res.insert(0,v)
 				d = 0
+				has_critical = True
 
 		top = stack.pop()
-		return (top, res)
+		tag = "N" if has_critical else "L"
+		return (TaggedValue(top,tag), res)
 
 
 	def uacc_global(self, psi_n):
@@ -307,8 +311,6 @@ class Segment(SList):
 		res = Segment()
 		if self.has_critical():
 			raise IllFormedError("uacc_global cannot be applied to a segments which contains a critical")
-		if self.empty():
-			raise IllFormedError("uacc_global cannot be applied to an empty global segment")
 		for g in self.reverse():
 			if g.is_leaf():
 				res.insert(0, g)
@@ -328,9 +330,6 @@ class Segment(SList):
 		"""
 		TODO
 		"""
-		if self.empty():
-			raise IllFormedError("uacc_update cannot be applied to an empty global segment")
-		
 		if self.length() != seg.length():
 			raise NotEqualSizeError("uacc_update cannot needs to segment of same size as input")
 		
@@ -375,7 +374,7 @@ class Segment(SList):
 		TODO
 		"""
 		if self.empty():
-			raise IllFormedError("dacc_path cannot be applied to an empty segment")
+			raise EmptyError("dacc_path cannot be applied to an empty segment")
 		d = MINUS_INFINITY
 		to_l = None
 		to_r = None
@@ -427,8 +426,6 @@ class Segment(SList):
 		"""
 		TODO
 		"""
-		if self.empty():
-			raise IllFormedError("dacc_path cannot be applied to an empty segment")
 		stack = [c]
 		res = Segment()
 		for v in self:
@@ -447,16 +444,45 @@ class Segment(SList):
 		return res
 
 
+	def get_left(self, i):
+		"""
+		TODO
+		"""
+		if self.has_critical():
+			raise ApplicationError("The left children of a value in a non-global segment cannot be found")
+		if self[i].is_leaf():
+			raise ApplicationError("A leaf value doesn't have a left children")
+		if i == self.length() - 1:
+			raise IllFormedError("Cannot get the left children of a node in an ill-formed segment")
+		return self[i+1]
+
+	def get_right(self, i):
+		"""
+		TODO
+		"""
+		if self.has_critical():
+			raise ApplicationError("The right children of a value in a non-global segment cannot be found")
+		if self[i].is_leaf():
+			raise ApplicationError("A leaf value doesn't have a right children")
+		if i == self.length() - 2:
+			raise IllFormedError("Cannot get the left children of a node in an ill-formed segment")
+
+		def get_right_index(gt,i):
+			if gt[i+1].is_leaf():
+				return i+2
+			else:
+				return 1 + get_right_index(gt,i+1)
+
+		j = get_right_index(self, i)
+		return self[j]
+
+
 class LTree(SList):
 	"""
 	A list of Segment
 	
 	Methods
 	-------
-	nb_values()
-		Counts the total number of value contained in the current instance
-	replace_values(l)
-		Replaces all the values contained in a linearized tree by a list of new values
 	map(kl, kn)
 		TODO
 	reduce(k, phi, psi_n, psi_l, psi_r)
@@ -487,45 +513,12 @@ class LTree(SList):
 		return res + "]"
 
 
-	def nb_values(self):
-		"""
-		Counts the total number of value contained in the current instance
-		"""
-		n = 0
-		for seg in self:
-			n = n + seg.length()
-		return n
-
-
-	def replace_values(self, l):
-		"""
-		Replaces all the values contained in a linearized tree by a list of new values
-
-		Parameters
-		----------
-		l : list
-			A list of new value
-
-		Raises
-		------
-		AssertionError
-			If there is not enough value in l to replace
-		"""
-		if len(l) != self.nb_values():
-			raise NotEqualSizeError("The number of replacing values is not equal to the number of values in the current instance (" + str(len(l)) +" vs " + str(self.nb_values()) + ")")
-		res = LTree()
-		for seg in self:
-			res_seg = Segment()
-			for i in range(0,seg.length()):
-				res_seg.append(TaggedValue(l.pop(), seg[i].get_tag()))
-			res.append(res_seg)
-		return res
-
-
 	def map(self, kl, kn):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise EmptyError("map cannot be applied to an empty linearized tree")
 		res = LTree()
 		for seg in self:
 			res.append(seg.map_local(kl,kn))
@@ -536,6 +529,8 @@ class LTree(SList):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise EmptyError("reduce cannot be applied to an empty linearized tree")
 		tops = Segment()
 		for seg in self:
 			tops.append(seg.reduce_local(k, phi, psi_l, psi_r))
@@ -546,17 +541,23 @@ class LTree(SList):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise EmptyError("uacc cannot be applied to an empty linearized tree")
 		gt = Segment()
 		lt2 = LTree()
 		for seg in self:
 			(top, res) = seg.uacc_local(k, phi, psi_l, psi_r)
 			gt.append(top)
 			lt2.append(res)
+
 		gt2 = gt.uacc_global(psi_n)
+
 		res = Segment()
 		for i in range(0, gt.length()):
 			if gt[i].is_node():
-				seg_res = self[i].uacc_update(k, lt2[i].get_value(), gt2[i].get_value())
+				lc = gt2.get_left(i).get_value()
+				rc = gt2.get_left(i).get_value()
+				seg_res = self[i].uacc_update(lt2[i], k, lc, rc)
 				res.append(seg_res)
 			else:
 				res.append(lt2[i])
@@ -567,6 +568,8 @@ class LTree(SList):
 		"""
 		TODO
 		"""
+		if self.empty():
+			raise EmptyError("dacc cannot be applied to an empty linearized tree")
 		gt = Segment()
 		res = LTree()
 		for seg in self:

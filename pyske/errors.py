@@ -68,4 +68,25 @@ class ApplicationError(Exception):
         self.message = "[ApplicationError] "+ message
 
 
+class EmptyError(Exception):
+    """
+    Exception raised if a function is applied to an empty structure
 
+    Attributes
+    ----------
+    message: 
+        explanation of the error
+    """
+    
+    def __init__(self, message):
+        self.message = "[EmptyError] "+ message
+
+
+class TestFailure(Exception):
+    """
+    Exception raised if a test fails
+    """
+    def __init__(self):
+        pass
+
+        

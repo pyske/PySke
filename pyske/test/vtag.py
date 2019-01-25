@@ -1,5 +1,5 @@
 from pyske.ltree import VTag, parseVTag
-from pyske.errors import UnknownTypeError 
+from pyske.errors import UnknownTypeError, TestFailure
 from pyske.test.run import run_tests
 
 def test_parseVTag_leaf():
@@ -29,7 +29,7 @@ def test_parseVTag_unknown():
 	tag = "_"
 	try:
 		res = parseVTag(tag)
-		raise Exception("Test failure")
+		raise TestFailure()
 	except UnknownTypeError as e:
 		assert True
 
