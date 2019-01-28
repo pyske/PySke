@@ -70,6 +70,8 @@ class Leaf(BTree):
 		Shift all the values contained in the current instance by the left
 	getchr(c)
 		Shift all the values contained in the current instance by the right
+	size()
+		TODO
 	"""
 	def __init__(self, value):
 		self.value = value
@@ -236,6 +238,13 @@ class Leaf(BTree):
 		return Leaf(c)
 
 
+	def size(self):
+		"""
+		TODO
+		"""
+		return 1
+
+
 class Node(BTree):
 	"""
 	An extension of BTree. 
@@ -282,6 +291,8 @@ class Node(BTree):
 		Shift all the values contained in the current instance by the left
 	getchr(c)
 		Shift all the values contained in the current instance by the right
+	size()
+		TODO
 	"""
 
 
@@ -483,3 +494,10 @@ class Node(BTree):
 		left = self.get_left().getchr(c)
 		right = self.get_right().getchr(c)
 		return Node(v, left, right)
+
+	def size(self):
+		"""
+		TODO
+		"""
+		return 1 + self.get_left().size() + self.get_right().size()
+
