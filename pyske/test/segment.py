@@ -170,7 +170,7 @@ def test_uacc_local_node():
 	id_f = lambda x : x
 	seg = Segment([TaggedValue(1,"N"),  TaggedValue(2,"L"), TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"C")])
 	res = seg.uacc_local(sum3, id_f, sum3, sum3)
-	exp = (TaggedValue(9,"N"), Segment([TaggedValue(1,"N"),  TaggedValue(2,"L"), TaggedValue(1,"N"), TaggedValue(2,"L"), TaggedValue(3,"C")]))
+	exp = (TaggedValue(9,"N"), Segment([None,  TaggedValue(2,"L"), None, TaggedValue(2,"L"), None]))
 	assert res == exp
 
 def test_uacc_local_leaf():
@@ -182,6 +182,86 @@ def test_uacc_local_leaf():
 	assert res == exp
 
 tests_uacc_local = [test_uacc_local_empty, test_uacc_local_illformed, test_uacc_local_node, test_uacc_local_leaf] 
+
+# -------------------------- #
+phi = lambda b : (1, 0, 0, 1)
+
+def k(l, b, r):
+	(ll, ls) = l
+	(rl, rs) = r
+	return (ls, ls + 1 + rs)
+
+
+def psi_l(l, b, r):
+	(l0, l1, l2, l3) = l
+	(b0, b1, b2, b3) = b
+	(rl, rs) = r
+	res_0 = 0
+	res_1 = b0 + b1
+	res_2 = (b0 + b1) * l3 + b1 * (1 + rs) + b2
+	res_3 = l3 + 1 + rs + b3
+	return (res_0, res_1, res_2, res_3)
+
+
+def psi_r(l, b, r):
+	(ll, ls) = l
+	(b0, b1, b2, b3) = b
+	(r0, r1, r2, r3) = r
+	res_0 = 0
+	res_1 = b1
+	res_2 = b1 * r3 + b0 * ls + b1 * (1 + ls) + b2
+	res_3 = r3 + 1 + ls + b3
+	return (res_0, res_1, res_2, res_3)
+
+
+def psi_n(l, b, r):
+	(ll, ls) = l
+	(b0, b1, b2, b3) = b
+	(rl, rs) = r
+	res_1 = b0 * ls + b1 * (ls + rs + 1) + b2
+	res_2 = ls + 1 + rs + b3
+	return (res_1, res_2)
+
+
+def test_uacc_local_prefix_1():
+	seg = Segment([TaggedValue(1,"N"),  TaggedValue(2,"C"), TaggedValue((0,1),"L")])
+	res = seg.uacc_local(k, phi, psi_l, psi_r)
+	exp = (TaggedValue((0,1,1,4),"N"), Segment([None, None, TaggedValue((0,1),"L")]))
+	assert res == exp
+
+
+def test_uacc_local_prefix_2():
+	seg = Segment([TaggedValue(4,"N"),  TaggedValue((0,1),"L"), TaggedValue((0,1),"L")])
+	res = seg.uacc_local(k, phi, psi_l, psi_r)
+	exp = (TaggedValue((1,3),"L"), Segment([TaggedValue((1,3),"N"), TaggedValue((0,1),"L"), TaggedValue((0,1),"L")]))
+	assert res == exp
+
+
+def test_uacc_local_prefix_3():
+	seg = Segment([TaggedValue(5,"N"),  TaggedValue((0,1),"L"), TaggedValue((0,1),"L")])
+	res = seg.uacc_local(k, phi, psi_l, psi_r)
+	exp = (TaggedValue((1,3),"L"), Segment([TaggedValue((1,3),"N"), TaggedValue((0,1),"L"), TaggedValue((0,1),"L")]))
+	assert res == exp
+
+
+def test_uacc_global_prefix():
+	gt = Segment([TaggedValue((0,1,1,4),"N"), TaggedValue((1,3),"L"),TaggedValue((1,3),"L")])
+	res = gt.uacc_global(psi_n)
+	exp = Segment([TaggedValue((8,11),"N"), TaggedValue((1,3),"L"),TaggedValue((1,3),"L")])
+	assert res == exp
+
+
+def test_uacc_update_prefix():
+	seg = Segment([TaggedValue(1,"N"),TaggedValue(2,"C"),TaggedValue((0,1),"L")])
+	seg2 = Segment([None, None ,TaggedValue((0,1),"L")])
+	lc = (1,3)
+	rc = (1,3)
+	res = seg.uacc_update(seg2, k, lc, rc)
+	exp = Segment([TaggedValue((5,9),"N"),TaggedValue((1,5),"C"),TaggedValue((0,1),"L")])
+	assert res == exp
+
+
+tests_uacc_prefix = [test_uacc_update_prefix, test_uacc_global_prefix, test_uacc_local_prefix_1, test_uacc_local_prefix_2, test_uacc_local_prefix_3]
 
 # -------------------------- #
 
@@ -526,6 +606,7 @@ fcts = tests_has_critical + tests_map_local \
 	+ tests_reduce_local + tests_reduce_global \
 	+ tests_uacc_local + tests_uacc_global + tests_uacc_update \
 	+ tests_dacc_path + tests_dacc_global + tests_dacc_local \
-	+ tests_get_left + tests_get_right
+	+ tests_get_left + tests_get_right \
+	+ tests_uacc_prefix
 
 run_tests(fcts, "segment")

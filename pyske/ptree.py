@@ -66,6 +66,11 @@ class PTree:
 		TODO
 		"""
 
+		# TODO fix the communication of step 2 and step 3 cause we need to use
+		# the global gt2. Instead of using (_,_) in idx (step 3), we need to
+		# to use the global idx ! And only use the one we need. Create a res
+		# segment for there representing the resulting segment of a small part only
+
 		# STEP 1 : uacc locally applied #
 		seg2 = Segment()
 		gt_l = Segment()

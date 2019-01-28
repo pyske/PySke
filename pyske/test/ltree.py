@@ -3,21 +3,6 @@ from pyske.ltree import LTree, Segment, TaggedValue
 from pyske.slist import SList
 from pyske.errors import IllFormedError, EmptyError, TestFailure
 
-
-# -------------------------- #
-
-#TODO
-
-tests_serialization = []
-
-# -------------------------- #
-
-#TODO
-
-tests_deserialization = []
-
-# -------------------------- #
-
 def test_map_empty():
 	lt = LTree()
 	id_f = lambda x : x
@@ -164,8 +149,20 @@ tests_dacc = [test_dacc_empty, test_dacc]
 
 # -------------------------- #
 
+#TODO
 
-fcts = tests_deserialization + tests_serialization + tests_map + \
-		tests_reduce + tests_uacc + tests_dacc
+tests_zip = []
+
+# -------------------------- #
+
+#TODO
+
+tests_zipwith = []
+
+# -------------------------- #
+
+
+fcts = tests_map + \
+		tests_reduce + tests_uacc + tests_dacc + tests_zip + tests_zipwith 
 
 run_tests(fcts, "ltree")

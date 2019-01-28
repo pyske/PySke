@@ -4,7 +4,7 @@ from pyske.errors import EmptyError, NotEqualSizeError, UnknownTypeError, IllFor
 from pyske.slist import SList
 from pyske.btree import BTree
 
-MINUS_INFINITY = -sys.maxsize - 1
+MINUS_INFINITY = int((-sys.maxsize - 1)/2)
 
 class VTag(Enum):
 	LEAF = "L" #'tag used represent a leaf in a linearized tree'
@@ -280,11 +280,20 @@ class Segment(SList):
 				lv = stack.pop()
 				rv = stack.pop()
 				if d == 0:
-					stack.append(psi_l(lv, phi(v.get_value()), rv))
-					res.insert(0, v)
+					val = phi(v.get_value())
+					# stack.append(psi_l(lv, val, rv))
+					# res.insert(0, TaggedValue(val,"N"))
+					stack.append(psi_l(lv, val, rv))
+					# res.insert(0, v)
+					res.insert(0, None)
 				elif d == 1:
-					stack.append(psi_r(lv, phi(v.get_value()), rv))
-					res.insert(0, v)
+					val = phi(v.get_value())
+					# stack.append(psi_r(lv, val, rv))
+					# res.insert(0, TaggedValue(val,"N"))
+					stack.append(psi_r(lv, val, rv))
+
+					res.insert(0, None)
+					# res.insert(0, v)
 					d = 0
 				else :
 					val = k(lv, v.get_value(), rv)
@@ -294,7 +303,8 @@ class Segment(SList):
 
 			else: #v.is_critical()
 				stack.append(phi(v.get_value()))
-				res.insert(0,v)
+				# res.insert(0,v)
+				res.insert(0,None)
 				d = 0
 				has_critical = True
 
@@ -326,29 +336,30 @@ class Segment(SList):
 		return res
 
 
-	def uacc_update(self, seg, k, lc, rc):
+	def uacc_update(self, seg2, k, lc, rc):
 		"""
 		TODO
 		"""
-		if self.length() != seg.length():
+		if self.length() != seg2.length():
 			raise NotEqualSizeError("uacc_update cannot needs to segment of same size as input")
 		
 		stack = [rc, lc]
 		d = MINUS_INFINITY
 		res = Segment()
-		for i in range(seg.length() - 1, -1, -1):
+		for i in range(seg2.length() - 1, -1, -1):
 			v1 = self[i]
-			v2 = seg[i]
+			v2 = seg2[i]
 			if v1.is_leaf():
 				res.insert(0,v2)
 				stack.append(v2.get_value())
 				d = d+1
+
 			elif v1.is_node():
 				if len(stack) < 2:
 					raise IllFormedError("uacc_update cannot be applied to ill-formed segments")
 				lv = stack.pop()
 				rv = stack.pop()
-				if d == 0 | d == 1:
+				if d == 0 or d == 1:	
 					val = k(lv, v1.get_value(), rv)
 					res.insert(0,TaggedValue(val, v1.get_tag()))
 					stack.append(val)
@@ -361,7 +372,7 @@ class Segment(SList):
 				if len(stack) < 2:
 					raise IllFormedError("uacc_update cannot be applied to ill-formed segments")
 				lv = stack.pop()
-				rv = stack.pop()
+				rv = stack.pop()		
 				val = k(lv, v1.get_value(), rv)
 				res.insert(0,TaggedValue(val, v1.get_tag()))
 				stack.append(val)
@@ -429,7 +440,7 @@ class Segment(SList):
 		stack = [c]
 		res = Segment()
 		for v in self:
-			if v.is_leaf() | v.is_critical():
+			if v.is_leaf() or v.is_critical():
 				if len(stack) == 0 :
 					raise IllFormedError("dacc_local cannot be applied to a ill-formed segment")
 				val = stack.pop()
@@ -551,8 +562,7 @@ class LTree(SList):
 			lt2.append(res)
 
 		gt2 = gt.uacc_global(psi_n)
-
-		res = Segment()
+		res = LTree()
 		for i in range(0, gt.length()):
 			if gt[i].is_node():
 				lc = gt2.get_left(i).get_value()
@@ -586,6 +596,28 @@ class LTree(SList):
 		return res
 
 
+	def zip(self, lt):
+		res = LTree()
+		if self.length() != lt.length():
+			raise NotEqualSizeError("The linearized trees have not the same shape")
+		for i in range(self.length()):
+			seg1 = self[i]
+			seg2 = lt[i]
+			res.append(seg1.zip(seg2))
+		return res
+
+
+	def zipwith(self, lt, f):
+		res = LTree()
+		if self.length() != lt.length():
+			raise NotEqualSizeError("The linearized trees have not the same shape")
+		for i in range(self.length()):
+			seg1 = self[i]
+			seg2 = lt[i]
+			res.append(seg1.zipwith(seg2, f))
+		return res
+
+
 def __tv2lv(bt_val):
 	val = bt_val.get_value()
 	res = Segment()
@@ -609,6 +641,7 @@ def __tv2lv(bt_val):
 			res.extend(res_left[1:])
 			res.extend(res_right[1:])
 	return res
+
 
 
 def serialization(bt, m):

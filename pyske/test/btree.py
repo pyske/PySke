@@ -280,9 +280,16 @@ tests_getchr = [test_getchr_leaf, test_getchr_node_right, test_getchr_node_left]
 
 # -------------------------- #
 
+# TODO
+
+tests_size = []
+
+# -------------------------- #
+
+
 fcts = tests_is_leaf + tests_is_node + tests_map + tests_mapt\
 	+ tests_reduce + tests_uacc + tests_dacc + tests_zip\
-	+ tests_zipwith + tests_getchl + tests_getchr
+	+ tests_zipwith + tests_getchl + tests_getchr + tests_size 
 
 
 run_tests(fcts, "btree")
