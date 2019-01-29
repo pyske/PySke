@@ -99,7 +99,7 @@ def test_reduce_global_has_critical():
 	try:
 		res = seg.reduce_global(sum3)
 		raise TestFailure()
-	except IllFormedError as e:
+	except ApplicationError as e:
 		assert True
 
 
@@ -271,7 +271,7 @@ def test_uacc_global_has_critical():
 	try:
 		res = seg.uacc_global(sum3)
 		raise TestFailure()
-	except IllFormedError as e:
+	except ApplicationError as e:
 		assert True
 
 
@@ -451,7 +451,7 @@ def test_dacc_global_has_critical():
 	try:
 		seg.dacc_global(sum2, c)
 		raise TestFailure()
-	except IllFormedError as e :
+	except ApplicationError as e :
 		assert True
 
 def test_dacc_global():

@@ -21,8 +21,6 @@ class SList(list):
 		Indicates if a list is empty
 	reverse()
 		Reverse a list
-	flat_map(f)
-		TODO
 	map(f)
 		Applies f to every element of the current instance
 	reduce(f)
@@ -101,15 +99,7 @@ class SList(list):
 			The function to apply to every values of the current instance
 		"""
 		return SList(map(f, self))
-
-	def flat_map(self, f):
-		"""
-		TODO
-		"""
-		if self.empty():
-			return SList()
-		else:
-			return SList(f(self.head())) + self.tail().flat_map(f)
+		
 
 	def reduce(self, f):
 		"""

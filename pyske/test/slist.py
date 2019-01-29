@@ -150,24 +150,6 @@ tests_map = [test_map_empty, test_map_inc, test_map_id]
 
 # -------------------------- #
 
-def test_flat_map_empty():
-	sl = SList()
-	f = lambda x : range(0, x+1)
-	res = sl.flat_map(f)
-	exp = SList()
-	assert res == exp
-
-def test_flat_map_range():
-	sl = SList([1, 2, 3])
-	f = lambda x : range(0,x+1)
-	res = sl.flat_map(f)
-	exp = SList([0, 1, 0, 1, 2, 0, 1, 2, 3])
-	assert res == exp
-
-tests_flat_map = [test_flat_map_empty, test_flat_map_range]
-
-# -------------------------- #
-
 def test_reduce_nil():
 	sl = SList()
 	f = lambda x,y : x + y
@@ -315,7 +297,7 @@ tests_zipwith = [test_zipwith_nil, test_zipwith_cons, test_zipwith_one_gt, test_
 
 fcts = tests_head + tests_tail + tests_length + \
 	tests_filter + tests_empty + tests_reverse + \
-	tests_map + tests_flat_map + tests_reduce + \
+	tests_map +  tests_reduce + \
 	tests_scan + tests_scan2 + tests_zip + tests_zipwith
 
 run_tests(fcts, "slist")

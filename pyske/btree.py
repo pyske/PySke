@@ -71,7 +71,7 @@ class Leaf(BTree):
 	getchr(c)
 		Shift all the values contained in the current instance by the right
 	size()
-		TODO
+		Gives the number of elements in the current instance
 	"""
 	def __init__(self, value):
 		self.value = value
@@ -105,9 +105,9 @@ class Leaf(BTree):
 
 		Parameters
 		----------
-		kl : lambda x => y
+		kl : lambda x -> y
 			The function to apply to every leaf values of the current instance
-		kn : lambda x => y
+		kn : lambda x -> y
 			The function to apply to every node values of the current instance
 		"""
 		return Leaf(kl(self.get_value()))
@@ -119,9 +119,9 @@ class Leaf(BTree):
 
 		Parameters
 		----------
-		kl : lambda x => y
+		kl : lambda x -> y
 			The function to apply to every leaf values of the current instance
-		kn : lambda x y z => r
+		kn : lambda x y z -> r
 			The function to apply to every node subtrees of the current instance
 		"""
 		return Leaf(kl(self.get_value()))
@@ -135,7 +135,7 @@ class Leaf(BTree):
 		
 		Parameters
 		----------
-		k : lambda x y z => r
+		k : lambda x y z -> r
 			The function used to reduce a BTree into a single value 
 		"""
 		return self.get_value()
@@ -149,7 +149,7 @@ class Leaf(BTree):
 
 		Parameters
 		----------
-		k : lambda x y z => r
+		k : lambda x y z -> r
 			The function used to reduce a BTree into a single value 
 		"""
 		return Leaf(self.get_value())
@@ -161,9 +161,9 @@ class Leaf(BTree):
 
 		Parameters
 		----------
-		gl : lambda x y => z
+		gl : lambda x y -> z
 			Function to make an accumulation to the left part of a node
-		gr : lambda x y => z
+		gr : lambda x y -> z
 			Function to make an accumulation to the right part of a node
 		c : 
 			Accumulator for the downward computation
@@ -199,7 +199,7 @@ class Leaf(BTree):
 		----------
 		t : BTree
 			The BTree to zip with the current instance
-		f : lambda x,y => z
+		f : lambda x,y -> z
 			A function to zip values
 			
 		Raises
@@ -240,7 +240,7 @@ class Leaf(BTree):
 
 	def size(self):
 		"""
-		TODO
+		Gives the number of elements in the current instance
 		"""
 		return 1
 
@@ -292,7 +292,7 @@ class Node(BTree):
 	getchr(c)
 		Shift all the values contained in the current instance by the right
 	size()
-		TODO
+		Gives the number of elements in the current instance
 	"""
 
 
@@ -338,9 +338,9 @@ class Node(BTree):
 
 		Parameters
 		----------
-		kl : lambda x => y
+		kl : lambda x -> y
 			The function to apply to every leaf values of the current instance
-		kn : lambda x => y
+		kn : lambda x -> y
 			The function to apply to every node values of the current instance
 		"""
 		new_val = kn(self.get_value())
@@ -355,9 +355,9 @@ class Node(BTree):
 
 		Parameters
 		----------
-		kl : lambda x => y
+		kl : lambda x -> y
 			The function to apply to every leaf values of the current instance
-		kn : lambda x y z => r
+		kn : lambda x y z -> r
 			The function to apply to every node subtrees of the current instance
 		"""
 		new_val = kn(self.get_value(), self.get_left(), self.get_right())
@@ -374,7 +374,7 @@ class Node(BTree):
 		
 		Parameters
 		----------
-		k : lambda x y z => r
+		k : lambda x y z -> r
 			The function used to reduce a BTree into a single value 
 		"""
 		left = self.get_left().reduce(k)
@@ -390,7 +390,7 @@ class Node(BTree):
 
 		Parameters
 		----------
-		k : lambda x y z => r
+		k : lambda x y z -> r
 			The function used to reduce a BTree into a single value 
 		"""
 		r = self.reduce(k)
@@ -403,9 +403,9 @@ class Node(BTree):
 
 		Parameters
 		----------
-		gl : lambda x y => z
+		gl : lambda x y -> z
 			Function to make an accumulation to the left part of a node
-		gr : lambda x y => z
+		gr : lambda x y -> z
 			Function to make an accumulation to the right part of a node
 		c : 
 			Accumulator for the downward computation
@@ -449,7 +449,7 @@ class Node(BTree):
 		----------
 		t : BTree
 			The BTree to zip with the current instance
-		f : lambda x,y => z
+		f : lambda x,y -> z
 			A function to zip values
 
 		Raises
@@ -497,7 +497,7 @@ class Node(BTree):
 
 	def size(self):
 		"""
-		TODO
+		Gives the number of elements in the current instance
 		"""
 		return 1 + self.get_left().size() + self.get_right().size()
 
