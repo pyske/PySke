@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 from pyske.errors import EmptyError, NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError
 from pyske.slist import SList
-from pyske.btree import BTree
+from pyske.btree import BTree, Leaf, Node
 
 MINUS_INFINITY = int((-sys.maxsize - 1)/2)
 
@@ -617,6 +617,7 @@ class LTree(SList):
 			res.append(seg1.zipwith(seg2, f))
 		return res
 
+# ------------------------------- #
 
 def __tv2lv(bt_val):
 	val = bt_val.get_value()
@@ -654,4 +655,92 @@ def serialization(bt, m):
 	bt_val = bt.zipwith(bt_tags, lambda x,y: TaggedValue(x,y))
 	return LTree(__tv2lv(bt_val))
 
-#TODO deserialization
+# ------------------------------- #
+
+def __graft(bt, lbt, rbt):
+	if bt.is_node():
+		left = __graft(bt.get_left(), lbt, rbt)
+		right = __graft(bt.get_right(), lbt, rbt)
+		val = bt.get_value()
+		return Node(val, left, right)
+	else: # bt.is_leaf()
+		v = bt.get_value()
+		if v.is_critical():
+			return Node(v,lbt,rbt)
+		else: # v.is_leaf()
+			return bt
+
+
+def __remove_annotation(bt):
+	if bt.is_leaf():
+		v = bt.get_value()
+		return Leaf(v.get_value())
+	else:
+		left = __remove_annotation(bt.get_left())
+		right = __remove_annotation(bt.get_right())
+		v = bt.get_value()
+		return Node(v.get_value(), left, right)
+
+
+def __lv2ibt(seg):
+	stack = []
+	has_crit = False
+	if seg.empty():
+		raise EmptyError("An empty Segment cannot be transformed into a BTree")
+
+	for i in range(seg.length()-1, -1, -1):
+		v = seg[i]
+		if v.is_leaf():
+			stack.append(Leaf(v))
+
+		elif v.is_critical():
+			stack.append(Leaf(v))
+			if has_crit:
+				raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
+			else:
+				has_crit = True
+		else:
+			if len(stack) < 2:
+				raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
+			lv = stack.pop()
+			rv = stack.pop()
+			stack.append(Node(v,lv,rv))
+	if len(stack) != 1:
+		raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
+	else:
+		return (has_crit, stack[0])
+
+
+def __rev_segment_to_trees(lb, gt):
+	stack = []
+	for i in range(lb.length()-1, -1, -1):
+		if gt[i] == VTag.LEAF:
+			stack.append(lb[i])
+		else: #gt[i] == VTag.Node
+			lbt = stack.pop()
+			rbt = stack.pop()
+			bt_i = __graft(lb[i],lbt,rbt)
+			stack.append(bt_i)
+	if len(stack) != 1:
+		raise IllFormedError("A ill-formed list of incomplete BTree cannot be transformed into a BTree")
+	else:
+		return stack[0]
+
+
+def deserialization(lt):
+	gt = SList()
+	list_of_btree = SList()
+
+	for seg in lt:
+		(has_crit, bt_i) = __lv2ibt(seg)
+		list_of_btree.append(bt_i)
+		if has_crit:
+			gt.append(VTag.NODE)
+		else:
+			gt.append(VTag.LEAF)
+
+	bt_annoted = __rev_segment_to_trees(list_of_btree, gt)
+
+	return __remove_annotation(bt_annoted)
+
+	
