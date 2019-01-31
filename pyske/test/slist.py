@@ -159,7 +159,6 @@ def test_reduce_nil():
 	except EmptyError as e:
 		assert True
 
-
 def test_reduce_cons():
 	sl = SList([1, 2, 3, 4])
 	f = lambda x,y : x + y
@@ -167,7 +166,21 @@ def test_reduce_cons():
 	exp = 10
 	assert res == exp
 
-tests_reduce = [test_reduce_nil, test_reduce_cons]
+def test_reduce_sum_empty():
+	sl = SList()
+	f = lambda x,y : x + y
+	exp = 0
+	res = sl.reduce(f, 0)
+	assert res == exp
+
+def test_reduce_sum_non_empty():
+	sl = SList([1,2,3,4,5,6])
+	f = lambda x,y : x + y
+	exp = 22
+	res = sl.reduce(f, 1)
+	assert res == exp
+
+tests_reduce = [test_reduce_nil, test_reduce_cons, test_reduce_sum_empty, test_reduce_sum_non_empty]
 
 # -------------------------- #
 

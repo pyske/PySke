@@ -119,9 +119,24 @@ class SList(list):
 			If the SList is empty
 		"""
 		if self.empty():
-			raise EmptyError("An empty SList cannot be reduced")
+			raise EmptyError("An empty SList cannot be reduced without providing an initial value")
 
 		return functools.reduce(f,self)
+
+	def reduce(self, f, initial):
+		"""
+		Reduce the current instance using a reduction function
+
+		BMF definition:
+		reduce f [x1, x2, ..., xn] e = f(f(f(e, x1), ...), xn)
+
+		Parameters
+		----------
+		f : lambda x,y => z
+			The used function to reduce the current instance
+		"""
+
+		return functools.reduce(f, self, initial)
 
 
 	def scan(self, f, c):
