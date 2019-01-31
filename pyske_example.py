@@ -9,3 +9,5 @@ lt = serialization(bt, m)
 
 res = prefix(lt)
 print(res)
+
+

@@ -1,0 +1,2 @@
+#localhost and slots is the maximum number of processes
+localhost slots=50

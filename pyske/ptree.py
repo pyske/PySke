@@ -1,17 +1,14 @@
 from pyske.ltree import TaggedValue, Segment, LTree
+from pyske.slist import SList
 from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
 my_rank = comm.Get_rank()
 size = comm.Get_size()
 
-global proc_nb #= comm.get("proc_nb") #Global, TODO : how to do it ?
-global total_size #= comm.get("total_size") #Global, TODO : how to do it ? really useful?
-
 TAG_COMM_UACC = 120102
 TAG_COMM_DACC = 126722
 
- 
 
 class PTree:
 	"""
@@ -20,8 +17,14 @@ class PTree:
 
 	def __init__(self, content, idx):
 		self.content = content
-		self.total_size = total_size
 		self.idx = idx
+
+	def __str__(self):
+		res = ""
+		for (start, offset) in self.idx:
+			seg = Segment(self.content[start:start+offset])
+			res = res + str(seg)
+		return res
 
 
 	def get_content(self):
@@ -37,22 +40,30 @@ class PTree:
 		TODO
 		"""
 		res_l = SList()
-		for (start, offset) in idx:
+		for (start, offset) in self.idx:
 			seg = Segment(self.content[start:start+offset])
 			res_l = res_l + seg.map_local(kl,kn)
-		return PTree(res_l, idx)
+		return PTree(res_l, self.idx)
 
 
 	def reduce(self, k, phi, psi_n, psi_l, psi_r):
 		"""
 		TODO
 		"""
+
+		# Step 1 : Reduce local
 		res_l = Segment()
-		for (start, offset) in idx:
+		for (start, offset) in self.idx:
 			seg = Segment(self.content[start:start+offset])
 			res_l = res_l + seg.reduce_local(k, phi, psi_l, psi_r)
+
+		# Step 2 : Gather results
 		comm.gather(res_l, root=0)
+
+		# Step 3 : Reduce global (rank 0 only)
 		if my_rank == 0:
+			# We first get the results into the same object
+			# And compute the reduce_global
 			gt = Segment()
 			for i in range(size):
 				gt.append(res_l[i])
