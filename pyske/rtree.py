@@ -1,4 +1,4 @@
-from pyske.errors import NotEqualSizeError
+from pyske.errors import NotEqualSizeError, ConstructorError
 from pyske.slist import SList
 from pyske.btree import Node, Leaf, BTree
 
@@ -14,6 +14,10 @@ class RNode:
 		Get the children of the current RNode
 	add_children(c)
 		Add a children to the ones of the current RNode
+	is_leaf()
+		Indicates if the current RNode has no children, and then can be considered as a leaf
+	is_node()
+		Indicates if the current RNode has children, and then can be considered as a node
 	get_value()
 		Get the value of the current RNode
 	set_value(v)
@@ -40,21 +44,27 @@ class RNode:
 
 	def __init__(self, value, ts = SList()):
 		if isinstance(value, BTree):
+			if value == Leaf(None):
+				raise ConstructorError("A RTree cannot be constructed from a single Leaf that contains None")
 			# Create a RTree from a BTree
-			def b2r1(bt):
+			def b2r(bt):
 				if bt.is_leaf():
-					return SList()
+					val = bt.get_value()
+					if val == None:
+						return SList()
+					else:
+						return SList([RNode(val)])
 				else:
 					n = bt.get_value() 
 					left = bt.get_left()
 					right = bt.get_right()
-					res_l = b2r1(left)
-					res_r = b2r1(right)
+					res_l = b2r(left)
+					res_r = b2r(right)
 					res_head = RNode(n, res_l) 
 					res_r.insert(0, res_head)
 					return res_r
 			bt = value
-			rt = b2r1(bt).head()
+			rt = b2r(bt).head()
 			self.value = rt.get_value()
 			self.children = rt.get_children()
 		else:	
@@ -84,6 +94,20 @@ class RNode:
 					return False
 			return (self.get_value() == other.get_value())
 		return False
+
+
+	def is_leaf(self):
+		"""
+		Indicates if the current RNode has no children, and then can be considered as a leaf
+		"""
+		return len(self.children == 0)
+
+
+	def is_node(self):
+		"""
+		Indicates if the current RNode has children, and then can be considered as a node
+		"""
+		return len(self.children != 0)
 
 
 	def get_children(self):

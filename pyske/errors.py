@@ -89,4 +89,20 @@ class TestFailure(Exception):
     def __init__(self):
         pass
 
+
+class ConstructorError(Exception):
+    """
+    Exception raised if an instance cannot be created
+
+    Attributes
+    ----------
+    message: 
+        explanation of the error
+    """
+    
+    def __init__(self, message):
+        self.message = "[ConstructorError] "+ message
+
+
+
         
