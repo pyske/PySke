@@ -34,6 +34,8 @@ class SList(list):
 	zipwith(l, f)
 		Creates a list of new elements using a function from the element of the current instance and another one
 	"""
+
+
 	def head(self):
 		"""
 		Gives the first element of the current instance

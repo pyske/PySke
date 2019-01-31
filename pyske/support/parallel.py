@@ -4,19 +4,25 @@ from pyske.slist import SList
 from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
-my_rank = comm.Get_rank()
-nb_procs = comm.Get_size()
+pid = comm.Get_rank()
+nprocs = comm.Get_size()
+
+def local_size(pid, size):
+	return int(size / pid) + (1 if pid < size % pid else 0)
+
+def local_size(size):
+	return local_size(pid, size)
 
 def distribute_tree(lt):
 	idx = SList()
 	content = SList()
 
 	size = lt.length()
-	rem = size % nb_procs
-	lsz = int(size / nb_procs)
+	rem = size % nprocs
+	lsz = int(size / nprocs)
 
-	drops = my_rank * lsz + my_rank if my_rank < rem else rem
-	takes = lsz + 1 if my_rank < rem else 0 
+	drops = pid * lsz + pid if pid < rem else rem
+	takes = lsz + 1 if pid < rem else 0
 	segs = lt[drops : drops + takes]
 
 	start = 0
@@ -32,7 +38,7 @@ def distribute_tree(lt):
 
 
 def at_root(f):
-	if my_rank == 0:
+	if pid == 0:
 		return f()
 	else:
 		return None
