@@ -165,12 +165,12 @@ class SList(list):
 			return res
 
 
-	def scan2(self, f, c):
+	def rscan(self, f, c):
 		"""
 		Makes an leftward accumulation of the element on the current instance from an initial value
 
 		BMF definition:
-		scan2 f [x1, x2, ..., xn] = [f(x2, f(x3 , f(..., xn)), f(x3 , f(..., xn)), ..., an, unit_f]
+		scan2 f [x1, x2, ..., xn] = [f(x2, f(x3 , f(..., xn)), f(x3 , f(..., xn)), ..., xn, c]
 
 		Parameters
 		----------

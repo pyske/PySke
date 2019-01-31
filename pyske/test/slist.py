@@ -209,7 +209,7 @@ def test_scan2_nil():
 	c = 0
 	sl = SList()
 	f = lambda x,y : x + y
-	res = sl.scan2(f, c)
+	res = sl.rscan(f, c)
 	exp = SList([0])
 	assert res == exp
 
@@ -218,7 +218,7 @@ def test_scan2_cons():
 	c = 0
 	sl = SList([1, 2, 3, 4])
 	f = lambda x,y : x + y
-	res = sl.scan2(f, c)
+	res = sl.rscan(f, c)
 	exp = SList([9, 7, 4, 0])
 	assert res == exp
 
