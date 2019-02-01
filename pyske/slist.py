@@ -101,31 +101,9 @@ class SList(list):
 			The function to apply to every values of the current instance
 		"""
 		return SList(map(f, self))
-		
 
-	def reduce(self, f):
-		"""
-		Reduce the current instance using a reduction function
 
-		BMF definition:
-		reduce f [x1, x2, ..., xn] = f(f(f(x1, x2), ...), xn)
-
-		Parameters
-		----------
-		f : lambda x,y => z
-			The used function to reduce the current instance
-
-		Raises
-		------
-		EmptyError
-			If the SList is empty
-		"""
-		if self.empty():
-			raise EmptyError("An empty SList cannot be reduced without providing an initial value")
-
-		return functools.reduce(f,self)
-
-	def reduce(self, f, initial):
+	def reduce(self, f, e=None):
 		"""
 		Reduce the current instance using a reduction function
 
@@ -137,8 +115,10 @@ class SList(list):
 		f : lambda x,y => z
 			The used function to reduce the current instance
 		"""
-
-		return functools.reduce(f, self, initial)
+		if e is None:
+			return functools.reduce(f, self)
+		else:
+			return functools.reduce(f, self, e)
 
 
 	def scan(self, f, c):

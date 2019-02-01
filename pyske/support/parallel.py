@@ -7,11 +7,11 @@ comm = MPI.COMM_WORLD
 pid = comm.Get_rank()
 nprocs = comm.Get_size()
 
-def local_size(pid, size):
-	return int(size / pid) + (1 if pid < size % pid else 0)
+def local_size_pid(pid, size):
+	return int(size / nprocs) + (1 if pid < size % nprocs else 0)
 
 def local_size(size):
-	return local_size(pid, size)
+	return local_size_pid(pid, size)
 
 def distribute_tree(lt):
 	idx = SList()
