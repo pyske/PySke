@@ -47,6 +47,15 @@ class PList:
 		p.__distribution = [ 1 for i in range(0, nprocs)]
 		return p
 
+	def flatten(self):
+		p = PList()
+		p.__content = SList(self.__content).reduce(lambda x,y: x+y, [])
+		p.__local_size = len(p.__content)
+		p.__distribution = comm.allgather(p.__local_size)
+		p.__start_index = SList(p.__distribution).scan(lambda x, y: x + y, 0)[pid]
+		p.__global_size = SList(p.__distribution).reduce(lambda x, y: x+y)
+		return p
+
 	def reduce(self, op, e = None):
 		if e is None:
 			assert(self.__global_size >= 1)
