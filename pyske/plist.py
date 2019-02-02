@@ -32,7 +32,7 @@ class PList:
 		return PList.init(lambda i: f(i, self.__content[i-self.__start_index]), self.__global_size)
 
 	def map2(self, f, pl):
-		assert (self.__global_size == pl.__global_size)
+		assert (self.__distribution == pl.__distribution)
 		return PList.init(lambda i: f(self.__content[i-self.__start_index], pl.__content[i-self.__start_index]), self.__global_size)
 
 	def zip(self, pl):
