@@ -1,7 +1,7 @@
 
 # PySke : Library of skeletons on distributed data structure in Python
 
-Version 0.1
+Version 0.1alpha
 
 - [INSTALLATION]
 - [DEVELOPERS]
@@ -63,8 +63,8 @@ pip3 install mpi4py
 
 ## DEVELOPERS
 DEVELOPED BY
-	Jolan Philippe (Northern Arizona University, Flagstaff, AZ, USA)
-	Frédéric Loulerge (Northern Arizona University, Flagstaff, AZ, USA)
+- Jolan Philippe (Northern Arizona University, Flagstaff, AZ, USA)
+- Frédéric Loulergue (Northern Arizona University, Flagstaff, AZ, USA)
 
 ## COPYRIGHT
 PySke is released into the public domain by the copyright holders.

@@ -5,7 +5,7 @@ from pyske.support.parallel import *
 class PList:
 
 	def __init__(self):
-		self.__content = []
+		self.__content = SList([])
 		self.__global_size = 0
 		self.__local_size = 0
 		self.__start_index = 0
@@ -21,7 +21,7 @@ class PList:
 		p.__local_size = local_size(size)
 		p.__distribution = [local_size_pid(i, size) for i in range(0, nprocs)]
 		p.__start_index = SList(p.__distribution).scan(lambda x,y:x+y,0)[pid]
-		p.__content = [f(i) for i in range(p.__start_index, p.__start_index + p.__local_size)]
+		p.__content = SList([f(i) for i in range(p.__start_index, p.__start_index + p.__local_size)])
 		p.__distribution = [local_size_pid(i, size) for i in range(0, nprocs)]
 		return p
 
@@ -49,7 +49,7 @@ class PList:
 
 	def flatten(self):
 		p = PList()
-		p.__content = SList(self.__content).reduce(lambda x,y: x+y, [])
+		p.__content = self.__content.reduce(lambda x,y: x+y, [])
 		p.__local_size = len(p.__content)
 		p.__distribution = comm.allgather(p.__local_size)
 		p.__start_index = SList(p.__distribution).scan(lambda x, y: x + y, 0)[pid]
@@ -66,6 +66,24 @@ class PList:
 			partial = SList(self.__content).reduce(op, e)
 			partials = SList(comm.allgather(partial))
 		return partials.reduce(op, e)
+
+
+	def from_seq(l):
+		p = PList()
+		if pid==0:
+			p.__content = SList(l)
+			p.__distribution = [len(l)] + [0 for i in range(1, nprocs)]
+		else:
+			p.__content = []
+		p.__distribution = comm.bcast(p.__distribution, 0)
+		p.__local_size  = p.__distribution[pid]
+		p.__global_size = p.__distribution[0]
+		p.__start_index = 0
+		return p
+
+
+	def to_seq(self):
+		return self.get_partition().reduce(lambda x,y: x+y, [])
 
 
 	def __str__(self):
