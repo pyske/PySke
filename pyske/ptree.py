@@ -1,10 +1,9 @@
 from pyske.ltree import TaggedValue, Segment, LTree
 from pyske.slist import SList
-from mpi4py import MPI
+from pyske.support.parallel import *
 
-comm = MPI.COMM_WORLD
-my_rank = comm.Get_rank()
-size = comm.Get_size()
+TAG_BASE = "270995"
+TAG_COMM_REDUCE = int(TAG_BASE + "1")
 
 TAG_COMM_UACC = 120102
 TAG_COMM_DACC = 126722
@@ -12,65 +11,107 @@ TAG_COMM_DACC = 126722
 
 class PTree:
 	"""
-	TODO
-	"""
+	A class used to represent a distributed tree
 
-	def __init__(self, content, idx):
-		self.content = content
-		self.idx = idx
+	Attributes
+	----------
+	__distribution: pid -> nb of segments
+	__global_index: num seg -> (start, offset)
+	__start_index: index of first index for the current pid in global_index
+	__nb_segs: nb of indexes for the current pid in global_index
+	__content: concatenation of the segments contained in the current instance
+	"""
+	def __init__(self, lt = None):
+		self.__distribution = SList([])
+		self.__global_index = SList([])
+		self.__start_index = 0
+		self.__nb_segs = 0
+		self.__content = SList([])
+
+		if(lt != None):
+			size = lt.length()
+
+			start_global_index = 0
+			for proc_id in range(nprocs):
+				start_index = 0
+
+				nsegs = local_size_pid(proc_id, size)
+				self.__distribution.append((proc_id, nsegs))
+				for seg_idx in range(start_global_index, start_global_index + nsegs):
+					self.__global_index.append((start_index, lt[seg_idx].length()))
+					start_index = start_index + lt[seg_idx].length() 
+
+					if proc_id == pid:
+						self.__content.extend(lt[seg_idx])
+				if proc_id == pid:
+					self.__start_index = start_global_index
+					self.__nb_segs = nsegs
+
+				start_global_index = start_global_index + nsegs
+
+
+	def init(pt, content):
+		"""
+		Factory for distributed tree
+		"""
+		p = PTree()
+		p.__distribution = pt.__distribution
+		p.__global_index = pt.__global_index
+		p.__start_index = pt.__start_index
+		p.__nb_segs = pt.__nb_segs
+		p.__content = content
+		return p
+
 
 	def __str__(self):
-		res = ""
-		for (start, offset) in self.idx:
-			seg = Segment(self.content[start:start+offset])
-			res = res + str(seg)
+		return "pid["+str(pid)+"]:\n" + \
+			   "  global_index: "+ str(self.__global_index)+ "\n" + \
+			   "  distribution: " + str(self.__distribution) + "\n" + \
+			   "  nb_segs: " + str(self.__nb_segs) + "\n" + \
+			   "  start_index: " + str(self.__start_index) + "\n" + \
+			   "  content: "  + str(self.__content) +"\n"
+
+
+	def browse(self):
+		"""
+		Browse the linearized distributed tree contained in the current processor
+		"""
+		res = "pid[" + str(pid) + "] "
+		for (start, offset) in self.__global_index[self.__start_index : self.__start_index+self.__nb_segs]:
+			seg = Segment(self.__content[start:start+offset])
+			res = res + "\n   " + str(seg)
 		return res
-
-
-	def get_content(self):
-		return self.content
-
-
-	def get_total_size(self):
-		return self.total_size
 
 
 	def map(self, kl, kn):
 		"""
-		TODO
+		Map skeleton for distributed tree
 		"""
-		res_l = SList()
-		for (start, offset) in self.idx:
-			seg = Segment(self.content[start:start+offset])
-			res_l = res_l + seg.map_local(kl,kn)
-		return PTree(res_l, self.idx)
+		content = SList([])
+		for (start, offset) in self.__global_index[self.__start_index : self.__start_index+self.__nb_segs]:			
+			content.extend(Segment(self.__content[start:start+offset]).map_local(kl,kn))
+		return PTree.init(self, content)
 
 
 	def reduce(self, k, phi, psi_n, psi_l, psi_r):
 		"""
-		TODO
+		Reduce skeleton for distributed tree
 		"""
-
 		# Step 1 : Reduce local
-		res_l = Segment()
-		for (start, offset) in self.idx:
-			seg = Segment(self.content[start:start+offset])
-			res_l = res_l + seg.reduce_local(k, phi, psi_l, psi_r)
-
-		# Step 2 : Gather results
-		comm.gather(res_l, root=0)
-
-		# Step 3 : Reduce global (rank 0 only)
-		if my_rank == 0:
-			# We first get the results into the same object
-			# And compute the reduce_global
-			gt = Segment()
-			for i in range(size):
-				gt.append(res_l[i])
-			return gt.reduce_global(psi_n)
+		gt = Segment([])
+		for (start, offset) in self.__global_index[self.__start_index : self.__start_index+self.__nb_segs]:
+			gt.append(Segment(self.__content[start:start+offset]).reduce_local(k, phi, psi_l, psi_r))
+		# Step 2 : Gather Results
+		if pid == 0:
+			for i in range(1, nprocs):
+				gt.extend(comm.recv(source=i, tag=TAG_COMM_REDUCE)['c'])
 		else:
-			return None
+			comm.send({'c' : gt}, dest=0, tag=TAG_COMM_REDUCE)
+		# Step 3 : Reduce global
+		return (gt.reduce_global(psi_n) if pid == 0 else None)
+	
 
+	# TODO : below must be debugged !
 
 	def uacc(self, k, phi, psi_n, psi_l, psi_r):
 		"""
@@ -94,7 +135,7 @@ class PTree:
 		comm.gather(gt_l, root=0)
 
 		# STEP 2 : uacc global executed at root #
-		if my_rank == 0:
+		if pid == 0:
 			gt = Segment()
 			for i in range(size):
 				gt = gt + gt_l[i]
@@ -139,7 +180,7 @@ class PTree:
 
 		# STEP 2 :  at root #
 
-		if my_rank == 0:
+		if pid == 0:
 			gt = Segment()
 			for i in range(size):
 				gt = gt + gt_l[i]
@@ -148,7 +189,7 @@ class PTree:
 			passed = len(idx)
 			for i in range(1, size):
 				data = {'gt2': gt2[passed + 1 : passed + 1 + proc_nb[i]]}
-				comm.send(data, dest=i, tag=TAG_COMM_UACC)
+				comm.send(data, dest=i, tag=TAG_COMM_DACC)
 				passed = passed + 1 + proc_nb[i]
 			gt2 = gt2[0: len(idx)]
 

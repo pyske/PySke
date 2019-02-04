@@ -5,14 +5,9 @@ from pyske.slist import SList
 from pyske.btree import BTree, Leaf, Node
 
 MINUS_INFINITY = int((-sys.maxsize - 1)/2)
-
-class VTag(Enum):
-	LEAF = "L" #'tag used represent a leaf in a linearized tree'
-	NODE = "N" #'tag used represent a node in a linearized tree'
-	CRITICAL = "C" #'tag used represent a critical node in a linearized tree'
-
-	def __str__(self):
-		return self.value[0]
+VTag_LEAF = 1
+VTag_NODE = 2
+VTag_CRITICAL = 3
 
 
 def parseVTag(vt):
@@ -29,9 +24,13 @@ def parseVTag(vt):
 	UnknownTypeError
 		If the label is not known in VTag
 	"""
-	for t in VTag:
-		if t.value[0] == vt:
-			return t
+	if vt == "C":
+		return VTag_CRITICAL
+	if vt == "L":
+		return VTag_LEAF
+	if vt == "N":
+		return VTag_NODE
+
 	raise UnknownTypeError('Type of value unknown: '+str(vt))
 
 
@@ -64,7 +63,7 @@ class TaggedValue:
 	"""
 	def __init__(self, val, t):
 		self.val = val
-		if (t == VTag.LEAF) | (t == VTag.NODE) | (t == VTag.CRITICAL):
+		if (t == VTag_LEAF) | (t == VTag_NODE) | (t == VTag_CRITICAL):
 			self.tag = t 
 		else:
 			try:
@@ -74,7 +73,14 @@ class TaggedValue:
 
 
 	def __str__(self):
-		return "("+str(self.val)+"^"+str(self.tag)+")"
+		def tag2str(tag):
+			if tag == VTag_CRITICAL:
+				return "C"
+			if tag == VTag_LEAF:
+				return "L"
+			if tag == VTag_NODE:
+				return "N"
+		return "("+str(self.val)+"^"+tag2str(self.tag)+")"
 
 
 	def __eq__(self, other):
@@ -101,21 +107,21 @@ class TaggedValue:
 		"""
 		Indicates if the current instance is tagged by the Leaf VTag
 		"""
-		return self.tag == VTag.LEAF
+		return self.tag == VTag_LEAF
 
 
 	def is_critical(self):
 		"""
 		Indicates if the current instance is tagged by the Critical VTag
 		"""
-		return self.tag == VTag.CRITICAL    
+		return self.tag == VTag_CRITICAL    
 
 
 	def is_node(self):
 		"""
 		Indicates if the current instance is tagged by the Node VTag
 		"""
-		return self.tag == VTag.NODE
+		return self.tag == VTag_NODE
 
 
 class Segment(SList):
@@ -155,15 +161,6 @@ class Segment(SList):
 					return False
 			return True
 		return False
-
-
-	def __str__(self):
-		res = "["
-		for i in range(0, self.length()):
-			res = res + str(self[i])
-			if i != self.length() - 1:
-				res = res + ", "
-		return res + "]"
 
 
 	def has_critical(self):
@@ -725,15 +722,6 @@ class LTree(SList):
 		return False
 
 
-	def __str__(self):
-		res = "["
-		for i in range(0, self.length()):
-			res = res + str(self[i])
-			if i != self.length() - 1:
-				res = res + ", "
-		return res + "]"
-
-
 	def map(self, kl, kn):
 		"""
 		Applies function to every element of the current instance
@@ -990,8 +978,8 @@ def serialization(bt, m):
 	up_div = lambda n,m: (int(n / m) + (0 if n % m == 0 else 1))
 	bt_one = bt.map(lambda x : 1, lambda x : 1)
 	bt_size = bt_one.uacc(lambda x,y,z : x+y+z)
-	bt_tags = bt_size.mapt(lambda x: VTag.LEAF, 
-		lambda x, y, z: VTag.CRITICAL if up_div(x,m) > up_div(y.get_value(),m) and up_div(x,m) > up_div(z.get_value(),m) else VTag.NODE)
+	bt_tags = bt_size.mapt(lambda x: VTag_LEAF, 
+		lambda x, y, z: VTag_CRITICAL if up_div(x,m) > up_div(y.get_value(),m) and up_div(x,m) > up_div(z.get_value(),m) else VTag_NODE)
 	bt_val = bt.zipwith(bt_tags, lambda x,y: TaggedValue(x,y))
 	return LTree(__tv2lv(bt_val))
 
@@ -1054,9 +1042,9 @@ def __lv2ibt(seg):
 def __rev_segment_to_trees(lb, gt):
 	stack = []
 	for i in range(lb.length()-1, -1, -1):
-		if gt[i] == VTag.LEAF:
+		if gt[i] == VTag_LEAF:
 			stack.append(lb[i])
-		else: #gt[i] == VTag.Node
+		else: #gt[i] == VTag_Node
 			lbt = stack.pop()
 			rbt = stack.pop()
 			bt_i = __graft(lb[i],lbt,rbt)
@@ -1075,9 +1063,9 @@ def deserialization(lt):
 		(has_crit, bt_i) = __lv2ibt(seg)
 		list_of_btree.append(bt_i)
 		if has_crit:
-			gt.append(VTag.NODE)
+			gt.append(VTag_NODE)
 		else:
-			gt.append(VTag.LEAF)
+			gt.append(VTag_LEAF)
 
 	bt_annoted = __rev_segment_to_trees(list_of_btree, gt)
 

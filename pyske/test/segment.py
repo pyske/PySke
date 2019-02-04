@@ -1,6 +1,6 @@
 from pyske.test.run import run_tests
 from pyske.errors import IllFormedError, NotEqualSizeError, ApplicationError, EmptyError, TestFailure
-from pyske.ltree import VTag, Segment, TaggedValue
+from pyske.ltree import Segment, TaggedValue
 
 
 def test_has_critical_empty():
