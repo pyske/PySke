@@ -71,13 +71,13 @@ def phi_r(b):
 sum2 = lambda x,y : x + y
 # --------------------- #
 
-bt = Node(1, Node(2, Node (3, Leaf (4), Leaf(5)), Node (6, Leaf (7), Leaf(8))), Node(9, Leaf(10), Leaf(11)))
+bt = Node(31, Node(71, Node (61, Leaf (41), Leaf(101)), Node (91, Leaf (111), Leaf(11))), Node(21, Leaf(81), Leaf(51)))
 m = 3
 lt = serialization(bt, m)
 
 # --------------------- #
-
 pt = PTree(lt)
+print(pt)
 pt_mapped = pt.map(lambda a : (0,1), lambda x : x)
 pt_uacc = pt_mapped.uacc(k, phi, psi_n, psi_l, psi_r)
 pt_dacc = pt_uacc.dacc(gl, gr, 0, phi_l, phi_r, sum2, sum2)

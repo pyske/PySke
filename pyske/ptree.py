@@ -133,13 +133,20 @@ class PTree:
 			comm.send({'c' : gt}, dest=0, tag=TAG_COMM_UACC_1)
 
 		# Step 3 : Global Upward Accumulation
-		gt2 = (gt.uacc_global(psi_n) if pid == 0 else None)
+		if pid == 0:
+			gt2 = gt.uacc_global(psi_n)
+			for i in range(len(gt2)):
+				if gt2[i].is_node():
+					gt2[i] = TaggedValue((gt2.get_left(i).get_value(),gt2.get_left(i).get_value()),gt2[i].get_tag())
+
 
 		# Step 4 : Distributing Global Result
-		# TODO : can be optimized by sending only gt2 values that will be used
 		if pid == 0:
-			for iproc in range(1, nprocs):
-				comm.send({'g':gt2}, dest=iproc,tag = TAG_COMM_UACC_2)
+			for iproc in range(nprocs):
+				(iproc_idx, iproc_off) = self.__global_index[iproc]
+				if iproc != 0:
+					comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
+				start = start + iproc_off
 		else:
 			gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
 
@@ -148,8 +155,7 @@ class PTree:
 		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
 			(start, offset) = self.__global_index[self.__start_index : self.__start_index+self.__nb_segs][i]
 			if gt[i].is_node():
-				lc = gt2.get_left(self.__start_index + i).get_value()
-				rc = gt2.get_left(self.__start_index + i).get_value()
+				(lc,rc) = gt2[i].get_value()
 				val = Segment(self.__content[start:start+offset]).uacc_update(lt2[i], k, lc, rc)
 			else:
 				val = lt2[i]
@@ -180,11 +186,26 @@ class PTree:
 		gt2 = (gt.dacc_global(psi_d, c) if pid == 0 else None)
 		# Step 4 : Distributing Global Result
 		# TODO : can be optimized by sending only gt2 values that will be used
+
+		# --------------------- #
+
 		if pid == 0:
 			for iproc in range(1, nprocs):
-				comm.send({'g':gt2}, dest=iproc,tag = TAG_COMM_UACC_2)
+				comm.send({'g':gt2}, dest=iproc,tag = TAG_COMM_DACC_2)
 		else:
-			gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
+			gt2 = comm.recv(source = 0, tag = TAG_COMM_DACC_2)['g']
+
+		# if pid == 0:
+		# 	for iproc in range(nprocs):
+		# 		(iproc_idx, iproc_off) = self.__global_index[iproc]
+		# 		if iproc != 0:
+		# 			comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
+		# 		start = start + iproc_off
+		# else:
+		# 	gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
+		# --------------------- #
+		
+
 		# Step 5 : Local Downward Accumulation
 		new_content = SList([])
 		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
