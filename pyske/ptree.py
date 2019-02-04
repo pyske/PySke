@@ -3,10 +3,11 @@ from pyske.slist import SList
 from pyske.support.parallel import *
 
 TAG_BASE = "270995"
-TAG_COMM_REDUCE = int(TAG_BASE + "1")
-
-TAG_COMM_UACC = 120102
-TAG_COMM_DACC = 126722
+TAG_COMM_REDUCE = int(TAG_BASE + "11")
+TAG_COMM_UACC_1 = int(TAG_BASE + "21")
+TAG_COMM_UACC_2 = int(TAG_BASE + "22")
+TAG_COMM_DACC_1 = int(TAG_BASE + "31")
+TAG_COMM_DACC_2 = int(TAG_BASE + "32")
 
 
 class PTree:
@@ -97,112 +98,98 @@ class PTree:
 		"""
 		Reduce skeleton for distributed tree
 		"""
-		# Step 1 : Reduce local
+		# Step 1 : Local Reduction
 		gt = Segment([])
 		for (start, offset) in self.__global_index[self.__start_index : self.__start_index+self.__nb_segs]:
 			gt.append(Segment(self.__content[start:start+offset]).reduce_local(k, phi, psi_l, psi_r))
-		# Step 2 : Gather Results
+		# Step 2 : Gather local Results
 		if pid == 0:
 			for i in range(1, nprocs):
 				gt.extend(comm.recv(source=i, tag=TAG_COMM_REDUCE)['c'])
 		else:
 			comm.send({'c' : gt}, dest=0, tag=TAG_COMM_REDUCE)
-		# Step 3 : Reduce global
+		# Step 3 : Global Reduction
 		return (gt.reduce_global(psi_n) if pid == 0 else None)
 	
 
-	# TODO : below must be debugged !
-
 	def uacc(self, k, phi, psi_n, psi_l, psi_r):
 		"""
-		TODO
+		Upward accumulation skeleton for distributed tree
 		"""
+		# Step 1 : Local Upwards Accumulation
+		gt = Segment([])
+		lt2 = SList([])
+		for (start, offset) in self.__global_index[self.__start_index : self.__start_index+self.__nb_segs]:
+			(top, res) = Segment(self.__content[start:start+offset]).uacc_local(k, phi, psi_l, psi_r)
+			gt.append(top)
+			lt2.append(res)
 
-		# TODO fix the communication of step 2 and step 3 cause we need to use
-		# the global gt2. Instead of using (_,_) in idx (step 3), we need to
-		# to use the global idx ! And only use the one we need. Create a res
-		# segment for there representing the resulting segment of a small part only
-
-		# STEP 1 : uacc locally applied #
-		seg2 = Segment()
-		gt_l = Segment()
-		for (start, offset) in idx:
-			seg = Segment(self.content[start:start+offset])
-			(res_local, gt_local) = seg.uacc_local(k, phi, psi_l, psi_r)
-			seg2 = seg2 + res_local
-			gt_l = gt_l + gt_local
-
-		comm.gather(gt_l, root=0)
-
-		# STEP 2 : uacc global executed at root #
+		# Step 2 : Gather local Results
 		if pid == 0:
-			gt = Segment()
-			for i in range(size):
-				gt = gt + gt_l[i]
-			gt2 = gt.uacc_global(psi_n)
-
-			passed = len(idx)
-			for i in range(1, size):
-				data = {'gt2': gt2[passed + 1 : passed + 1 + proc_nb[i]]}
-				comm.send(data, dest=i, tag=TAG_COMM_UACC)
-				passed = passed + 1 + proc_nb[i]
-			gt2 = gt2[0: len(idx)]
-
+			for iproc in range(1, nprocs):
+				gt.extend(comm.recv(source=iproc, tag=TAG_COMM_UACC_1)['c'])
 		else:
-			data = comm.recv(source = 0, tag=TAG_COMM_UACC)
-			gt2 = data['gt2']
+			comm.send({'c' : gt}, dest=0, tag=TAG_COMM_UACC_1)
 
-		# STEP 3 #
-		res_l = Segment()
-		for i in range(gt2.length()):
-			(start, offset) = idx[i]
-			seg_2_up = Segment(seg2[start:start+offset])
-			if gt2[i].is_node():
-				seg_up = Segment(self.content[start:start+offset])
-				res_l = res_l + seg_up.uacc_update(k, seg_2_up, gt2[i].get_value())
+		# Step 3 : Global Upward Accumulation
+		gt2 = (gt.uacc_global(psi_n) if pid == 0 else None)
+
+		# Step 4 : Distributing Global Result
+		# TODO : can be optimized by sending only gt2 values that will be used
+		if pid == 0:
+			for iproc in range(1, nprocs):
+				comm.send({'g':gt2}, dest=iproc,tag = TAG_COMM_UACC_2)
+		else:
+			gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
+
+		# Step 5 : Local Updates
+		new_content = SList([])
+		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
+			(start, offset) = self.__global_index[self.__start_index : self.__start_index+self.__nb_segs][i]
+			if gt[i].is_node():
+				lc = gt2.get_left(self.__start_index + i).get_value()
+				rc = gt2.get_left(self.__start_index + i).get_value()
+				val = Segment(self.__content[start:start+offset]).uacc_update(lt2[i], k, lc, rc)
 			else:
-				res_l = res_l + seg_2_up
+				val = lt2[i]
+			new_content.extend(val)
 
-		return PTree(res_l, idx)
-
+		return PTree.init(self, new_content)
 			
+
 	def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
 		"""
-		TODO
+		Downward accumulation skeleton for distributed tree
 		"""
-		# STEP 1 : dacc_path #
-		gt_l = Segment()
-		for (start, offset) in idx:
-			seg = Segment(self.content[start:start+offset])
-			gt_l.append(seg.dacc_path(phi_l, phi_r, psi_u, psi_d))
-		
-		comm.gather(gt_l, root=0)
-
-		# STEP 2 :  at root #
-
+		# Step 1 : Computing Local Intermediate Values
+		gt = Segment([])
+		for (start, offset) in self.__global_index[self.__start_index : self.__start_index+self.__nb_segs]:			
+			seg = Segment(self.__content[start:start+offset])
+			if seg.has_critical():
+				gt.append(seg.dacc_path(phi_l, phi_r, psi_u))
+			else:
+				gt.append(TaggedValue(seg[0].get_value(), "L"))
+		# Step 2 : Gather Local Results
 		if pid == 0:
-			gt = Segment()
-			for i in range(size):
-				gt = gt + gt_l[i]
-			gt2 = gt.dacc_global(psi_d, c)
-
-			passed = len(idx)
-			for i in range(1, size):
-				data = {'gt2': gt2[passed + 1 : passed + 1 + proc_nb[i]]}
-				comm.send(data, dest=i, tag=TAG_COMM_DACC)
-				passed = passed + 1 + proc_nb[i]
-			gt2 = gt2[0: len(idx)]
-
+			for iproc in range(1, nprocs):
+				gt.extend(comm.recv(source=iproc, tag=TAG_COMM_DACC_1)['c'])
 		else:
-			data = comm.recv(source = 0, tag=TAG_COMM_DACC)
-			gt2 = data['gt2']
+			comm.send({'c' : gt}, dest=0, tag=TAG_COMM_DACC_1)
+		# Step 3 : Global Downward Accumulation
+		gt2 = (gt.dacc_global(psi_d, c) if pid == 0 else None)
+		# Step 4 : Distributing Global Result
+		# TODO : can be optimized by sending only gt2 values that will be used
+		if pid == 0:
+			for iproc in range(1, nprocs):
+				comm.send({'g':gt2}, dest=iproc,tag = TAG_COMM_UACC_2)
+		else:
+			gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
+		# Step 5 : Local Downward Accumulation
+		new_content = SList([])
+		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
+			(start, offset) = self.__global_index[self.__start_index : self.__start_index+self.__nb_segs][i]
+			new_content.extend(Segment(self.__content[start:start+offset]).dacc_local(gl, gr, gt2[self.__start_index + i].get_value()))
+		return PTree.init(self, new_content)
 
 
-		# STEP 3 : 	#
-		seg2 = Segment()
-		for i in range(gt2.length()):
-			seg = Segment(self.content[start:start+offset])
-			seg2.append(seg.append(gl, gr, gt2[i]))
-
-		return PTree(seg2, idx)
-
+	# TODO : zip and zipwith skeletons 

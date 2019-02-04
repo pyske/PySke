@@ -161,7 +161,7 @@ class Segment(SList):
 					return False
 			return True
 		return False
-
+		
 
 	def has_critical(self):
 		"""
