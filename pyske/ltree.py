@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from pyske.errors import EmptyError, NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError
+from pyske.errors import EmptyError, NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError,NotSameTagError
 from pyske.slist import SList
 from pyske.btree import BTree, Leaf, Node
 
@@ -691,6 +691,66 @@ class Segment(SList):
 		return self[j]
 
 
+	def zip(self, seg):
+		"""
+		Zip the values contained in a second Segment with the ones in the current instance
+
+		Parameters
+		----------
+		seg : Segment
+			The Segment to zip with the current instance
+
+		Raises
+		------
+		NotEqualSizeError:
+			If the size of seg is not the same one than the current instance or if two zipped segments doesn't have the same size
+		NotSameTagError :
+			If two values with not the same tag are trying to be zipped together
+		"""
+		res = Segment()
+		if self.length() != seg.length():
+			raise NotEqualSizeError("The linearized trees have not the same shape")
+		for j in range(self.length()):
+			tv1 = self[j]
+			tv2 = seg[j]
+			if tv1.get_tag() != tv2.get_tag():
+				raise NotSameTagError("Two zipped values have not the same tag")
+			tv = TaggedValue((tv1.get_value(), tv2.get_value()), tv1.get_tag())
+			res.append(tv)
+		return res
+
+
+	def zipwith(self, seg, f):
+		"""
+		Zip the values contained in a second Segment with the ones in the current instance using a function
+		
+		Parameters
+		----------
+		lt : Segment
+			The Segment to zip with the current instance
+		f : lambda x,y -> z
+			A function to zip values
+
+		Raises
+		------
+		NotEqualSizeError:
+			If the size of seg is not the same one than the current instance or if two zipped segments doesn't have the same size
+		NotSameTagError :
+			If two values with not the same tag are trying to be zipped together
+		"""
+		res = Segment()
+		if self.length() != seg.length():
+			raise NotEqualSizeError("The linearized trees have not the same shape")
+		for j in range(self.length()):
+			tv1 = self[j]
+			tv2 = seg[j]
+			if tv1.get_tag() != tv2.get_tag():
+				raise NotSameTagError("Two zipped values have not the same tag")
+			tv = TaggedValue(f(tv1.get_value(), tv2.get_value()), tv1.get_tag())
+			res.append(tv)
+		return res
+
+
 class LTree(SList):
 	"""
 	A list of Segment
@@ -908,15 +968,13 @@ class LTree(SList):
 		Raises
 		------
 		NotEqualSizeError:
-			If the size of lt is not the same one than the current instance
+			If the size of lt is not the same one than the current instance or if two zipped segments doesn't have the same size
 		"""
 		res = LTree()
 		if self.length() != lt.length():
 			raise NotEqualSizeError("The linearized trees have not the same shape")
 		for i in range(self.length()):
-			seg1 = self[i]
-			seg2 = lt[i]
-			res.append(seg1.zip(seg2))
+			res.append(self[i].zip(lt[i]))
 		return res
 
 
@@ -934,15 +992,13 @@ class LTree(SList):
 		Raises
 		------
 		NotEqualSizeError:
-			If the size of lt is not the same one than the current instance
+			If the size of lt is not the same one than the current instance or if two zipped segments doesn't have the same size
 		"""
 		res = LTree()
 		if self.length() != lt.length():
 			raise NotEqualSizeError("The linearized trees have not the same shape")
 		for i in range(self.length()):
-			seg1 = self[i]
-			seg2 = lt[i]
-			res.append(seg1.zipwith(seg2, f))
+			res.append(self[i].zipwith(lt[i],f))
 		return res
 
 # ------------------------------- #

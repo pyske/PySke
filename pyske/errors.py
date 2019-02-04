@@ -39,6 +39,19 @@ class EmptyError(Exception):
     def __init__(self, message):
         self.message = "[EmptyError] "+ message
 
+class NotSameTagError(Exception):
+    """
+    Exception raised if a function is applied to several tagged value with not the same tag
+
+    Attributes
+    ----------
+    message: 
+        explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = "[EmptyError] "+ message
+
 
 class IllFormedError(Exception):
     """

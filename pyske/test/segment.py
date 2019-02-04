@@ -1,5 +1,5 @@
 from pyske.test.run import run_tests
-from pyske.errors import IllFormedError, NotEqualSizeError, ApplicationError, EmptyError, TestFailure
+from pyske.errors import IllFormedError, NotEqualSizeError, ApplicationError, EmptyError, TestFailure, NotSameTagError
 from pyske.ltree import Segment, TaggedValue
 
 
@@ -599,7 +599,75 @@ def test_get_right_not_direct():
 
 
 tests_get_right = [test_get_right_has_critical, test_get_right_is_leaf, test_get_right_illformed, test_get_right_direct, test_get_right_not_direct]
+
 # -------------------------- #
+
+def test_zip_not_equal_size_error():
+	seg1 = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	seg2 = Segment([TaggedValue(2,"L")])
+	try :
+		seg1.zip(seg2)
+		raise TestFailure()
+	except NotEqualSizeError :
+		assert True
+
+
+def test_zip_not_same_tag_error():
+	seg1 = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	seg2 = Segment([TaggedValue(2,"N"),TaggedValue(1,"C"),TaggedValue(2,"L")])
+	try :
+		seg1.zip(seg2)
+		raise TestFailure()
+	except NotSameTagError:
+		assert True
+
+
+def test_zip():
+	seg1 = Segment([TaggedValue(1,"N"),TaggedValue(2,"L"),TaggedValue(3,"L")])
+	seg2 = Segment([TaggedValue(4,"N"),TaggedValue(5,"L"),TaggedValue(6,"L")])
+	res = seg1.zip(seg2)
+	exp = Segment([TaggedValue((1,4),"N"),TaggedValue((2,5),"L"),TaggedValue((3,6),"L")])
+	assert res == exp
+
+tests_zip = [test_zip_not_equal_size_error, test_zip_not_same_tag_error, test_zip]
+
+# -------------------------- #
+
+
+def test_zipwith_not_equal_size_error():
+	sum2 = lambda x,y : x + y
+	seg1 = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	seg2 = Segment([TaggedValue(2,"L")])
+	try :
+		seg1.zipwith(seg2, sum2)
+		raise TestFailure()
+	except NotEqualSizeError :
+		assert True
+
+
+def test_zipwith_not_same_tag_error():
+	sum2 = lambda x,y : x + y
+	seg1 = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
+	seg2 = Segment([TaggedValue(2,"N"),TaggedValue(1,"C"),TaggedValue(2,"L")])
+	try :
+		seg1.zipwith(seg2, sum2)
+		raise TestFailure()
+	except NotSameTagError:
+		assert True
+
+
+def test_zipwith():
+	sum2 = lambda x,y : x + y
+	seg1 = Segment([TaggedValue(1,"N"),TaggedValue(2,"L"),TaggedValue(3,"L")])
+	seg2 = Segment([TaggedValue(4,"N"),TaggedValue(5,"L"),TaggedValue(6,"L")])
+	res = seg1.zipwith(seg2, sum2)
+	exp = Segment([TaggedValue(5,"N"),TaggedValue(7,"L"),TaggedValue(9,"L")])
+	assert res == exp
+
+tests_zipwith = [test_zipwith_not_equal_size_error, test_zipwith_not_same_tag_error, test_zipwith]
+
+# -------------------------- #
+
 
 
 fcts = tests_has_critical + tests_map_local \
@@ -607,6 +675,6 @@ fcts = tests_has_critical + tests_map_local \
 	+ tests_uacc_local + tests_uacc_global + tests_uacc_update \
 	+ tests_dacc_path + tests_dacc_global + tests_dacc_local \
 	+ tests_get_left + tests_get_right \
-	+ tests_uacc_prefix
+	+ tests_uacc_prefix + tests_zip + tests_zipwith
 
 run_tests(fcts, "segment")

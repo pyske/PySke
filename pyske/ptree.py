@@ -8,6 +8,7 @@ TAG_COMM_UACC_1 = int(TAG_BASE + "21")
 TAG_COMM_UACC_2 = int(TAG_BASE + "22")
 TAG_COMM_DACC_1 = int(TAG_BASE + "31")
 TAG_COMM_DACC_2 = int(TAG_BASE + "32")
+TAG_COMM_MERGE = int(TAG_BASE + "00")
 
 
 class PTree:
@@ -192,4 +193,25 @@ class PTree:
 		return PTree.init(self, new_content)
 
 
-	# TODO : zip and zipwith skeletons 
+	def zip(self, pt):
+		"""
+		Zip skeleton for distributed tree
+		"""
+		assert self.__distribution == pt.__distribution
+		new_content = SList([])
+		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
+			(start, offset) = self.__global_index[self.__start_index : self.__start_index+self.__nb_segs][i]
+			new_content.extend(Segment(self.__content[start:start+offset]).zip(Segment(pt.__content[start:start+offset])))
+		return PTree.init(self, new_content)
+
+
+	def zipwith(self, pt, f):
+		"""
+		Zipwith skeleton for distributed tree
+		"""
+		assert self.__distribution == pt.__distribution
+		new_content = SList([])
+		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
+			(start, offset) = self.__global_index[self.__start_index : self.__start_index+self.__nb_segs][i]
+			new_content.extend(Segment(self.__content[start:start+offset]).zipwith(Segment(pt.__content[start:start+offset]),f))
+		return PTree.init(self, new_content)

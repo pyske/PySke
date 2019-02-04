@@ -1,7 +1,7 @@
 from pyske.test.run import run_tests
 from pyske.ltree import LTree, Segment, TaggedValue
 from pyske.slist import SList
-from pyske.errors import IllFormedError, EmptyError, TestFailure
+from pyske.errors import IllFormedError, EmptyError, TestFailure, NotEqualSizeError
 
 def test_map_empty():
 	lt = LTree()
@@ -149,15 +149,75 @@ tests_dacc = [test_dacc_empty, test_dacc]
 
 # -------------------------- #
 
-#TODO
+def test_zip_not_same_size():
+	seg11 = Segment([TaggedValue(13, "C")])
+	seg21 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
+	seg31 = Segment([TaggedValue(72, "N"),TaggedValue(92, "L"),TaggedValue(42, "L")])
+	lt1 = LTree([seg11, seg21, seg31]) 
+	seg12 = Segment([TaggedValue(13, "C")])
+	seg22 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
+	lt2 = LTree([seg12, seg22])
+	try:
+		lt1.zip(lt2)
+		raise TestFailure()
+	except NotEqualSizeError:
+		assert True
 
-tests_zip = []
+
+def test_zip():
+	seg11 = Segment([TaggedValue(1, "C")])
+	seg21 = Segment([TaggedValue(1, "N"),TaggedValue(1, "L"),TaggedValue(1, "L")])
+	seg31 = Segment([TaggedValue(1, "N"),TaggedValue(1, "L"),TaggedValue(1, "L")])
+	lt1 = LTree([seg11, seg21, seg31]) 
+	seg12 = Segment([TaggedValue(2, "C")])
+	seg22 = Segment([TaggedValue(2, "N"),TaggedValue(2, "L"),TaggedValue(2, "L")])
+	seg32 = Segment([TaggedValue(2, "N"),TaggedValue(2, "L"),TaggedValue(2, "L")])
+	lt2 = LTree([seg12, seg22, seg32])
+	res = lt1.zip(lt2)
+	seg1_exp = Segment([TaggedValue((1,2), "C")])
+	seg2_exp = Segment([TaggedValue((1,2), "N"),TaggedValue((1,2), "L"),TaggedValue((1,2), "L")])
+	seg3_exp = Segment([TaggedValue((1,2), "N"),TaggedValue((1,2), "L"),TaggedValue((1,2), "L")])
+	exp = LTree([seg1_exp, seg2_exp, seg3_exp])
+	assert res == exp
+
+tests_zip = [test_zip_not_same_size, test_zip]
 
 # -------------------------- #
 
-#TODO
+def test_zipwith_not_same_size():
+	sum2 = lambda x,y : x + y
+	seg11 = Segment([TaggedValue(13, "C")])
+	seg21 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
+	seg31 = Segment([TaggedValue(72, "N"),TaggedValue(92, "L"),TaggedValue(42, "L")])
+	lt1 = LTree([seg11, seg21, seg31]) 
+	seg12 = Segment([TaggedValue(13, "C")])
+	seg22 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
+	lt2 = LTree([seg21, seg22])
+	try:
+		lt1.zipwith(lt2, sum2)
+		raise TestFailure()
+	except NotEqualSizeError:
+		assert True
 
-tests_zipwith = []
+
+def test_zipwith():
+	sum2 = lambda x,y : x + y
+	seg11 = Segment([TaggedValue(1, "C")])
+	seg21 = Segment([TaggedValue(1, "N"),TaggedValue(1, "L"),TaggedValue(1, "L")])
+	seg31 = Segment([TaggedValue(1, "N"),TaggedValue(1, "L"),TaggedValue(1, "L")])
+	lt1 = LTree([seg11, seg21, seg31]) 
+	seg12 = Segment([TaggedValue(2, "C")])
+	seg22 = Segment([TaggedValue(2, "N"),TaggedValue(2, "L"),TaggedValue(2, "L")])
+	seg32 = Segment([TaggedValue(2, "N"),TaggedValue(2, "L"),TaggedValue(2, "L")])
+	lt2 = LTree([seg12, seg22, seg32])
+	res = lt1.zipwith(lt2, sum2)
+	seg1_exp = Segment([TaggedValue(3, "C")])
+	seg2_exp = Segment([TaggedValue(3, "N"),TaggedValue(3, "L"),TaggedValue(3, "L")])
+	seg3_exp = Segment([TaggedValue(3, "N"),TaggedValue(3, "L"),TaggedValue(3, "L")])
+	exp = LTree([seg1_exp, seg2_exp, seg3_exp])
+	assert res == exp
+
+tests_zipwith = [test_zipwith_not_same_size, test_zipwith]
 
 # -------------------------- #
 
