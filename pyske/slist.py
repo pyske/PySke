@@ -36,6 +36,15 @@ class SList(list):
 	"""
 
 
+	def __str__(self):
+		res = "["
+		for i in range(0, self.length()):
+			res = res + str(self[i])
+			if i != self.length() - 1:
+				res = res + ", "
+		return res + "]"
+
+
 	def head(self):
 		"""
 		Gives the first element of the current instance
