@@ -1,6 +1,7 @@
 from pyske.ltree import TaggedValue, Segment, LTree
 from pyske.slist import SList
 from pyske.support.parallel import *
+import time #TODO remove
 
 TAG_BASE = "270995"
 TAG_COMM_REDUCE = int(TAG_BASE + "11")
@@ -141,9 +142,10 @@ class PTree:
 
 
 		# Step 4 : Distributing Global Result
+		start = 0
 		if pid == 0:
 			for iproc in range(nprocs):
-				(iproc_idx, iproc_off) = self.__global_index[iproc]
+				(iproc_idx, iproc_off) = self.__distribution[iproc]
 				if iproc != 0:
 					comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
 				start = start + iproc_off
@@ -185,32 +187,21 @@ class PTree:
 		# Step 3 : Global Downward Accumulation
 		gt2 = (gt.dacc_global(psi_d, c) if pid == 0 else None)
 		# Step 4 : Distributing Global Result
-		# TODO : can be optimized by sending only gt2 values that will be used
-
-		# --------------------- #
-
 		if pid == 0:
-			for iproc in range(1, nprocs):
-				comm.send({'g':gt2}, dest=iproc,tag = TAG_COMM_DACC_2)
+			start = 0
+			for iproc in range(nprocs):
+				(iproc_idx, iproc_off) = self.__distribution[iproc]
+				if iproc != 0:
+					comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
+				start = start + iproc_off
 		else:
-			gt2 = comm.recv(source = 0, tag = TAG_COMM_DACC_2)['g']
-
-		# if pid == 0:
-		# 	for iproc in range(nprocs):
-		# 		(iproc_idx, iproc_off) = self.__global_index[iproc]
-		# 		if iproc != 0:
-		# 			comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
-		# 		start = start + iproc_off
-		# else:
-		# 	gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
-		# --------------------- #
-		
-
+			gt2 = comm.recv(source = 0, tag = TAG_COMM_UACC_2)['g']
 		# Step 5 : Local Downward Accumulation
 		new_content = SList([])
 		for i in range(len(self.__global_index[self.__start_index : self.__start_index+self.__nb_segs])):
 			(start, offset) = self.__global_index[self.__start_index : self.__start_index+self.__nb_segs][i]
-			new_content.extend(Segment(self.__content[start:start+offset]).dacc_local(gl, gr, gt2[self.__start_index + i].get_value()))
+			# new_content.extend(Segment(self.__content[start:start+offset]).dacc_local(gl, gr, gt2[self.__start_index + i].get_value()))
+			new_content.extend(Segment(self.__content[start:start+offset]).dacc_local(gl, gr, gt2[i].get_value()))
 		return PTree.init(self, new_content)
 
 

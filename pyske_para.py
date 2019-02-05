@@ -77,14 +77,14 @@ lt = serialization(bt, m)
 
 # --------------------- #
 pt = PTree(lt)
-print(pt)
+
 pt_mapped = pt.map(lambda a : (0,1), lambda x : x)
 pt_uacc = pt_mapped.uacc(k, phi, psi_n, psi_l, psi_r)
 pt_dacc = pt_uacc.dacc(gl, gr, 0, phi_l, phi_r, sum2, sum2)
 print(pt_dacc.browse())
 
 # --------------------- #
-time.sleep(4)
+time.sleep(2)
 
 lt_mapped = lt.map(lambda a : (0,1), lambda x : x)
 lt_uacc = lt_mapped.uacc(k, phi, psi_n, psi_l, psi_r)
