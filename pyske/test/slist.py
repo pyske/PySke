@@ -308,10 +308,36 @@ tests_zipwith = [test_zipwith_nil, test_zipwith_cons, test_zipwith_one_gt, test_
 
 # -------------------------- #
 
+def test_from_str_simple():
+	s = "[1;2;3]"
+	res = SList.from_str(s)
+	exp = SList([1,2,3])
+	assert res == exp
+
+
+def parser_tuple(s):
+	print("must be parsed : " + s)
+	s = s.replace("(","")
+	s = s.replace(")","")
+	ss = s.split(",")
+	return (int(ss[0]), int(ss[1]))
+
+
+def test_from_str_tuple():
+	s = "[(1,2);(3,4)]"
+	res = SList.from_str(s, parser = parser_tuple)
+	exp = SList([(1,2),(3,4)])
+	assert res == exp
+
+tests_from_str = [test_from_str_simple, test_from_str_tuple]
+
+# -------------------------- #
+
+
 fcts = tests_head + tests_tail + tests_length + \
 	tests_filter + tests_empty + tests_reverse + \
 	tests_map +  tests_reduce + \
-	tests_scan + tests_scan2 + tests_zip + tests_zipwith
+	tests_scan + tests_scan2 + tests_zip + tests_zipwith + tests_from_str 
 
 run_tests(fcts, "slist")
 	

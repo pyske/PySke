@@ -668,13 +668,21 @@ tests_zipwith = [test_zipwith_not_equal_size_error, test_zipwith_not_same_tag_er
 
 # -------------------------- #
 
+def test_from_str():
+	s = "[(11^N); (2^L); (3^C)]"
+	res = Segment.from_str(s)
+	exp = Segment([TaggedValue(11,"N"),TaggedValue(2,"L"),TaggedValue(3,"C")])
+	assert res == exp
 
+tests_from_str = [test_from_str]
+
+# -------------------------- #
 
 fcts = tests_has_critical + tests_map_local \
 	+ tests_reduce_local + tests_reduce_global \
 	+ tests_uacc_local + tests_uacc_global + tests_uacc_update \
 	+ tests_dacc_path + tests_dacc_global + tests_dacc_local \
 	+ tests_get_left + tests_get_right \
-	+ tests_uacc_prefix + tests_zip + tests_zipwith
+	+ tests_uacc_prefix + tests_zip + tests_zipwith + tests_from_str
 
 run_tests(fcts, "segment")

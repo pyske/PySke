@@ -1,6 +1,7 @@
 from pyske.ltree import TaggedValue, Segment, LTree
 from pyske.slist import SList
 from pyske.support.parallel import *
+from mpi4py import MPI
 import time #TODO remove
 
 TAG_BASE = "270995"
@@ -62,6 +63,38 @@ class PTree:
 		p.__global_index = pt.__global_index
 		p.__start_index = pt.__start_index
 		p.__nb_segs = pt.__nb_segs
+		p.__content = content
+		return p
+
+
+	def init_from_file(filename, parser = int):
+		"""
+		Instantiate a distributed tree from a file
+		"""
+		filename = filename + "." + str(pid)
+		def __parser_couple(s):
+			s = s.replace("(","")
+			s = s.replace(")","")
+			ss = s.split(",")
+			return (int(ss[0]), int(ss[1]))
+		p = PTree()
+		content = SList([])
+		with open(filename,"r") as f:
+			count_line = 0
+			for line in f:
+				if line.strip()[0] == '#':
+					continue
+				# __distribution: pid -> nb of segments
+				# __global_index: num seg -> (start, offset)
+				if count_line == 0: # Get the distribution
+					p.__distribution = SList.from_str(line, parser = __parser_couple)
+					p.__start_index = p.__distribution.scan(lambda x, y : x + y[1], 0)[pid]
+					p.__nb_segs = p.__distribution[pid][1]
+				elif count_line == 1: # Get the global_index
+					p.__global_index = SList.from_str(line, parser = __parser_couple)
+				else: # Get the content
+					content.extend(Segment.from_str(line, parser = parser))
+				count_line = count_line+1
 		p.__content = content
 		return p
 

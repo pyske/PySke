@@ -10,6 +10,14 @@ VTag_NODE = 2
 VTag_CRITICAL = 3
 
 
+SEPARATOR_TV = "^"
+LEFT_TV = "("
+RIGHT_TV = ")"
+LEFT_SEG = "["
+RIGHT_SEG = "]"
+SEPARATOR_SEG = ";"
+
+
 def parseVTag(vt):
 	"""
 	Get a VTag from a label
@@ -24,6 +32,7 @@ def parseVTag(vt):
 	UnknownTypeError
 		If the label is not known in VTag
 	"""
+	vt = vt.strip()
 	if vt == "C":
 		return VTag_CRITICAL
 	if vt == "L":
@@ -80,7 +89,7 @@ class TaggedValue:
 				return "L"
 			if tag == VTag_NODE:
 				return "N"
-		return "("+str(self.val)+"^"+tag2str(self.tag)+")"
+		return LEFT_TV+str(self.val)+SEPARATOR_TV+tag2str(self.tag)+RIGHT_TV
 
 
 	def __eq__(self, other):
@@ -150,6 +159,8 @@ class Segment(SList):
 		Performs sequential downwards accumulation
 	dacc_local(gl, gr, c)
 		Computes local downward accumulation for the current instance using an accumulative parameter resulting of a global downward accumulation
+	from_str(s, parser)
+		Get a segment from a string value
 	"""
 
 	def __eq__(self, other):
@@ -751,6 +762,27 @@ class Segment(SList):
 		return res
 
 
+	def from_str(s, parser = int):
+		"""
+		Get a segment from a string value
+
+		Parameters
+		----------
+		s : string
+			The string to parse into a segment
+		"""
+		res = Segment()
+		s=s.replace(LEFT_SEG, "")
+		s=s.replace(RIGHT_SEG, "")
+		values = s.split(SEPARATOR_SEG)
+		for v in values:
+			v = v.replace(LEFT_TV,"")
+			v = v.replace(RIGHT_TV,"")
+			tv = v.split(SEPARATOR_TV)
+			res.append(TaggedValue(parser(tv[0]) , parseVTag(tv[1])))
+		return res
+
+
 class LTree(SList):
 	"""
 	A list of Segment
@@ -780,6 +812,15 @@ class LTree(SList):
 					return False
 			return True
 		return False
+
+
+	def __str__(self):
+		res = LEFT_SEG
+		for i in range(0, self.length()):
+			res = res + str(self[i])
+			if i != self.length() - 1:
+				res = res + SEPARATOR_SEG + " "
+		return res + RIGHT_SEG
 
 
 	def map(self, kl, kn):

@@ -1,6 +1,11 @@
 import functools
 from pyske.errors import NotEqualSizeError, EmptyError
 
+
+LEFT_LIST = "["
+RIGHT_LIST = "]"
+SEPARATOR_LIST = ";"
+
 class SList(list):
 	"""
 	An extended definition of lists, including Bird-Meertens Formalism primitives
@@ -37,12 +42,22 @@ class SList(list):
 
 
 	def __str__(self):
-		res = "["
+		res = LEFT_LIST
 		for i in range(0, self.length()):
 			res = res + str(self[i])
 			if i != self.length() - 1:
-				res = res + ", "
-		return res + "]"
+				res = res + SEPARATOR_LIST + " "
+		return res + RIGHT_LIST
+
+
+	def from_str(s, parser = int):
+		res = SList([])
+		s=s.replace(LEFT_LIST, "")
+		s=s.replace(RIGHT_LIST, "")
+		values = s.split(SEPARATOR_LIST)
+		for v in values:
+			res.append(parser(v))
+		return res
 
 
 	def head(self):
