@@ -1,6 +1,6 @@
 from pyske.slist import SList
 from pyske.btree import BTree
-from pyske.ltree import LTree, serialization
+from pyske.ltree import LTree
 
 def distribute_tree(lt, n):
 	sum3 = lambda x,y,z : x+y+z

@@ -10,7 +10,11 @@ from pyske.applications.parallel.prefix import prefix
 import time
 import random
 
+import sys
+
 # --------------------- #
+
+filename = sys.argv[1]
 
 frdm = lambda : random.randint(1,101)
 size = 20

@@ -16,7 +16,7 @@ RIGHT_TV = ")"
 LEFT_SEG = "["
 RIGHT_SEG = "]"
 SEPARATOR_SEG = ";"
-
+EXT_FILE_LT = "lt"
 
 def parseVTag(vt):
 	"""
@@ -783,12 +783,21 @@ class Segment(SList):
 		return res
 
 
+# ------------------------------- #
+
+
 class LTree(SList):
 	"""
 	A list of Segment
 	
 	Methods
 	-------
+	init_from_bt(bt, m)
+		Create a LTree from a BTree
+	init_from_file(filename)
+		Initialize a LTree from a file
+	write_file(filename)
+		Write a file that contains the current instance
 	map(kl, kn)
 		Applies function to every element of the current instance
 	reduce(k, phi, psi_n, psi_l, psi_r)
@@ -801,6 +810,8 @@ class LTree(SList):
 		Zip the values contained in a second LTree with the ones in the current instance
 	zipwith(lt, f)
 		Zip the values contained in a second LTree with the ones in the current instance using a function
+	deserialization()
+		TODO
 	"""
 
 	def __eq__(self, other):
@@ -815,12 +826,92 @@ class LTree(SList):
 
 
 	def __str__(self):
-		res = LEFT_SEG
+		res = ""
 		for i in range(0, self.length()):
 			res = res + str(self[i])
 			if i != self.length() - 1:
-				res = res + SEPARATOR_SEG + " "
-		return res + RIGHT_SEG
+				res = res + "\n"
+		return res 
+
+
+	def init_from_bt(bt, m):
+		"""
+		Create a LTree from a BTree
+
+		Parameters
+		----------
+		bt : BTree
+			The BTree to transform into a LTree
+		m : int
+			Variable to define the critical nodes of bt
+		"""
+		def __tv2lv(bt_val):
+			val = bt_val.get_value()
+			res = Segment()
+			res_0 = Segment()
+			if bt_val.is_leaf():
+				res_0.append(val)
+				res.append(res_0)
+			else: #bt_val.is_node()
+				res_left = Segment(__tv2lv(bt_val.get_left()))
+				res_right = Segment(__tv2lv(bt_val.get_right()))
+				if val.is_critical():
+					res_0.append(val)
+					res.append(res_0)
+					res.extend(res_left)
+					res.extend(res_right)
+				else: # val.is_node()
+					res_0.append(val)
+					res_0.extend(res_left[0])
+					res_0.extend(res_right[0])
+					res.append(res_0)
+					res.extend(res_left[1:])
+					res.extend(res_right[1:])
+			return res
+		# Get a LTree from a BTree
+		up_div = lambda n,m: (int(n / m) + (0 if n % m == 0 else 1))
+		bt_one = bt.map(lambda x : 1, lambda x : 1)
+		bt_size = bt_one.uacc(lambda x,y,z : x+y+z)
+		bt_tags = bt_size.mapt(lambda x: VTag_LEAF, 
+			lambda x, y, z: VTag_CRITICAL if up_div(x,m) > up_div(y.get_value(),m) and up_div(x,m) > up_div(z.get_value(),m) else VTag_NODE)
+		bt_val = bt.zipwith(bt_tags, lambda x,y: TaggedValue(x,y))
+		return LTree(__tv2lv(bt_val))
+
+
+	def init_from_file(filename, parser = int):
+		"""
+		Initialize a LTree from a file
+
+		Parameters
+		----------
+		filename :
+			The name of the file that contains the LTree to instantiate
+		"""
+		if filename[-3:] != "." + EXT_FILE_LT:
+			filename = filename + "." + EXT_FILE_LT
+		res = LTree([])
+		with open(filename,"r") as f:
+			for line in f:
+				a = Segment.from_str(line, parser=parser)
+				res.append(a)
+		f.close()
+		return res
+
+
+	def write_file(self, filename):
+		"""
+		Write a file that contains the current instance
+
+		Parameters
+		----------
+		filename :
+			The name of the file that we want to write the current instance in
+		"""
+		if filename[-3:] != "." + EXT_FILE_LT:
+			filename = filename + "." + EXT_FILE_LT
+		with open(filename,"w+") as f: 
+			f.write(str(self))
+		f.close()
 
 
 	def map(self, kl, kn):
@@ -1042,130 +1133,72 @@ class LTree(SList):
 			res.append(self[i].zipwith(lt[i],f))
 		return res
 
-# ------------------------------- #
 
-def __tv2lv(bt_val):
-	val = bt_val.get_value()
-	res = Segment()
-	res_0 = Segment()
-	if bt_val.is_leaf():
-		res_0.append(val)
-		res.append(res_0)
-	else: #bt_val.is_node()
-		res_left = Segment(__tv2lv(bt_val.get_left()))
-		res_right = Segment(__tv2lv(bt_val.get_right()))
-		if val.is_critical():
-			res_0.append(val)
-			res.append(res_0)
-			res.extend(res_left)
-			res.extend(res_right)
-		else: # val.is_node()
-			res_0.append(val)
-			res_0.extend(res_left[0])
-			res_0.extend(res_right[0])
-			res.append(res_0)
-			res.extend(res_left[1:])
-			res.extend(res_right[1:])
-	return res
-
-
-
-def serialization(bt, m):
-	# Get a LTree from a BTree
-	up_div = lambda n,m: (int(n / m) + (0 if n % m == 0 else 1))
-	bt_one = bt.map(lambda x : 1, lambda x : 1)
-	bt_size = bt_one.uacc(lambda x,y,z : x+y+z)
-	bt_tags = bt_size.mapt(lambda x: VTag_LEAF, 
-		lambda x, y, z: VTag_CRITICAL if up_div(x,m) > up_div(y.get_value(),m) and up_div(x,m) > up_div(z.get_value(),m) else VTag_NODE)
-	bt_val = bt.zipwith(bt_tags, lambda x,y: TaggedValue(x,y))
-	return LTree(__tv2lv(bt_val))
-
-# ------------------------------- #
-
-def __graft(bt, lbt, rbt):
-	if bt.is_node():
-		left = __graft(bt.get_left(), lbt, rbt)
-		right = __graft(bt.get_right(), lbt, rbt)
-		val = bt.get_value()
-		return Node(val, left, right)
-	else: # bt.is_leaf()
-		v = bt.get_value()
-		if v.is_critical():
-			return Node(v,lbt,rbt)
-		else: # v.is_leaf()
-			return bt
-
-
-def __remove_annotation(bt):
-	if bt.is_leaf():
-		v = bt.get_value()
-		return Leaf(v.get_value())
-	else:
-		left = __remove_annotation(bt.get_left())
-		right = __remove_annotation(bt.get_right())
-		v = bt.get_value()
-		return Node(v.get_value(), left, right)
-
-
-def __lv2ibt(seg):
-	stack = []
-	has_crit = False
-	if seg.empty():
-		raise EmptyError("An empty Segment cannot be transformed into a BTree")
-
-	for i in range(seg.length()-1, -1, -1):
-		v = seg[i]
-		if v.is_leaf():
-			stack.append(Leaf(v))
-
-		elif v.is_critical():
-			stack.append(Leaf(v))
-			if has_crit:
+	def deserialization(self):
+		"""
+		TODO
+		"""
+		def __graft(bt, lbt, rbt):
+			val = bt.get_value()
+			if bt.is_node():
+				return Node(val, __graft(bt.get_left(), lbt, rbt), __graft(bt.get_right(), lbt, rbt))
+			else: # bt.is_leaf()
+				return Node(val,lbt,rbt) if v.is_critical() else bt
+		def __remove_annotation(bt):
+			v = bt.get_value()
+			return Leaf(v.get_value()) if bt.is_leaf() else Node(v.get_value(), __remove_annotation(bt.get_left()), __remove_annotation(bt.get_right()))
+		def __lv2ibt(seg):
+			stack = []
+			has_crit = False
+			if seg.empty():
+				raise EmptyError("An empty Segment cannot be transformed into a BTree")
+			for i in range(seg.length()-1, -1, -1):
+				v = seg[i]
+				if v.is_leaf():
+					stack.append(Leaf(v))
+				elif v.is_critical():
+					stack.append(Leaf(v))
+					if has_crit:
+						raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
+					else:
+						has_crit = True
+				else:
+					if len(stack) < 2:
+						raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
+					lv = stack.pop()
+					rv = stack.pop()
+					stack.append(Node(v,lv,rv))
+			if len(stack) != 1:
 				raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
 			else:
-				has_crit = True
-		else:
-			if len(stack) < 2:
-				raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
-			lv = stack.pop()
-			rv = stack.pop()
-			stack.append(Node(v,lv,rv))
-	if len(stack) != 1:
-		raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
-	else:
-		return (has_crit, stack[0])
+				return (has_crit, stack[0])
+		def __rev_segment_to_trees(lb, gt):
+			stack = []
+			for i in range(lb.length()-1, -1, -1):
+				if gt[i] == VTag_LEAF:
+					stack.append(lb[i])
+				else: #gt[i] == VTag_Node
+					lbt = stack.pop()
+					rbt = stack.pop()
+					stack.append(__graft(lb[i],lbt,rbt))
+			if len(stack) != 1:
+				raise IllFormedError("A ill-formed list of incomplete BTree cannot be transformed into a BTree")
+			else:
+				return stack[0]
 
+		gt = SList()
+		list_of_btree = SList()
 
-def __rev_segment_to_trees(lb, gt):
-	stack = []
-	for i in range(lb.length()-1, -1, -1):
-		if gt[i] == VTag_LEAF:
-			stack.append(lb[i])
-		else: #gt[i] == VTag_Node
-			lbt = stack.pop()
-			rbt = stack.pop()
-			bt_i = __graft(lb[i],lbt,rbt)
-			stack.append(bt_i)
-	if len(stack) != 1:
-		raise IllFormedError("A ill-formed list of incomplete BTree cannot be transformed into a BTree")
-	else:
-		return stack[0]
+		for seg in self:
+			(has_crit, bt_i) = __lv2ibt(seg)
+			list_of_btree.append(bt_i)
+			if has_crit:
+				gt.append(VTag_NODE)
+			else:
+				gt.append(VTag_LEAF)
 
+		bt_annoted = __rev_segment_to_trees(list_of_btree, gt)
 
-def deserialization(lt):
-	gt = SList()
-	list_of_btree = SList()
-
-	for seg in lt:
-		(has_crit, bt_i) = __lv2ibt(seg)
-		list_of_btree.append(bt_i)
-		if has_crit:
-			gt.append(VTag_NODE)
-		else:
-			gt.append(VTag_LEAF)
-
-	bt_annoted = __rev_segment_to_trees(list_of_btree, gt)
-
-	return __remove_annotation(bt_annoted)
+		return __remove_annotation(bt_annoted)
 
 	
