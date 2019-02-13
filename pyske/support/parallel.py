@@ -4,6 +4,9 @@ comm = MPI.COMM_WORLD
 pid = comm.Get_rank()
 nprocs = comm.Get_size() 
 
+def time():
+	return MPI.Wtime()
+
 def local_size_pid(pid, size):
 	return int(size / nprocs) + (1 if pid < size % nprocs else 0)
 
