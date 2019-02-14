@@ -1143,7 +1143,7 @@ class LTree(SList):
 			if bt.is_node():
 				return Node(val, __graft(bt.get_left(), lbt, rbt), __graft(bt.get_right(), lbt, rbt))
 			else: # bt.is_leaf()
-				return Node(val,lbt,rbt) if v.is_critical() else bt
+				return Node(val,lbt,rbt) if val.is_critical() else bt
 		def __remove_annotation(bt):
 			v = bt.get_value()
 			return Leaf(v.get_value()) if bt.is_leaf() else Node(v.get_value(), __remove_annotation(bt.get_left()), __remove_annotation(bt.get_right()))

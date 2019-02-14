@@ -47,30 +47,32 @@ class RNode:
 			if value == Leaf(None):
 				raise ConstructorError("A RTree cannot be constructed from a single Leaf that contains None")
 			# Create a RTree from a BTree
-			def b2r(bt):
-				if bt.is_leaf():
-					val = bt.get_value()
-					if val == None:
-						return SList()
-					else:
-						return SList([RNode(val)])
-				else:
-					n = bt.get_value() 
-					left = bt.get_left()
-					right = bt.get_right()
-					res_l = b2r(left)
-					res_r = b2r(right)
-					res_head = RNode(n, res_l) 
-					res_r.insert(0, res_head)
-					return res_r
 			bt = value
-			rt = b2r(bt).head()
+			rt = RNode.b2r(bt)
 			self.value = rt.get_value()
 			self.children = rt.get_children()
 		else:	
 			self.value = value
 			self.children = ts
 
+	def b2r(bt):
+		def aux(bt):
+			if bt.is_leaf():
+				val = bt.get_value()
+				if val == None:
+					return SList()
+				else:
+					return SList([RNode(val)])
+			else:
+				n = bt.get_value() 
+				left = bt.get_left()
+				right = bt.get_right()
+				res_l = aux(left)
+				res_r = aux(right)
+				res_head = RNode(n, res_l) 
+				res_r.insert(0, res_head)
+				return res_r
+		return aux(bt).head()
 
 	def __str__(self):
 		res = "rnode " + str(self.value) + "["
