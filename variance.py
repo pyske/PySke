@@ -22,7 +22,10 @@ avg = X.reduce(add) / n
 var = (X.map(lambda x: (x-avg)**2).reduce(add)**0.5) / n
 
 # stop timing
-max_elapsed = t.map(lambda x: time()-x).reduce(max)
+elapsed = t.map(lambda x: time()-x)
+max_elapsed = elapsed.reduce(max)
+avg_elapsed = elapsed.reduce(add) / nprocs
+all_elapsed = elapsed.mapi(lambda i,x: "["+str(i)+"]:"+str(x)).to_seq()  
 
 # ouput at processor 0
-at_root(lambda: print("Variance: ",var,"\nTime:",max_elapsed))
+at_root(lambda: print("Variance: ",var,"\nTime (max):",max_elapsed,"\nTime (avg):",avg_elapsed, "\nTime (all):",all_elapsed))
