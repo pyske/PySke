@@ -13,7 +13,7 @@ def distribute_tree(lt, n):
 	distribution = SList([])
 
 	for i in range(n):
-		distribution.append((i,0))
+		distribution.append(0)
 
 	current_pid = 0
 	nb_segs = 1
@@ -28,7 +28,7 @@ def distribute_tree(lt, n):
 		if current_pid == n - 1:
 			# We need to give all the rest to the last processor
 			if seg_i == lt.length() - 1:
-				distribution[current_pid] = (current_pid, nb_segs + 1)
+				distribution[current_pid] = (nb_segs + 1)
 				global_index.append((acc_size, curr_seg_length))
 			else :
 				nb_segs += 1
@@ -37,12 +37,12 @@ def distribute_tree(lt, n):
 				acc_size = acc_size + curr_seg_length
 		else:
 			if seg_i == lt.length() - 1:
-				distribution[current_pid] = (current_pid, nb_segs + 1)
+				distribution[current_pid] = (nb_segs + 1)
 				global_index.append((acc_size, seg.length()))
 			else:
 				curr_seg_length = seg.length()
 				if abs(avg_elements - (acc_size + curr_seg_length)) > abs(avg_elements - acc_size) :
-					distribution[current_pid] = (current_pid, nb_segs)
+					distribution[current_pid] = (nb_segs)
 					global_index.append((0, curr_seg_length))
 					acc_size = curr_seg_length
 					nb_segs = 1
@@ -59,7 +59,7 @@ def create_pt_files(lt, n, filename):
 	(distribution, global_index) = distribute_tree(lt, n)
 	passed_seg = 0
 	for pid in range(n):
-		(i_pid, nb_segs) = distribution[pid]
+		nb_segs = distribution[pid]
 		filename_pid = filename + "." + str(pid)
 		content_pid = ""
 		for i_seg in range(passed_seg, passed_seg+ nb_segs):

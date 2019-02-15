@@ -1,6 +1,10 @@
 from pyske.btree import BTree, Leaf, Node
 from pyske.slist import SList
+
 import random
+import sys
+
+
 
 def generate_random_list(frdm, len):
 	res = SList([])
@@ -47,10 +51,12 @@ def generate_random_btree(frdm, size):
 
 def generate_illbalanced_btree(frdm, size):
 	size = (size if size%2 == 1 else size + 1)
-	if size == 1:
-		return Leaf(frdm())
-	else:
-		left = Leaf(frdm())
-		right = generate_illbalanced_btree(frdm, (size-2))
-		return Node(frdm(), left, right)
+	def aux(size, continuation):
+		if size == 1:
+			return continuation(Leaf(frdm()))
+		else:
+			return aux(size-2, lambda tr : continuation(Node(frdm(), Leaf(frdm()), tr)) )
+	return aux(size, lambda x : x)
+
+
 

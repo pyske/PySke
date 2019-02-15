@@ -1,4 +1,4 @@
-from pyske.ltree import LTree, serialization
+from pyske.ltree import LTree
 from pyske.ptree import PTree
 
 from pyske.support.generate import generate_balanced_btree
@@ -14,12 +14,10 @@ import sys
 
 # --------------------- #
 
-filename = sys.argv[1]
-
 frdm = lambda : random.randint(1,101)
 size = 20
 bt = generate_balanced_btree(frdm, size)
-lt = serialization(bt, 3)
+lt = LTree.init_from_bt(bt, 3)
 filename ="test.pt"
 at_root(lambda : create_pt_files(lt, 4, filename))
 

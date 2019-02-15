@@ -2,7 +2,7 @@ from pyske.ltree import TaggedValue, Segment, LTree
 from pyske.slist import SList
 from pyske.support.parallel import *
 from mpi4py import MPI
-import time #TODO remove
+
 
 TAG_BASE = "270995"
 TAG_COMM_REDUCE = int(TAG_BASE + "11")
@@ -40,7 +40,7 @@ class PTree:
 				start_index = 0
 
 				nsegs = local_size_pid(proc_id, size)
-				self.__distribution.append((proc_id, nsegs))
+				self.__distribution.append(nsegs)
 				for seg_idx in range(start_global_index, start_global_index + nsegs):
 					self.__global_index.append((start_index, lt[seg_idx].length()))
 					start_index = start_index + lt[seg_idx].length() 
@@ -87,9 +87,9 @@ class PTree:
 				# __distribution: pid -> nb of segments
 				# __global_index: num seg -> (start, offset)
 				if count_line == 0: # Get the distribution
-					p.__distribution = SList.from_str(line, parser = __parser_couple)
-					p.__start_index = p.__distribution.scan(lambda x, y : x + y[1], 0)[pid]
-					p.__nb_segs = p.__distribution[pid][1]
+					p.__distribution = SList.from_str(line)
+					p.__start_index = p.__distribution.scan(lambda x, y : x + y, 0)[pid]
+					p.__nb_segs = p.__distribution[pid]
 				elif count_line == 1: # Get the global_index
 					p.__global_index = SList.from_str(line, parser = __parser_couple)
 				else: # Get the content
@@ -178,7 +178,7 @@ class PTree:
 		start = 0
 		if pid == 0:
 			for iproc in range(nprocs):
-				(iproc_idx, iproc_off) = self.__distribution[iproc]
+				iproc_off = self.__distribution[iproc]
 				if iproc != 0:
 					comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
 				start = start + iproc_off
@@ -223,7 +223,7 @@ class PTree:
 		if pid == 0:
 			start = 0
 			for iproc in range(nprocs):
-				(iproc_idx, iproc_off) = self.__distribution[iproc]
+				iproc_off = self.__distribution[iproc]
 				if iproc != 0:
 					comm.send({'g':gt2[start : start + iproc_off]}, dest=iproc,tag = TAG_COMM_UACC_2)
 				start = start + iproc_off
