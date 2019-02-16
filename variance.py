@@ -12,6 +12,8 @@ else:
     size = 1000
 X = PList.init(lambda _: random.randint(0,100), size)
 
+comm.barrier()
+
 # start timing
 t = PList.init(lambda _: time(), nprocs)
 
@@ -27,5 +29,5 @@ max_elapsed = elapsed.reduce(max)
 avg_elapsed = elapsed.reduce(add) / nprocs
 all_elapsed = elapsed.mapi(lambda i,x: "["+str(i)+"]:"+str(x)).to_seq()  
 
-# ouput at processor 0
+# output at processor 0
 at_root(lambda: print("Variance: ",var,"\nTime (max):",max_elapsed,"\nTime (avg):",avg_elapsed, "\nTime (all):",all_elapsed))

@@ -64,7 +64,7 @@ class SList(list):
 		"""
 		Gives the first element of the current instance
 		"""
-		if self.empty():
+		if self.is_empty():
 			return None
 		else:
 			return self[0]
@@ -95,7 +95,7 @@ class SList(list):
 		return SList(filter(p,self))
 
 
-	def empty(self):
+	def is_empty(self):
 		"""
 		Indicates if a list is empty
 		"""
@@ -160,7 +160,7 @@ class SList(list):
 			Initial value for the accumulator
 		"""
 		res = SList()
-		if self.empty():
+		if self.is_empty():
 			res.append(c)
 			return res
 		else:
@@ -170,6 +170,33 @@ class SList(list):
 				res.append(c)
 			return res
 
+	def scanr(self, op):
+		len = self.length()
+		res = SList(range(0, len))
+		if 0<len: res[0]=self[0]
+		for i in range(0,len-1):
+			res[i+1]=op(res[i],self[i+1])
+		return res
+
+	def scanl(self, op, e):
+		len = self.length()
+		res = SList(range(0, len))
+		if 0<len: res[0]=e
+		for i in range(0,len-1):
+			res[i+1]=op(res[i],self[i])
+		return res
+
+	def scanl_last(self, op, e):
+		len = self.length()
+		res = SList(range(0, len))
+		if 0<len: res[0]=e
+		for i in range(0,len-1):
+			res[i+1]=op(res[i],self[i])
+		if 0<len:
+			last = op(res[len-1], self[len-1])
+		else:
+			last = e
+		return (res, last)
 
 	def rscan(self, f, c):
 		"""
@@ -187,7 +214,7 @@ class SList(list):
 		"""
 		res = SList()
 		res.append(c)
-		if self.empty():
+		if self.is_empty():
 			return res
 		else:
 			for i in range(self.length()-1, 0, -1):

@@ -90,14 +90,14 @@ tests_filter = [test_filter]
 def test_empty_true():
 	sl = SList()
 	exp = True
-	res = sl.empty()
+	res = sl.is_empty()
 	assert res == exp
 
 
 def test_empty_false():
 	sl = SList([1, 2, 3])
 	exp = False
-	res = sl.empty()
+	res = sl.is_empty()
 	assert res == exp
 
 tests_empty = [test_empty_true, test_empty_false]
@@ -202,6 +202,62 @@ def test_scan_cons():
 	assert res == exp
 
 tests_scan = [test_scan_nil, test_scan_cons]
+
+# -------------------------- #
+
+def test_scanr_singleton():
+	sl = SList([1])
+	f = lambda x,y : x + y
+	res = sl.scanr(f)
+	assert res == sl
+
+
+def test_scanr_non_singleton():
+	sl = SList([1, 2, 3, 4])
+	f = lambda x,y : x + y
+	res = sl.scanr(f)
+	exp = SList([1, 3, 6, 10])
+	assert res == exp
+
+tests_scan = [test_scanr_singleton, test_scanr_non_singleton]
+
+# -------------------------- #
+
+def test_scanl_empty():
+	sl = SList([])
+	f = lambda x,y : x + y
+	res = sl.scanl(f,0)
+	exp = SList([])
+	assert res == exp
+
+
+def test_scanl_non_empty():
+	sl = SList([1, 2, 3, 4])
+	f = lambda x,y : x + y
+	res = sl.scanl(f, 0)
+	exp = SList([0, 1, 3, 6])
+	assert res == exp
+
+tests_scan = [test_scanl_empty, test_scanl_non_empty]
+
+# -------------------------- #
+
+def test_scanl_last_empty():
+	sl = SList([])
+	f = lambda x,y : x + y
+	res = sl.scanl_last(f, 0)
+	exp = ([], 0)
+	assert res == exp
+
+
+def test_scanl_last_non_empty():
+	sl = SList([1, 2, 3, 4])
+	f = lambda x,y : x + y
+	res = sl.scanl_last(f, 0)
+	exp = ( SList([0, 1, 3, 6]), 10 )
+	assert res == exp
+
+tests_scan = [test_scanl_last_empty, test_scanl_last_non_empty]
 
 # -------------------------- #
 

@@ -341,7 +341,7 @@ class RNode:
 			return Node(a, left, right)
 
 		def r2b2(ts):
-			if ts.empty():
+			if ts.is_empty():
 				return Leaf(None)
 			else:
 				h = ts.head()
