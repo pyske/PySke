@@ -67,7 +67,7 @@ class PList:
 			partials = SList(comm.allgather(partial))
 		return partials.reduce(op, e)
 
-	def __dup_meta_data(self):
+	def __get_shape(self):
 		p = PList()
 		p.__local_size = self.__local_size
 		p.__global_size = self.__global_size
@@ -75,17 +75,39 @@ class PList:
 		p.__start_index = self.__start_index
 		return p
 
+
 	def scanr(self, op):
 		assert(self.__global_size > 0)
-		p = self.__dup_meta_data()
+		p = self.__get_shape()
 		partials = self.__content.scanr(op)
 		last = partials[self.__local_size-1]
-		acc = scan(op, last)
+		acc, _ = scan(op, last)
 		if pid != 0:
 			for i in range(0, len(partials)):
 				partials[i]=op(acc, partials[i])
 		p.__content = partials
 		return p
+
+	def scanl(self, op, e):
+		p = self.__get_shape()
+		partials, last = self.__content.scanl_last(op, e)
+		acc, _ = scan(op, last)
+		if pid != 0:
+			for i in range(0, len(partials)):
+				partials[i] = op(acc, partials[i])
+		p.__content = partials
+		return p
+
+	def scanl_last(self, op, e):
+		p = self.__get_shape()
+		partials, last = self.__content.scanl_last(op, e)
+		acc, red = scan(op, last)
+		if pid != 0:
+			for i in range(0, len(partials)):
+				partials[i] = op(acc, partials[i])
+		p.__content = partials
+		return (p, red)
+
 
 	def from_seq(l):
 		p = PList()

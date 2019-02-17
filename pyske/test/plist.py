@@ -35,8 +35,51 @@ def map_non_empty():
     exp = list(f(msg))
     assert res == exp
 
+def scanr_non_empty():
+    f = lambda x,y: x+y
+    size = 23
+    input = PList.init(lambda i:i, size)
+    res = input.scanr(f).to_seq()
+    exp = SList(range(0,size)).scanr(f)
+    assert res == exp
 
+def scanl_empty():
+    f = lambda x,y: x+y
+    size = 0
+    input = PList.init(lambda i:i, size)
+    res = input.scanl(f, 0).to_seq()
+    exp = SList(range(0,size)).scanl(f, 0)
+    assert res == exp
 
-fcts = [init_to_seq_empty, init_to_seq_non_empty, map_empty, map_non_empty]
+def scanl_non_empty():
+    f = lambda x,y: x+y
+    size = 23
+    input = PList.init(lambda i:i, size)
+    res = input.scanl(f, 0).to_seq()
+    exp = SList(range(0,size)).scanl(f, 0)
+    assert res == exp
+
+def scanl_last_empty():
+    f = lambda x,y: x+y
+    size = 0
+    input = PList.init(lambda i:i, size)
+    res_pl, res_scalar = input.scanl_last(f, 0)
+    res = (res_pl.to_seq(), res_scalar)
+    exp = SList(range(0,size)).scanl_last(f, 0)
+    assert res == exp
+
+def scanl_last_non_empty():
+    f = lambda x,y: x+y
+    size = 23
+    input = PList.init(lambda i:i, size)
+    res_pl, res_scalar = input.scanl_last(f, 0)
+    res = (res_pl.to_seq(), res_scalar)
+    exp = SList(range(0,size)).scanl_last(f, 0)
+    assert res == exp
+
+fcts = [init_to_seq_empty, init_to_seq_non_empty,
+        map_empty, map_non_empty,
+        scanr_non_empty, scanl_empty, scanl_non_empty,
+        scanl_last_empty, scanl_last_non_empty]
 
 run_ptests(fcts, "plist")
