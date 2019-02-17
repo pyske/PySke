@@ -67,6 +67,25 @@ class PList:
 			partials = SList(comm.allgather(partial))
 		return partials.reduce(op, e)
 
+	def __dup_meta_data(self):
+		p = PList()
+		p.__local_size = self.__local_size
+		p.__global_size = self.__global_size
+		p.__distribution = self.__distribution
+		p.__start_index = self.__start_index
+		return p
+
+	def scanr(self, op):
+		assert(self.__global_size > 0)
+		p = self.__dup_meta_data()
+		partials = self.__content.scanr(op)
+		last = partials[self.__local_size-1]
+		acc = scan(op, last)
+		if pid != 0:
+			for i in range(0, len(partials)):
+				partials[i]=op(acc, partials[i])
+		p.__content = partials
+		return p
 
 	def from_seq(l):
 		p = PList()
