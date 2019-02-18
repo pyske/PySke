@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-f", help="name of the file to create to store the BTree")
 parser.add_argument("-s", help="size of BTree to generate", type=int)
 parser.add_argument("-t", help="type of BTree to generate")
+parser.add_argument("-m", help="m value for serialization", type=int)
 args = parser.parse_args()
 
 # --------------------- #
@@ -39,7 +40,7 @@ if type_bt == "ill" :
 
 # --------------------- #
 
-m = 2 * math.sqrt(size)
+m = args.m
 lt = LTree.init_from_bt(bt, m)
 lt.write_file(filename)
 
