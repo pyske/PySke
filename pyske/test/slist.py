@@ -151,13 +151,12 @@ tests_map = [test_map_empty, test_map_inc, test_map_id]
 # -------------------------- #
 
 def test_reduce_nil():
+	e = 1232
 	sl = SList()
 	f = lambda x,y : x + y
-	try:
-		res = sl.reduce(f)
-		raise TestFailure()
-	except EmptyError as e:
-		assert True
+	res = sl.reduce(f,e)
+	exp = e
+	assert res == exp
 
 def test_reduce_cons():
 	sl = SList([1, 2, 3, 4])
@@ -372,7 +371,6 @@ def test_from_str_simple():
 
 
 def parser_tuple(s):
-	print("must be parsed : " + s)
 	s = s.replace("(","")
 	s = s.replace(")","")
 	ss = s.split(",")
