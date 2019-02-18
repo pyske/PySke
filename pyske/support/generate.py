@@ -13,14 +13,15 @@ def generate_random_list(frdm, len):
 	return res
 
 
+
 def generate_balanced_btree(frdm, size):
-	size = (size if size%2 == 1 else size + 1)
-	if size == 1:
-		return Leaf(frdm())
-	else:
-		left = generate_balanced_btree(frdm, (size-3)/2 + 1)
-		right = generate_balanced_btree(frdm, (size-3)/2 + 1)
-		return Node(frdm(), left, right)
+	current_size = 1
+	bt = Leaf(frdm())
+	while current_size < size:
+		bt2 = bt.map(lambda x: frdm(),lambda x: frdm())
+		bt = Node(frdm(), bt, bt2)
+		current_size = 2 * current_size + 1
+	return bt
 
 
 def __insert_values_btree(v1, v2, bt):
@@ -50,13 +51,11 @@ def generate_random_btree(frdm, size):
 
 
 def generate_illbalanced_btree(frdm, size):
-	size = (size if size%2 == 1 else size + 1)
-	def aux(size, continuation):
-		if size == 1:
-			return continuation(Leaf(frdm()))
-		else:
-			return aux(size-2, lambda tr : continuation(Node(frdm(), Leaf(frdm()), tr)) )
-	return aux(size, lambda x : x)
-
+	current_size = 1
+	bt = Leaf(frdm())
+	while current_size < size:
+		bt = Node(frdm(), Leaf(frdm()), bt)
+		current_size = current_size + 2
+	return bt
 
 
