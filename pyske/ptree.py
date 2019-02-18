@@ -1,6 +1,7 @@
 from pyske.ltree import TaggedValue, Segment, LTree
 from pyske.slist import SList
 from pyske.support.parallel import *
+from pyske.support.separate import *
 from mpi4py import MPI
 
 
@@ -31,27 +32,14 @@ class PTree:
 		self.__start_index = 0
 		self.__nb_segs = 0
 		self.__content = SList([])
-
 		if(lt != None):
-			size = lt.length()
-
-			start_global_index = 0
-			for proc_id in range(nprocs):
-				start_index = 0
-
-				nsegs = local_size_pid(proc_id, size)
-				self.__distribution.append(nsegs)
-				for seg_idx in range(start_global_index, start_global_index + nsegs):
-					self.__global_index.append((start_index, lt[seg_idx].length()))
-					start_index = start_index + lt[seg_idx].length() 
-
-					if proc_id == pid:
-						self.__content.extend(lt[seg_idx])
-				if proc_id == pid:
-					self.__start_index = start_global_index
-					self.__nb_segs = nsegs
-
-				start_global_index = start_global_index + nsegs
+			(distribution, global_index) = distribute_tree(lt, nprocs)
+			self.__distribution = distribution
+			self.__global_index = global_index
+			self.__start_index = distribution.scan(lambda x, y : x + y, 0)[pid]
+			self.__nb_segs = distribution[pid]
+			for i_seg in range(self.__start_index, self.__start_index + __nb_segs):
+				self.__content.extend(lt[i_seg])
 
 
 	def init(pt, content):

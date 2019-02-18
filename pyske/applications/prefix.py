@@ -5,7 +5,6 @@ def prefix(lt):
 	# ---------- #
 
 	f = lambda a : (0,1)
-
 	id_f = lambda x : x
 
 	# ---------- #
