@@ -3,7 +3,7 @@ from mpi4py import MPI
 from pyske.support.parallel import *
 
 class PList:
-
+	"""Distributed lists"""
 	def __init__(self):
 		self.__content = SList([])
 		self.__global_size = 0
@@ -134,6 +134,3 @@ class PList:
 			   "  start_index: " + str(self.__start_index) + "\n" + \
 			   "  distribution: " + str(self.__distribution) + "\n" + \
 			   "  content: " + str(self.__content) +"\n"
-
-	# TODO implement skeletons primitives (map_local, etc) for a list
-	# Communication ?

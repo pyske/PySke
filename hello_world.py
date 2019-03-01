@@ -26,7 +26,7 @@ s1 = pl9.reduce(app).reduce(lambda x, y: x + y)
 s2 = pl11.to_seq()[0]
 
 at_root(lambda:
-        print("Capitalized:\t", s1,
-              "\nIdentity:\t", s2,
-              "\nLength:\t\t", n,
-              "\nFiltered:\t", filtered))
+        print(f'Capitalized: \t{ s1 }\n'
+              f'Identity:\t{ s2 }\n'
+              f'Length:\t\t{ n }\n'
+              f'Filtered:\t{ filtered }'))

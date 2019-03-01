@@ -5,11 +5,11 @@ def prefix(lt):
 	# ---------- #
 
 	f = lambda a : (0,1)
-	id_f = lambda x : x
+	id_f = lambda x: x
 
 	# ---------- #
 
-	phi = lambda b : (1, 0, 0, 1)
+	phi = lambda b: (1, 0, 0, 1)
 
 	def k(l, b, r):
 		(ll, ls) = l

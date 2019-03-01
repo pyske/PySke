@@ -30,4 +30,6 @@ avg_elapsed = elapsed.reduce(add) / nprocs
 all_elapsed = elapsed.mapi(lambda i,x: "["+str(i)+"]:"+str(x)).to_seq()  
 
 # output at processor 0
-at_root(lambda: print("Variance: ",var,"\nTime (max):",max_elapsed,"\nTime (avg):",avg_elapsed, "\nTime (all):",all_elapsed))
+at_root(lambda:
+        print(f'Variance:\t{var}\nTime (max):\t{max_elapsed}\n'
+              f'Time (avg):\t{avg_elapsed}\nTime (all):\t{all_elapsed}'))
