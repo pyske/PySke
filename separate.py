@@ -1,4 +1,5 @@
 from pyske.core.tree.ltree import LTree
+from pyske.core.support.separate import *
 import argparse
 
 def create_pt_files(lt, n, filename):
