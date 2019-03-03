@@ -1,6 +1,6 @@
-from pyske.slist import SList
-from pyske.plist import PList
-from pyske.support.parallel import *
+from pyske.core.list.slist import SList
+from pyske.core.list.plist import PList
+from pyske.core.support.parallel import *
 import sys
 import random
 from mpi4py import MPI

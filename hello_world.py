@@ -1,11 +1,9 @@
-from pyske.slist import SList
-from pyske.plist import PList
-from pyske.support.parallel import *
-
+from pyske.core.list.slist import SList
+from pyske.core.list.plist import PList
+from pyske.core.support.parallel import *
 
 def app(l1, l2):
     return SList(l1 + l2)
-
 
 msg = "hello world!"
 pl1 = PList.init(lambda i: msg[i], len(msg))
