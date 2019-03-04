@@ -25,10 +25,11 @@ for i in range(ntest):
 		res = sumv(pt)
 		comm.barrier()
 		end_time = time.time()
-		at_root(lambda : print(str(nprocs) + "\t" + str(format(end_time-start_time, '.6f')) + "\t" + "OK" ))
-	except: 
+		at_root(lambda : print(str(nprocs) + "\t" + str(format(end_time-start_time, '.6f')) + "\t" + str(res) ))
+	except Exception as e: 
 		comm.barrier()
 		end_time = time.time()
-		at_root(lambda : print(str(nprocs) + "\t" + str(format(end_time-start_time, '.6f')) + "\t" + "KO" ))
+		at_root(lambda : print(e))
+		# at_root(lambda : print(str(nprocs) + "\t" + str(format(end_time-start_time, '.6f')) + "\t" + "KO" ))
 
 
