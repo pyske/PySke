@@ -1,3 +1,11 @@
+def check(res, exp):
+	if (res == exp):
+		assert True
+	else:
+		print(f'Expected =\t{exp}')
+		print(f'Result =\t{res}')
+		assert False
+
 def run_tests(tests, filename = ""):
 	for f in tests:
 		try :

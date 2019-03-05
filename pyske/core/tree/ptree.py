@@ -35,7 +35,7 @@ class PTree:
 			(distribution, global_index) = distribute_tree(lt, nprocs)
 			self.__distribution = distribution
 			self.__global_index = global_index
-			self.__start_index = distribution.scan(lambda x, y : x + y, 0)[pid]
+			self.__start_index = distribution.scanl(lambda x, y : x + y, 0)[pid]
 			self.__nb_segs = distribution[pid]
 			for i_seg in range(self.__start_index, self.__start_index + self.__nb_segs):
 				self.__content.extend(lt[i_seg])
@@ -75,7 +75,7 @@ class PTree:
 				# __global_index: num seg -> (start, offset)
 				if count_line == 0: # Get the distribution
 					p.__distribution = SList.from_str(line)
-					p.__start_index = p.__distribution.scan(lambda x, y : x + y, 0)[pid]
+					p.__start_index = p.__distribution.scanl(lambda x, y : x + y, 0)[pid]
 					p.__nb_segs = p.__distribution[pid]
 				elif count_line == 1: # Get the global_index
 					p.__global_index = SList.from_str(line, parser = __parser_couple)

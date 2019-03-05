@@ -15,7 +15,7 @@ X = PList.init(lambda _: random.randint(0,100), size)
 comm.barrier()
 
 # start timing
-t = PList.init(lambda _: time(), nprocs)
+t = PList.init(lambda _: wtime(), nprocs)
 
 # computing the variance
 add = lambda x,y: x+y
@@ -24,7 +24,7 @@ avg = X.reduce(add) / n
 var = (X.map(lambda x: (x-avg)**2).reduce(add)**0.5) / n
 
 # stop timing
-elapsed = t.map(lambda x: time()-x)
+elapsed = t.map(lambda x: wtime()-x)
 max_elapsed = elapsed.reduce(max)
 avg_elapsed = elapsed.reduce(add) / nprocs
 all_elapsed = elapsed.mapi(lambda i,x: "["+str(i)+"]:"+str(x)).to_seq()  

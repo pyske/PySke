@@ -30,7 +30,7 @@ class SList(list):
 		Applies f to every element of the current instance
 	reduce(f)
 		Reduce the current instance using a reduction function
-	scan(f, c)
+	scanl(f, c)
 		Makes an rightward accumulation of the element on the current instance from an initial value
 	scan2(f)
 		Makes an rightward accumulation of the element on the current instance from an initial value
@@ -145,12 +145,38 @@ class SList(list):
 			return functools.reduce(f, self, e)
 
 
-	def scan(self, f, c):
+	def __gscan(self, end, f, c=None):
+		res = SList()
+		if c is None:
+			c = self[0]
+			start = 1
+		else:
+			start = 0
+		res.append(c)
+		for i in range(start, end):
+			c = f(c, self[i])
+			res.append(c)
+		return res
+
+	def __grscan(self, end, f, c=None):
+		res = SList()
+		if c is None:
+			c = self[0]
+			start = 1
+		else:
+			start = 0
+		res.append(c)
+		for i in range(start, end):
+			c = f(c, self[i])
+			res.insert(0, c)
+		return res
+
+	def scanl(self, f, c):
 		"""
 		Makes an rightward accumulation of the element on the current instance from an initial value
 
-		BMF definition:
-		scan f c [x1, x2, ..., xn] = [c, f(c, x1), f(f(c, x1), x2), ..., f(f(...,f(f(c, x1), x2)), xn)]
+		Definition:
+		scanl f c [x_1, x_2, ..., x_n] = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
 
 		Parameters
 		----------
@@ -159,43 +185,36 @@ class SList(list):
 		c :
 			Initial value for the accumulator
 		"""
-		res = SList()
-		if self.is_empty():
-			res.append(c)
-			return res
-		else:
-			res.append(c)
-			for i in range(0, self.length()-1):
-				c = f(c, self[i])
-				res.append(c)
-			return res
+		res = self.scan(f, c)
+		res.pop()
+		return res
+
+	def scan(self, f, c):
+		"""
+		Makes an rightward accumulation of the element on the current instance from an initial value
+
+		Definition:
+		scan f c [x_1, x_2, ..., x_n] = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n)]
+
+		The result of scan is a list of size n+1 where n is the size of self.
+
+		Parameters
+		----------
+		f : lambda x,y => z
+			A function to make a new accumulation from the previous accumulation and a current value
+		c :
+			Initial value for the accumulator
+		"""
+		return self.__gscan(len(self), f, c)
 
 	def scanr(self, op):
-		len = self.length()
-		res = SList(range(0, len))
-		if 0<len: res[0]=self[0]
-		for i in range(0,len-1):
-			res[i+1]=op(res[i],self[i+1])
-		return res
+		assert(len(self) > 0)
+		return self.__gscan(len(self), op)
 
-	def scanl(self, op, e):
-		len = self.length()
-		res = SList(range(0, len))
-		if 0<len: res[0]=e
-		for i in range(0,len-1):
-			res[i+1]=op(res[i],self[i])
-		return res
 
 	def scanl_last(self, op, e):
-		len = self.length()
-		res = SList(range(0, len))
-		if 0<len: res[0]=e
-		for i in range(0,len-1):
-			res[i+1]=op(res[i],self[i])
-		if 0<len:
-			last = op(res[len-1], self[len-1])
-		else:
-			last = e
+		res = self.scan(op, e)
+		last = res.pop()
 		return (res, last)
 
 	def rscan(self, f, c):

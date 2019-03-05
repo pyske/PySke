@@ -19,7 +19,7 @@ class PList:
 		p.__global_size = size
 		p.__local_size = local_size(size)
 		p.__distribution = [local_size_pid(i, size) for i in range(0, nprocs)]
-		p.__start_index = SList(p.__distribution).scan(lambda x,y:x+y,0)[pid]
+		p.__start_index = SList(p.__distribution).scanl(lambda x, y: x + y, 0)[pid]
 		p.__content = SList([f(i) for i in range(p.__start_index, p.__start_index + p.__local_size)])
 		p.__distribution = [local_size_pid(i, size) for i in range(0, nprocs)]
 		return p
@@ -51,7 +51,7 @@ class PList:
 		p.__content = self.__content.reduce(lambda x,y: x+y, [])
 		p.__local_size = len(p.__content)
 		p.__distribution = comm.allgather(p.__local_size)
-		p.__start_index = SList(p.__distribution).scan(lambda x, y: x + y, 0)[pid]
+		p.__start_index = SList(p.__distribution).scanl(lambda x, y: x + y, 0)[pid]
 		p.__global_size = SList(p.__distribution).reduce(lambda x, y: x+y)
 		return p
 

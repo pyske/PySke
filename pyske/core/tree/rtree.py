@@ -289,10 +289,10 @@ class RNode:
 		"""
 		# TODO test to check if it does match its specification:
 		# rAcc (+) (RNode a ts)
-		#	= let rs = scan (+) [root ts[i] | i in [1 .. #ts]]
+		#	= let rs = scanl (+) [root ts[i] | i in [1 .. #ts]]
 		#	in  RNode unit_(+) [setroot (rAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
 		rv = self.get_children().map(lambda x: x.get_value())
-		rs = rv.scan(f, unit_f)
+		rs = rv.scanl(f, unit_f)
 		ch = []
 		ch0 = self.get_children()
 		for i in range(0, ch0.length()):
