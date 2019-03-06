@@ -266,7 +266,7 @@ def test_rscan_nil():
 	c = 0
 	sl = SList()
 	f = lambda x,y : x + y
-	res = sl.rscan(f, c)
+	res = sl.scanp(f, c)
 	exp = SList([0])
 	check(res, exp)
 
@@ -275,7 +275,7 @@ def test_rscan_cons():
 	c = 0
 	sl = SList([1, 2, 3, 4])
 	f = lambda x,y : x + y
-	res = sl.rscan(f, c)
+	res = sl.scanp(f, c)
 	exp = SList([9, 7, 4, 0])
 	check(res, exp)
 

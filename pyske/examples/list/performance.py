@@ -24,6 +24,6 @@ def test(f, input, name):
 input = SList(range(1, 4_000_000))
 add = lambda x, y: x+y
 
-test(lambda l: l.scanl(add, 0), input, "scanl")
-test(lambda l: l.scan(add,0), input, "scan")
+test(lambda l: l.scanp2(add, 0), input, "scanp2")
+test(lambda l: l.scanp(add, 0), input, "scanp")
 

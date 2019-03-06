@@ -144,51 +144,6 @@ class SList(list):
 		else:
 			return functools.reduce(f, self, e)
 
-
-	def __gscan(self, end, f, c=None):
-		res = SList()
-		if c is None:
-			c = self[0]
-			start = 1
-		else:
-			start = 0
-		res.append(c)
-		for i in range(start, end):
-			c = f(c, self[i])
-			res.append(c)
-		return res
-
-	def __grscan(self, end, f, c=None):
-		res = SList()
-		if c is None:
-			c = self[0]
-			start = 1
-		else:
-			start = 0
-		res.append(c)
-		for i in range(start, end):
-			c = f(c, self[i])
-			res.insert(0, c)
-		return res
-
-	def scanl(self, f, c):
-		"""
-		Makes an rightward accumulation of the element on the current instance from an initial value
-
-		Definition:
-		scanl f c [x_1, x_2, ..., x_n] = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
-
-		Parameters
-		----------
-		f : lambda x,y => z
-			A function to make a new accumulation from the previous accumulation and a current value
-		c :
-			Initial value for the accumulator
-		"""
-		res = self.scan(f, c)
-		res.pop()
-		return res
-
 	def scan(self, f, c):
 		"""
 		Makes an rightward accumulation of the element on the current instance from an initial value
@@ -205,19 +160,36 @@ class SList(list):
 		c :
 			Initial value for the accumulator
 		"""
-		return self.__gscan(len(self), f, c)
+		res = self.copy()
+		res.append(c)
+		res[0] = c
+		for i in range(1, len(res)):
+			c = f(c, self[i-1])
+			res[i] = c
+		return res
 
-	def scanr(self, op):
+	def scanl(self, f, c):
+		res = self.copy()
+		for i in range(0, len(res)):
+			res[i] = c
+			c = f(c, self[i])
+		return res
+
+	def scanr(self, f):
 		assert(len(self) > 0)
-		return self.__gscan(len(self), op)
+		res = self.copy()
+		c = res[0]
+		for i in range(1, len(res)):
+			c = f(c, self[i - 1])
+			res[i] = c
+		return res
 
-
-	def scanl_last(self, op, e):
-		res = self.scan(op, e)
+	def scanl_last(self, f, c):
+		res = self.scan(f, c)
 		last = res.pop()
 		return (res, last)
 
-	def rscan(self, f, c):
+	def scanp(self, f, c):
 		"""
 		Makes an leftward accumulation of the element on the current instance from an initial value
 
@@ -228,8 +200,10 @@ class SList(list):
 		----------
 		f : lambda x,y => z
 			A function to make a new accumulation from the previous accumulation and a current value
+			Usually, f is associative.
 		c :
-			Initial value for the accumulator
+			Initial value for the accumulator.
+			Usually, c is the unit of f, i.e. f(x, c) = f(c, x) = x
 		"""
 		res = SList()
 		res.append(c)
@@ -241,6 +215,12 @@ class SList(list):
 				res.append(c)
 			return res.reverse()
 
+	def scanp2(self, f, c):
+		res = self.copy()
+		for i in range(len(self), 0, -1):
+			res[i-1] = c
+			c = f(self[i-1], c)
+		return res
 
 	def zip(self, l):
 		"""
