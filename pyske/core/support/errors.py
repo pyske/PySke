@@ -1,15 +1,15 @@
 class NotEqualSizeError(Exception):
-	"""
-	Exception raised for different sizes between structures
+    """
+    Exception raised for different sizes between structures
 
     Attributes
     ----------
-    message: 
-    	explanation of the error
+    message:
+        explanation of the error
     """
 
-	def __init__(self, message):
-		self.message = "[NotEqualSizeError] "+ message
+    def __init__(self, message):
+        self.message = "[NotEqualSizeError] "+ message
 
 
 class EmptyError(Exception):
@@ -18,26 +18,26 @@ class EmptyError(Exception):
 
     Attributes
     ----------
-    message: 
+    message:
         explanation of the error
     """
-    
+
     def __init__(self, message):
         self.message = "[EmptyError] "+ message
 
 
 class UnknownTypeError(Exception):
-	"""
-	Exception raised if a type is unknown
+    """
+    Exception raised if a type is unknown
 
     Attributes
     ----------
-    message: 
-    	explanation of the error
+    message:
+        explanation of the error
     """
-    
-	def __init__(self, message):
-		self.message = "[UnknownTypeError] "+ message
+
+    def __init__(self, message):
+        self.message = "[UnknownTypeError] "+ message
 
 
 class IllFormedError(Exception):
@@ -46,10 +46,10 @@ class IllFormedError(Exception):
 
     Attributes
     ----------
-    message: 
+    message:
         explanation of the error
     """
-    
+
     def __init__(self, message):
         self.message = "[IllFormedError] "+ message
 

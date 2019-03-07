@@ -2,13 +2,11 @@ from pyske.core.tree.btree import BTree, Leaf, Node
 from pyske.core.list.slist import SList
 
 import random
-import sys
 
 
-
-def generate_random_list(frdm, len):
+def generate_random_list(frdm, size):
 	res = SList([])
-	for i in range(len):
+	for i in range(size):
 		res.append(frdm())
 	return res
 

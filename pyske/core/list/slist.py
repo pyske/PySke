@@ -1,5 +1,6 @@
 import functools
 
+
 LEFT_LIST = "["
 RIGHT_LIST = "]"
 SEPARATOR_LIST = ";"
@@ -13,6 +14,8 @@ class SList(list):
 
     Methods
     -------
+    from_str(s, parser):
+        Creates a SList from a string
     head()
         Gives the first element of the current instance
     tail()
@@ -34,9 +37,9 @@ class SList(list):
     scanl(f, c)
         Makes a rightward accumulation of the values from an initial one, without considering the last value of the instance
     scanr(f)
-         Makes a total leftward accumulation of the values
+        Makes a total leftward accumulation of the values
     scanp(f, c)
-        #TODO
+        TODO
     scanp2(f, c)
          Makes an total lefttward accumulation of the element on the current instance from an initial value
     scanl_last(f, c)
@@ -56,11 +59,21 @@ class SList(list):
         return res + RIGHT_LIST
 
 
+    @staticmethod
     def from_str(s, parser=int):
+        """
+        Creates a SList from a string
+
+        Parameters
+        ----------
+        s : str
+            A string representation of the SList
+        parser : callable, optional
+            A function that transforms a string into a specific type
+            By default, string to int
+        """
         res = SList([])
-        s = s.replace(LEFT_LIST, "")
-        s = s.replace(RIGHT_LIST, "")
-        values = s.split(SEPARATOR_LIST)
+        values = s.replace(LEFT_LIST, "").replace(RIGHT_LIST, "").split(SEPARATOR_LIST)
         for v in values:
             res.append(parser(v))
         return res
@@ -151,6 +164,8 @@ class SList(list):
         ----------
         f : callable
             The used function to reduce the current instance
+        e : optional
+            Default value for reduction
         """
         if e is None:
             return functools.reduce(f, self)
@@ -242,11 +257,11 @@ class SList(list):
         """
         res = self.scan(f, c)
         last = res.pop()
-        return (res, last)
+        return res, last
 
 
     def scanp(self, f, c):
-        """
+        """TODO
         The result of scanp is a list of size n where n is the size of self.
 
         Definition:

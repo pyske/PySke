@@ -1,8 +1,9 @@
 import sys
-from pyske.core.support.errors import EmptyError, NotEqualSizeError, UnknownTypeError, IllFormedError, ApplicationError, \
-    NotSameTagError
+
+from pyske.core.support.errors import EmptyError, UnknownTypeError, IllFormedError, ApplicationError, NotSameTagError
 from pyske.core.list.slist import SList
-from pyske.core.tree.btree import BTree, Leaf, Node
+from pyske.core.tree.btree import Leaf, Node
+
 
 MINUS_INFINITY = int((-sys.maxsize - 1) / 2)
 TAG_LEAF = 1
@@ -24,7 +25,7 @@ def parse_tag(vt):
 
     Parameters
     ----------
-    t : str
+    vt : str
         A label that we want to get the VTag
 
     Raises
@@ -208,6 +209,10 @@ class Segment(SList):
     def reduce_local(self, k, phi, psi_l, psi_r):
         """Reduces a local Segment into a value
 
+        Precondition
+        -------------
+        self should not be empty
+
         Parameters
         ----------
         k : callable
@@ -274,6 +279,10 @@ class Segment(SList):
     def reduce_global(self, psi_n):
         """Makes a global reduction using local reductions of Segments
 
+        Precondition
+        -------------
+        self should empty, and should not have critical nodes
+
         Parameters
         ----------
         psi_n : callable
@@ -308,6 +317,10 @@ class Segment(SList):
 
     def uacc_local(self, k, phi, psi_l, psi_r):
         """Computes local upwards accumulation and reduction
+
+        Precondition
+        -------------
+        self should empty
 
         Parameters
         ----------
@@ -378,11 +391,15 @@ class Segment(SList):
         top = stack.pop()
         tag = "N" if has_crit else "L"
         # We return both the top values for following global upward accumulation, and the current accumulated subtree
-        return (TaggedValue(top, tag), res)
+        return TaggedValue(top, tag), res
 
 
     def uacc_global(self, psi_n):
         """Performs sequential upwards accumulation
+
+        Precondition
+        -------------
+        self should not have critical nodes
 
         Parameters
         ----------
@@ -420,9 +437,13 @@ class Segment(SList):
     def uacc_update(self, seg2, k, lc, rc):
         """Makes an update of the current accumulation, using initial values and the top accumulated values
 
+        Precondition
+        -------------
+        The lengths of self and seg2 should be equal
+
         Parameters
         ----------
-        seg : :obj:`Segment`
+        seg2 : :obj:`Segment`
             Result of a local accumulation
         k : callable
             The function used to reduce a BTree into a single value
@@ -490,6 +511,10 @@ class Segment(SList):
     def dacc_path(self, phi_l, phi_r, psi_u):
         """Finds the critical node and then computes two values only on the path from the root node to the critical node
 
+        Precondition
+        -------------
+        self should not be empty
+
         Parameters
         ----------
         phi_l : callable
@@ -542,6 +567,10 @@ class Segment(SList):
 
     def dacc_global(self, psi_d, c):
         """Performs sequential downwards accumulation
+
+        Precondition
+        -------------
+        self should bot have critical nodes
 
         Parameters
         ----------
@@ -621,6 +650,11 @@ class Segment(SList):
     def get_left(self, i):
         """Get the left children of a value at the i-th index
 
+        Precondition
+        -------------
+        self should not have critical nodes
+        The value at the looked index should not be a leaf, and should not be the last element
+
         Parameters
         ----------
         i : int
@@ -635,6 +669,11 @@ class Segment(SList):
     def get_right(self, i):
         """Get the right children of a value at the i-th index
 
+        Precondition
+        -------------
+        self should not have critical nodes
+        The value at the looked index should not be a leaf, and should not be the before last element
+
         Parameters
         ----------
         i : int
@@ -644,11 +683,11 @@ class Segment(SList):
         assert not self[i].is_leaf(), "A leaf value doesn't have a right children"
         assert i < self.length() - 2, "Cannot get the left children of a node in an ill-formed Segment"
 
-        def get_right_index(gt, i):
-            if gt[i + 1].is_leaf():
-                return i + 2
+        def get_right_index(gt, idx):
+            if gt[idx + 1].is_leaf():
+                return idx + 2
             else:
-                return 1 + get_right_index(gt, i + 1)
+                return 1 + get_right_index(gt, idx + 1)
 
         j = get_right_index(self, i)
         return self[j]
@@ -656,6 +695,10 @@ class Segment(SList):
 
     def zip(self, seg):
         """Zip the values contained in a second Segment with the ones in the current instance
+
+        Precondition
+        -------------
+        The lengths of self and seg should be equal
 
         Parameters
         ----------
@@ -682,12 +725,16 @@ class Segment(SList):
     def map2(self, f, seg):
         """Zip the values contained in a second Segment with the ones in the current instance using a function
 
+        Precondition
+        -------------
+        The lengths of self and seg should be equal
+
         Parameters
         ----------
-        lt : :obj:`Segment`
-            The Segment to zip with the current instance
         f : callable
             A function to zip values
+        seg : :obj:`Segment`
+            The Segment to zip with the current instance
 
         Raises
         ------
@@ -706,6 +753,7 @@ class Segment(SList):
         return res
 
 
+    @staticmethod
     def from_str(s, parser=int):
         """Get a segment from a string value
 
@@ -718,9 +766,7 @@ class Segment(SList):
             By default, string to int
         """
         res = Segment()
-        s = s.replace(LEFT_SEG, "")
-        s = s.replace(RIGHT_SEG, "")
-        values = s.split(SEPARATOR_SEG)
+        values = s.replace(LEFT_SEG, "").replace(RIGHT_SEG, "").split(SEPARATOR_SEG)
         for v in values:
             v = v.replace(LEFT_TV, "")
             v = v.replace(RIGHT_TV, "")
@@ -778,7 +824,7 @@ class LTree(SList):
                 res = res + "\n"
         return res
 
-
+    @staticmethod
     def init_from_bt(bt, m):
         """Create a LTree from a BTree
 
@@ -789,16 +835,16 @@ class LTree(SList):
         m : int
             Variable to define the critical nodes of bt
         """
-        def __tv2lv(bt_val):
-            val = bt_val.get_value()
+        def __tv2lv(bt_value):
+            val = bt_value.get_value()
             res = Segment()
             res_0 = Segment()
-            if bt_val.is_leaf():
+            if bt_value.is_leaf():
                 res_0.append(val)
                 res.append(res_0)
             else:  # bt_val.is_node()
-                res_left = Segment(__tv2lv(bt_val.get_left()))
-                res_right = Segment(__tv2lv(bt_val.get_right()))
+                res_left = Segment(__tv2lv(bt_value.get_left()))
+                res_right = Segment(__tv2lv(bt_value.get_right()))
                 if val.is_critical():
                     res_0.append(val)
                     res.append(res_0)
@@ -814,7 +860,7 @@ class LTree(SList):
             return res
 
         # Get a LTree from a BTree
-        up_div = lambda n, m: (int(n / m) + (0 if n % m == 0 else 1))
+        up_div = lambda n, m_val: (int(n / m_val) + (0 if n % m_val == 0 else 1))
         bt_one = bt.map(lambda x: 1, lambda x: 1)
         bt_size = bt_one.uacc(lambda x, y, z: x + y + z)
         bt_tags = bt_size.mapt(lambda x: TAG_LEAF,
@@ -825,6 +871,7 @@ class LTree(SList):
         return LTree(__tv2lv(bt_val))
 
 
+    @staticmethod
     def init_from_file(filename, parser=int):
         """Initialize a LTree from a file
 
@@ -865,6 +912,10 @@ class LTree(SList):
     def map(self, kl, kn):
         """Applies function to every element of the current instance
 
+        Precondition
+        -------------
+        self should empty
+
         Parameters
         ----------
         kl : callable
@@ -886,6 +937,10 @@ class LTree(SList):
         * k(l, b, r) = psi_n(l, phi(b), r)
         * psi_n(psi_n(x, l, y), b, r) = psi_n(x, psi_l(l,b,r), y)
         * psi_n(l, b, psi_n(x, r, y)) = psi_n(x, psi_r(l,b,r), y)
+
+        Precondition
+        -------------
+        self should not be empty
 
         Parameters
         ----------
@@ -918,6 +973,10 @@ class LTree(SList):
         * k(l, b, r) = psi_n(l, phi(b), r)
         * psi_n(psi_n(x, l, y), b, r) = psi_n(x, psi_l(l,b,r), y)
         * psi_n(l, b, psi_n(x, r, y)) = psi_n(x, psi_r(l,b,r), y)
+
+        Precondition
+        -------------
+        self should not be empty
 
         Parameters
         ----------
@@ -968,12 +1027,18 @@ class LTree(SList):
         * gr(c, b) = psi_d(c, phi_r(b))
         * psi_d(psi_d(c, b), a) = psi_d(c, psi_u(b,a))
 
+        Precondition
+        -------------
+        self should be empty
+
         Parameters
         ---------
         gl : callable
             The function used to make an accumulation to the left children in a binary tree
         gr : callable
             The function used to make an accumulation to the right children in a binary tree
+        c
+            Initial value of accumulation
         phi_l : callable
             A function used to respect the closure property to allow partial computation on the left
         phi_r : callable
@@ -1007,6 +1072,10 @@ class LTree(SList):
     def zip(self, lt):
         """Zip the values contained in a second LTree with the ones in the current instance
 
+        Precondition
+        -------------
+        The lengths of self and lt should be equal
+
         Parameters
         ----------
         lt : :obj:`LTree`
@@ -1021,6 +1090,10 @@ class LTree(SList):
 
     def map2(self, f, lt):
         """Zip the values contained in a second LTree with the ones in the current instance using a function
+
+        Precondition
+        -------------
+        The lengths of self and lt should be equal
 
         Parameters
         ----------
@@ -1051,21 +1124,21 @@ class LTree(SList):
             return Leaf(v.get_value()) if bt.is_leaf() else Node(v.get_value(), __remove_annotation(bt.get_left()),
                                                                  __remove_annotation(bt.get_right()))
 
-        def __lv2ibt(seg):
+        def __lv2ibt(segment):
             stack = []
-            has_crit = False
-            if seg.empty():
+            has_crit_b = False
+            if segment.empty():
                 raise EmptyError("An empty Segment cannot be transformed into a BTree")
-            for i in range(seg.length() - 1, -1, -1):
-                v = seg[i]
+            for i in range(segment.length() - 1, -1, -1):
+                v = segment[i]
                 if v.is_leaf():
                     stack.append(Leaf(v))
                 elif v.is_critical():
                     stack.append(Leaf(v))
-                    if has_crit:
+                    if has_crit_b:
                         raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
                     else:
-                        has_crit = True
+                        has_crit_b = True
                 else:
                     if len(stack) < 2:
                         raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
@@ -1075,12 +1148,12 @@ class LTree(SList):
             if len(stack) != 1:
                 raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
             else:
-                return (has_crit, stack[0])
+                return has_crit_b, stack[0]
 
-        def __rev_segment_to_trees(lb, gt):
+        def __rev_segment_to_trees(lb, glob):
             stack = []
             for i in range(lb.length() - 1, -1, -1):
-                if gt[i] == TAG_LEAF:
+                if glob[i] == TAG_LEAF:
                     stack.append(lb[i])
                 else:  # gt[i] == VTag_Node
                     lbt = stack.pop()

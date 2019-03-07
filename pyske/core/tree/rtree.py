@@ -1,4 +1,4 @@
-from pyske.core.support.errors import NotEqualSizeError, ConstructorError
+from pyske.core.support.errors import ConstructorError
 from pyske.core.list.slist import SList
 from pyske.core.tree.btree import Node, Leaf, BTree
 
@@ -58,22 +58,22 @@ class RNode:
             self.value = value
             self.children = SList(ts)
 
-
+    @staticmethod
     def b2r(bt):
         """
         Create a RNode instance from a BTree
         """
-        def aux(bt):
-            if bt.is_leaf():
-                val = bt.get_value()
-                if val == None:
+        def aux(btree):
+            if btree.is_leaf():
+                val = btree.get_value()
+                if val is None:
                     return SList()
                 else:
                     return SList([RNode(val)])
             else:
-                n = bt.get_value()
-                left = bt.get_left()
-                right = bt.get_right()
+                n = btree.get_value()
+                left = btree.get_left()
+                right = btree.get_right()
                 res_l = aux(left)
                 res_r = aux(right)
                 res_head = RNode(n, res_l)
@@ -103,7 +103,7 @@ class RNode:
             for i in range(0, ch1.length()):
                 if ch1[i] != ch2[i]:
                     return False
-            return (self.get_value() == other.get_value())
+            return self.get_value() == other.get_value()
         return False
 
 
@@ -215,9 +215,9 @@ class RNode:
             A value such as, forall x, f(x, unit_f) = x
         """
 
-        def dacc2(t, f, c):
+        def dacc2(t, fct, c):
             # Auxiliary function to make an accumulation with an arbitrary accumulator
-            return RNode(c, t.children.map(lambda x: dacc2(x, f, f(c, t.get_value()))))
+            return RNode(c, t.children.map(lambda x: dacc2(x, fct, fct(c, t.get_value()))))
 
         # Since the accumulator changes at each iteration, we need to use a changing parameter, not defined in dacc.
         # Use of an auxiliary function, with as a first accumulator, unit_f
@@ -227,6 +227,10 @@ class RNode:
     def zip(self, rt):
         """Zip the values contained in a second RTree with the ones in the current instance
 
+        Precondition
+        -------------
+        The lengths of self.children and rt.children should be equal
+
         Parameters
         ----------
         rt : :obj:`RTree`
@@ -235,7 +239,7 @@ class RNode:
         ch1 = self.get_children()
         ch2 = rt.get_children()
         assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
-        ch = []
+        ch = SList([])
         for i in range(0, ch1.length()):
             ch.append(ch1[i].zip(ch2))
         v = (self.get_value(), rt.get_value())
@@ -244,6 +248,10 @@ class RNode:
 
     def map2(self, rt, f):
         """Zip the values contained in a second RTree with the ones in the current instance using a function
+
+        Precondition
+        -------------
+        The lengths of self.children and rt.children should be equal
 
         Parameters
         ----------
@@ -255,7 +263,7 @@ class RNode:
         ch1 = self.get_children()
         ch2 = rt.get_children()
         assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
-        ch = []
+        ch = SList([])
         for i in range(0, ch1.length()):
             ch.append(ch1[i].map2(f, ch2))
         v = f(self.get_value(), rt.get_value())
@@ -265,6 +273,10 @@ class RNode:
     def racc(self, f, unit_f):
         """Makes a rightward accumulation of the values in the current instance
 
+        rAcc (+) (RNode a ts)
+            = let rs = scanl (+) [root ts[i] | i in [1 .. #ts]]
+            in  RNode unit_(+) [setroot (rAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
+
         Parameters
         ----------
         f : callable
@@ -272,9 +284,7 @@ class RNode:
         unit_f
             A value such as, forall x, f(x, unit_f) = x
         """
-        # rAcc (+) (RNode a ts)
-        #	= let rs = scanl (+) [root ts[i] | i in [1 .. #ts]]
-        #	in  RNode unit_(+) [setroot (rAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
+
         rv = self.get_children().map(lambda x: x.get_value())
         rs = rv.scanl(f, unit_f)
         ch = SList()
@@ -290,6 +300,10 @@ class RNode:
     def lacc(self, f, unit_f):
         """Makes a leftward accumulation of the values in the current instance
 
+        lAcc (+) (RNode a ts)
+            = let rs = scanp (+) [root ts[i] | i in [1 .. #ts]]
+            in  RNode unit_(+) [setroot (lAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
+
         Parameters
         ----------
         f : callable
@@ -297,9 +311,6 @@ class RNode:
         unit_f
             A value such as, forall x, f(x, unit_f) = x
         """
-        # lAcc (+) (RNode a ts)
-        #	= let rs = scan2 (+) [root ts[i] | i in [1 .. #ts]]
-        #	in  RNode unit_(+) [setroot (lAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
         rv = self.get_children().map(lambda x: x.get_value())
         rs = rv.scanp(f, unit_f)
         ch = SList()

@@ -1,6 +1,4 @@
 from pyske.core.list.slist import SList
-from pyske.core.tree.btree import BTree
-from pyske.core.tree.ltree import LTree
 
 def distribute_tree(lt, n):
 	sum3 = lambda x,y,z : x+y+z
@@ -42,7 +40,7 @@ def distribute_tree(lt, n):
 			else:
 				curr_seg_length = seg.length()
 				if abs(avg_elements - (acc_size + curr_seg_length)) > abs(avg_elements - acc_size) :
-					distribution[current_pid] = (nb_segs)
+					distribution[current_pid] = nb_segs
 					global_index.append((0, curr_seg_length))
 					acc_size = curr_seg_length
 					nb_segs = 1
@@ -52,7 +50,7 @@ def distribute_tree(lt, n):
 					global_index.append((acc_size, curr_seg_length))
 					acc_size = acc_size + curr_seg_length
 
-	return (distribution, global_index)
+	return distribution, global_index
 
 
 

@@ -1,7 +1,7 @@
-from pyske.core.tree.ltree import TaggedValue, Segment, LTree
-from pyske.core.list.slist import SList
+from pyske.core.tree.ltree import TaggedValue, Segment
 from pyske.core.support.parallel import *
 from pyske.core.support.separate import *
+
 
 TAG_BASE = "270995"
 TAG_COMM_REDUCE = int(TAG_BASE + "11")
@@ -30,7 +30,7 @@ class PTree:
         self.__start_index = 0
         self.__nb_segs = 0
         self.__content = SList([])
-        if (lt != None):
+        if lt is None:
             (distribution, global_index) = distribute_tree(lt, nprocs)
             self.__distribution = distribution
             self.__global_index = global_index
@@ -40,6 +40,7 @@ class PTree:
                 self.__content.extend(lt[i_seg])
 
 
+    @staticmethod
     def init(pt, content):
         """Factory for distributed tree.
 
@@ -61,6 +62,7 @@ class PTree:
         return p
 
 
+    @staticmethod
     def init_from_file(filename, parser=int):
         """Instantiate a distributed tree from a file
 
@@ -78,7 +80,7 @@ class PTree:
             s = s.replace("(", "")
             s = s.replace(")", "")
             ss = s.split(",")
-            return (int(ss[0]), int(ss[1]))
+            return int(ss[0]), int(ss[1])
 
         p = PTree()
         content = SList([])
@@ -166,7 +168,7 @@ class PTree:
         else:
             comm.send({'c': gt}, dest=0, tag=TAG_COMM_REDUCE)
         # Step 3 : Global Reduction
-        return (gt.reduce_global(psi_n) if pid == 0 else None)
+        return gt.reduce_global(psi_n) if pid == 0 else None
 
     def uacc(self, k, phi, psi_n, psi_l, psi_r):
         """Upward accumulation skeleton for distributed tree
@@ -205,6 +207,7 @@ class PTree:
             comm.send({'c': gt}, dest=0, tag=TAG_COMM_UACC_1)
 
         # Step 3 : Global Upward Accumulation
+        gt2 = None
         if pid == 0:
             gt2 = gt.uacc_global(psi_n)
             for i in range(len(gt2)):
@@ -249,6 +252,8 @@ class PTree:
             The function used to make an accumulation to the left children in a binary tree
         gr : callable
             The function used to make an accumulation to the right children in a binary tree
+        c
+            Initial value of accumulation
         phi_l : callable
             A function used to respect the closure property to allow partial computation on the left
         phi_r : callable
@@ -295,6 +300,10 @@ class PTree:
     def zip(self, pt):
         """Zip skeleton for distributed tree
 
+        Precondition
+        -------------
+        The distributions of self and pt should be the same
+
         Parameters
         ----------
         pt : :obj:`PTree`
@@ -311,9 +320,13 @@ class PTree:
     def map2(self, pt, f):
         """Map2 skeleton for distributed tree
 
+        Precondition
+        -------------
+        The distributions of self and pt should be the same
+
         Parameters
         ----------
-        lt : :obj:`LTree`
+        pt : :obj:`LTree`
             The LTree to zip with the current instance
         f : callable
             A function to zip values

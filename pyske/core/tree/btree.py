@@ -1,5 +1,6 @@
 from abc import ABC  # abstract classes library
 
+
 class BTree(ABC):
     """An abstract class used to represent a Binary Tree
 
@@ -75,7 +76,7 @@ class Leaf(BTree):
 
     def __eq__(self, other):
         if isinstance(other, Leaf):
-            return (self.get_value() == other.get_value())
+            return self.get_value() == other.get_value()
         return False
 
 
@@ -172,6 +173,10 @@ class Leaf(BTree):
     def zip(self, t):
         """Zip the values contained in t with the ones in the current instance
 
+        Precondition
+        -------------
+        t should be a Leaf instance
+
         Parameters
         ----------
         t : :obj:`BTree`
@@ -183,6 +188,10 @@ class Leaf(BTree):
 
     def map2(self, f, t):
         """Zip the values contained in a tree with the ones in the current instance using a function
+
+        Precondition
+        -------------
+        t should be a Leaf instance
 
         Parameters
         ----------
@@ -407,6 +416,10 @@ class Node(BTree):
     def zip(self, t):
         """Zip the values contained in t with the ones in the current instance
 
+        Precondition
+        -------------
+        f should be a Node instance
+
         Parameters
         ----------
         t : :obj:`BTree`
@@ -422,6 +435,10 @@ class Node(BTree):
 
     def map2(self, f, t):
         """Zip the values contained in a tree with the ones in the current instance using a function
+
+        Precondition
+        -------------
+        f should be a Node instance
 
         Parameters
         ----------

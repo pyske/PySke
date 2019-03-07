@@ -1,5 +1,6 @@
 from mpi4py import MPI
 
+
 comm = MPI.COMM_WORLD
 pid = comm.Get_rank()
 nprocs = comm.Get_size()
@@ -9,8 +10,8 @@ def wtime():
     return MPI.Wtime()
 
 
-def local_size_pid(pid, size):
-    return int(size / nprocs) + (1 if pid < size % nprocs else 0)
+def local_size_pid(idp, size):
+    return int(size / nprocs) + (1 if idp < size % nprocs else 0)
 
 
 def local_size(size):

@@ -17,6 +17,7 @@ class PList:
         return self.__global_size
 
 
+    @staticmethod
     def init(f, size):
         assert (size >= 0)
         p = PList()
@@ -120,9 +121,10 @@ class PList:
             for i in range(0, len(partials)):
                 partials[i] = op(acc, partials[i])
         p.__content = partials
-        return (p, red)
+        return p, red
 
 
+    @staticmethod
     def from_seq(l):
         p = PList()
         if pid == 0:
