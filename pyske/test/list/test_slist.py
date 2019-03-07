@@ -278,7 +278,7 @@ def test_scanl_last_non_empty():
 
 # -------------------------- #
 
-def test_rscan_nil():
+def test_scanp_nil():
     c = 0
     sl = SList()
     f = lambda x, y: x + y
@@ -287,7 +287,26 @@ def test_rscan_nil():
     assert res == exp
 
 
-def test_rscan_cons():
+def test_scanp_cons():
+    c = 0
+    sl = SList([1, 2, 3, 4])
+    f = lambda x, y: x + y
+    res = sl.scanp(f, c)
+    exp = SList([9, 7, 4, 0])
+    assert res == exp
+
+
+# -------------------------- #
+
+def test_scanp2_nil():
+    c = 0
+    sl = SList()
+    f = lambda x, y: x + y
+    res = sl.scanp2(f, c)
+    exp = SList([])
+    assert res == exp
+
+def test_scanp2_cons():
     c = 0
     sl = SList([1, 2, 3, 4])
     f = lambda x, y: x + y

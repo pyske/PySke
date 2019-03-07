@@ -1,33 +1,30 @@
-from pyske.core.tree.ltree import parseVTag,VTag_LEAF,VTag_NODE,VTag_CRITICAL
+import pytest
+
+from pyske.core.tree.ltree import parse_tag,TAG_LEAF,TAG_NODE,TAG_CRITICAL
 from pyske.core.support.errors import UnknownTypeError
 
 def test_parseVTag_leaf():
 	tag = "L"
-	exp = VTag_LEAF
-	res = parseVTag(tag)
+	exp = TAG_LEAF
+	res = parse_tag(tag)
 	assert exp == res
 
 
 def test_parseVTag_node():
 	tag = "N"
-	exp = VTag_NODE
-	res = parseVTag(tag)
+	exp = TAG_NODE
+	res = parse_tag(tag)
 	assert exp == res
 
 
 def test_parseVTag_critical():
 	tag = "C"
-	exp = VTag_CRITICAL
-	res = parseVTag(tag)
-	tag = "C"
-	
+	exp = TAG_CRITICAL
+	res = parse_tag(tag)
 	assert exp == res
 
 
 def test_parseVTag_unknown():
 	tag = "_"
-	try:
-		res = parseVTag(tag)
-		# raise TestFailure()
-	except UnknownTypeError as e:
-		assert True
+	with pytest.raises(UnknownTypeError):
+		parse_tag(tag)

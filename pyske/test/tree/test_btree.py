@@ -1,3 +1,5 @@
+import pytest
+
 from pyske.core.tree.btree import Leaf, Node
 from pyske.core.support.errors import NotEqualSizeError
 
@@ -145,21 +147,15 @@ def test_zip_node():
 def test_zip_leaf_node():
 	bt1 = Leaf(1) 
 	bt2 = Node(4, Leaf(5), Leaf(6))
-	try:
+	with pytest.raises(AssertionError):
 		bt1.zip(bt2)
-		# raise TestFailure()
-	except NotEqualSizeError as e:
-		assert True
 
 
 def test_zip_node_leaf():
 	bt1 = Node(1, Leaf(2), Leaf(3))
 	bt2 = Leaf(2)
-	try:
+	with pytest.raises(AssertionError):
 		bt1.zip(bt2)
-		# raise TestFailure()
-	except NotEqualSizeError as e:
-		assert True
 
 # -------------------------- #
 
@@ -168,7 +164,7 @@ def test_zipwith_leaf():
 	bt2 = Leaf(2)
 	f = lambda x,y : x + y
 	exp = Leaf(3)
-	res = bt1.zipwith(f, bt2)
+	res = bt1.map2(f, bt2)
 	assert exp == res
 
 
@@ -177,7 +173,7 @@ def test_zipwith_node():
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	f = lambda x,y : x + y
 	exp = Node(5, Leaf(7), Leaf(9))
-	res = bt1.zipwith(f, bt2)
+	res = bt1.map2(f, bt2)
 	assert exp == res
 
 
@@ -185,22 +181,16 @@ def test_zipwith_leaf_node():
 	bt1 = Leaf(1) 
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	f = lambda x,y : x + y
-	try:
-		bt1.zipwith(f, bt2)
-		# raise TestFailure()
-	except NotEqualSizeError as e:
-		assert True
+	with pytest.raises(AssertionError):
+		bt1.map2(f, bt2)
 
 
 def test_zipwith_node_leaf():
 	bt1 = Node(1, Leaf(2), Leaf(3))
 	bt2 = Leaf(2)
 	f = lambda x,y : x + y
-	try:
-		bt1.zipwith(f, bt2)
-		# raise TestFailure()
-	except NotEqualSizeError as e:
-		assert True
+	with pytest.raises(AssertionError):
+		bt1.map2(f, bt2)
 
 # -------------------------- #
 

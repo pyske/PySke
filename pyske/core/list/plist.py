@@ -12,8 +12,10 @@ class PList:
         self.__start_index = 0
         self.__distribution = [0 for i in range(0, nprocs)]
 
+
     def length(self):
         return self.__global_size
+
 
     def init(f, size):
         assert (size >= 0)
@@ -26,19 +28,24 @@ class PList:
         p.__distribution = [local_size_pid(i, size) for i in range(0, nprocs)]
         return p
 
+
     def map(self, f):
         return PList.init(lambda i: f(self.__content[i - self.__start_index]), self.__global_size)
 
+
     def mapi(self, f):
         return PList.init(lambda i: f(i, self.__content[i - self.__start_index]), self.__global_size)
+
 
     def map2(self, f, pl):
         assert (self.__distribution == pl.__distribution)
         return PList.init(lambda i: f(self.__content[i - self.__start_index], pl.__content[i - self.__start_index]),
                           self.__global_size)
 
+
     def zip(self, pl):
         return self.map2(lambda x, y: (x, y), pl)
+
 
     def get_partition(self):
         p = PList()
@@ -49,6 +56,7 @@ class PList:
         p.__distribution = [1 for i in range(0, nprocs)]
         return p
 
+
     def flatten(self):
         p = PList()
         p.__content = self.__content.reduce(lambda x, y: x + y, [])
@@ -57,6 +65,7 @@ class PList:
         p.__start_index = SList(p.__distribution).scanl(lambda x, y: x + y, 0)[pid]
         p.__global_size = SList(p.__distribution).reduce(lambda x, y: x + y)
         return p
+
 
     def reduce(self, op, e=None):
         if e is None:
@@ -69,6 +78,7 @@ class PList:
             partials = SList(comm.allgather(partial))
         return partials.reduce(op, e)
 
+
     def __get_shape(self):
         p = PList()
         p.__local_size = self.__local_size
@@ -76,6 +86,7 @@ class PList:
         p.__distribution = self.__distribution
         p.__start_index = self.__start_index
         return p
+
 
     def scanr(self, op):
         assert (self.__global_size > 0)
@@ -89,6 +100,7 @@ class PList:
         p.__content = partials
         return p
 
+
     def scanl(self, op, e):
         p = self.__get_shape()
         partials, last = self.__content.scanl_last(op, e)
@@ -99,6 +111,7 @@ class PList:
         p.__content = partials
         return p
 
+
     def scanl_last(self, op, e):
         p = self.__get_shape()
         partials, last = self.__content.scanl_last(op, e)
@@ -108,6 +121,7 @@ class PList:
                 partials[i] = op(acc, partials[i])
         p.__content = partials
         return (p, red)
+
 
     def from_seq(l):
         p = PList()
@@ -122,8 +136,10 @@ class PList:
         p.__start_index = 0
         return p
 
+
     def to_seq(self):
         return self.get_partition().reduce(lambda x, y: x + y, [])
+
 
     def __str__(self):
         return "pid[" + str(pid) + "]:\n" + \

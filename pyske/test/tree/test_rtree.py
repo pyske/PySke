@@ -1,3 +1,5 @@
+import pytest
+
 from pyske.core.tree.rtree import RNode
 from pyske.core.tree.btree import Node, Leaf 
 from pyske.core.list.slist import SList
@@ -7,11 +9,8 @@ from pyske.core.support.errors import ConstructorError
 
 def test_b2r_leaf_none():
 	bt = Leaf(None)
-	try:
+	with pytest.raises(ConstructorError):
 		RNode(bt)
-		# raise TestFailure()
-	except ConstructorError as e:
-		assert True
 
 
 def test_b2r_leaf():

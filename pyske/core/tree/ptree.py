@@ -13,8 +13,7 @@ TAG_COMM_MERGE = int(TAG_BASE + "00")
 
 
 class PTree:
-    """
-    A class used to represent a distributed tree
+    """A class used to represent a distributed tree
 
     Attributes
     ----------
@@ -40,9 +39,18 @@ class PTree:
             for i_seg in range(self.__start_index, self.__start_index + self.__nb_segs):
                 self.__content.extend(lt[i_seg])
 
+
     def init(pt, content):
-        """
-        Factory for distributed tree
+        """Factory for distributed tree.
+
+        Creates a PTree from a already existing one, but changing its content
+
+        Parameters
+        ----------
+        pt : :obj:`PTree`
+            A parallel tree that we want to copy the distribution
+        content : :obj:`SList`
+            The content of the resulting PTree
         """
         p = PTree()
         p.__distribution = pt.__distribution
@@ -52,9 +60,17 @@ class PTree:
         p.__content = content
         return p
 
+
     def init_from_file(filename, parser=int):
-        """
-        Instantiate a distributed tree from a file
+        """Instantiate a distributed tree from a file
+
+        Parameters
+        ----------
+        filename : str
+            The name of the file that contains the PTree to instantiate
+        parser : callable, optional
+            A function that transforms a string into a specific type.
+            By default, string to int
         """
         filename = filename + "." + str(pid)
 
@@ -85,6 +101,7 @@ class PTree:
         p.__content = content
         return p
 
+
     def __str__(self):
         return "pid[" + str(pid) + "]:\n" + \
                "  global_index: " + str(self.__global_index) + "\n" + \
@@ -94,8 +111,7 @@ class PTree:
                "  content: " + str(self.__content) + "\n"
 
     def browse(self):
-        """
-        Browse the linearized distributed tree contained in the current processor
+        """Browse the linearized distributed tree contained in the current processor
         """
         res = "pid[" + str(pid) + "] "
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
@@ -104,8 +120,14 @@ class PTree:
         return res
 
     def map(self, kl, kn):
-        """
-        Map skeleton for distributed tree
+        """Map skeleton for distributed tree
+
+        Parameters
+        ----------
+        kl : callable
+            Function to apply to every leaf value of the current instance
+        kn : callable
+            Function to apply to every node value of the current instance
         """
         content = SList([])
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
@@ -113,8 +135,25 @@ class PTree:
         return PTree.init(self, content)
 
     def reduce(self, k, phi, psi_n, psi_l, psi_r):
-        """
-        Reduce skeleton for distributed tree
+        """Reduce skeleton for distributed tree
+
+        The parameters must respect these equalities (closure property):
+        * k(l, b, r) = psi_n(l, phi(b), r)
+        * psi_n(psi_n(x, l, y), b, r) = psi_n(x, psi_l(l,b,r), y)
+        * psi_n(l, b, psi_n(x, r, y)) = psi_n(x, psi_r(l,b,r), y)
+
+        Parameters
+        ----------
+        k : callable
+            The function used to reduce a BTree into a single value
+        phi : callable
+            A function used to respect the closure property to allow partial computation
+        psi_n : callable
+            A function used to respect the closure property to make partial computation
+        psi_l : callable
+            A function used to respect the closure property to make partial computation on the left
+        psi_r : callable
+            A function used to respect the closure property to make partial computation on the right
         """
         # Step 1 : Local Reduction
         gt = Segment([])
@@ -130,8 +169,25 @@ class PTree:
         return (gt.reduce_global(psi_n) if pid == 0 else None)
 
     def uacc(self, k, phi, psi_n, psi_l, psi_r):
-        """
-        Upward accumulation skeleton for distributed tree
+        """Upward accumulation skeleton for distributed tree
+
+        The parameters must respect these equalities (closure property):
+        * k(l, b, r) = psi_n(l, phi(b), r)
+        * psi_n(psi_n(x, l, y), b, r) = psi_n(x, psi_l(l,b,r), y)
+        * psi_n(l, b, psi_n(x, r, y)) = psi_n(x, psi_r(l,b,r), y)
+
+        Parameters
+        ----------
+        k : callable
+            The function used to reduce a BTree into a single value
+        phi : callable
+            A function used to respect the closure property to allow partial computation
+        psi_n : callable
+            A function used to respect the closure property to make partial computation
+        psi_l : callable
+            A function used to respect the closure property to make partial computation on the left
+        psi_r : callable
+            A function used to respect the closure property to make partial computation on the right
         """
         # Step 1 : Local Upwards Accumulation
         gt = Segment([])
@@ -180,8 +236,27 @@ class PTree:
         return PTree.init(self, new_content)
 
     def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
-        """
-        Downward accumulation skeleton for distributed tree
+        """Downward accumulation skeleton for distributed tree
+
+        The parameters must respect these equalities (closure property):
+        * gl(c, b) = psi_d(c, phi_l(b))
+        * gr(c, b) = psi_d(c, phi_r(b))
+        * psi_d(psi_d(c, b), a) = psi_d(c, psi_u(b,a))
+
+        Parameters
+        ---------
+        gl : callable
+            The function used to make an accumulation to the left children in a binary tree
+        gr : callable
+            The function used to make an accumulation to the right children in a binary tree
+        phi_l : callable
+            A function used to respect the closure property to allow partial computation on the left
+        phi_r : callable
+            A function used to respect the closure property to allow partial computation on the right
+        psi_d : callable
+            A function used to respect the closure property to make partial downward accumulation
+        psi_u : callable
+            A function used to respect the closure property to make partial computation
         """
         # Step 1 : Computing Local Intermediate Values
         gt = Segment([])
@@ -218,8 +293,12 @@ class PTree:
         return PTree.init(self, new_content)
 
     def zip(self, pt):
-        """
-        Zip skeleton for distributed tree
+        """Zip skeleton for distributed tree
+
+        Parameters
+        ----------
+        pt : :obj:`PTree`
+            The PTree to zip with the current instance
         """
         assert self.__distribution == pt.__distribution
         new_content = SList([])
@@ -228,9 +307,16 @@ class PTree:
             new_content.extend(Segment(self.__content[start:start+offset]).zip(Segment(pt.__content[start:start+offset])))
         return PTree.init(self, new_content)
 
-    def zipwith(self, pt, f):
-        """
-        Zipwith skeleton for distributed tree
+
+    def map2(self, pt, f):
+        """Map2 skeleton for distributed tree
+
+        Parameters
+        ----------
+        lt : :obj:`LTree`
+            The LTree to zip with the current instance
+        f : callable
+            A function to zip values
         """
         assert self.__distribution == pt.__distribution
         new_content = SList([])

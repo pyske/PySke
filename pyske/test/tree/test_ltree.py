@@ -1,16 +1,14 @@
+import pytest
+
 from pyske.core.tree.ltree import LTree, Segment, TaggedValue
-from pyske.core.list.slist import SList
 from pyske.core.support.errors import IllFormedError, EmptyError, NotEqualSizeError
 
 
 def test_map_empty():
 	lt = LTree()
 	id_f = lambda x : x
-	try:
-		res = lt.map(id_f, id_f)
-		assert False
-	except EmptyError as e:
-		assert True
+	with pytest.raises(AssertionError):
+		lt.map(id_f, id_f)
 
 
 def test_map_not_empty():
@@ -39,11 +37,8 @@ def test_reduce_empty():
 	lt = LTree()
 	id_f = lambda x : x
 	sum3 = lambda x,y,z : x + y + z
-	try:
+	with pytest.raises(AssertionError):
 		lt.reduce(sum3, id_f, sum3, sum3, sum3)
-		raise TestFailure()
-	except EmptyError as e:
-		assert True
 
 
 def test_reduce_illformed():
@@ -52,11 +47,8 @@ def test_reduce_illformed():
 	lt = LTree([seg1, seg3])
 	id_f = lambda x : x
 	sum3 = lambda x,y,z : x + y + z
-	try:
+	with pytest.raises(IllFormedError):
 		lt.reduce(sum3, id_f, sum3, sum3, sum3)
-		# raise TestFailure()
-	except IllFormedError as e:
-		assert True
 
 
 def test_reduce():
@@ -78,11 +70,8 @@ def test_uacc_empty():
 	lt = LTree()
 	id_f = lambda x : x
 	sum3 = lambda x,y,z : x + y + z
-	try:
+	with pytest.raises(AssertionError):
 		lt.uacc(sum3, id_f, sum3, sum3, sum3)
-		# raise TestFailure()
-	except EmptyError as e:
-		assert True
 
 def test_uacc_illformed():
 	seg1 = Segment([TaggedValue(13, "C")])
@@ -90,11 +79,8 @@ def test_uacc_illformed():
 	lt = LTree([seg1, seg3])
 	id_f = lambda x : x
 	sum3 = lambda x,y,z : x + y + z
-	try:
+	with pytest.raises(IllFormedError):
 		lt.uacc(sum3, id_f, sum3, sum3, sum3)
-		# raise TestFailure()
-	except IllFormedError as e:
-		assert True
 
 def test_uacc():
 	seg1 = Segment([TaggedValue(13, "C")])
@@ -120,11 +106,8 @@ def test_dacc_empty():
 	c = 0
 	id_f = lambda x : x
 	lt = LTree()
-	try:
+	with pytest.raises(AssertionError):
 		lt.dacc(sum2, sum2, c, id_f, id_f, sum2, sum2)
-		# raise TestFailure()
-	except EmptyError as e:
-		assert True
 
 
 def test_dacc():
@@ -157,11 +140,8 @@ def test_zip_not_same_size():
 	seg12 = Segment([TaggedValue(13, "C")])
 	seg22 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
 	lt2 = LTree([seg12, seg22])
-	try:
+	with pytest.raises(AssertionError):
 		lt1.zip(lt2)
-		# raise TestFailure()
-	except NotEqualSizeError:
-		assert True
 
 
 def test_zip():
@@ -192,12 +172,9 @@ def test_zipwith_not_same_size():
 	lt1 = LTree([seg11, seg21, seg31]) 
 	seg12 = Segment([TaggedValue(13, "C")])
 	seg22 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
-	lt2 = LTree([seg21, seg22])
-	try:
+	lt2 = LTree([seg12, seg22])
+	with pytest.raises(AssertionError):
 		lt1.map2(sum2, lt2)
-		# raise TestFailure()
-	except NotEqualSizeError:
-		assert True
 
 
 def test_zipwith():
