@@ -168,7 +168,7 @@ def test_zipwith_leaf():
 	bt2 = Leaf(2)
 	f = lambda x,y : x + y
 	exp = Leaf(3)
-	res = bt1.zipwith(bt2,f)
+	res = bt1.zipwith(f, bt2)
 	assert exp == res
 
 
@@ -177,7 +177,7 @@ def test_zipwith_node():
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	f = lambda x,y : x + y
 	exp = Node(5, Leaf(7), Leaf(9))
-	res = bt1.zipwith(bt2,f)
+	res = bt1.zipwith(f, bt2)
 	assert exp == res
 
 
@@ -186,7 +186,7 @@ def test_zipwith_leaf_node():
 	bt2 = Node(4, Leaf(5), Leaf(6))
 	f = lambda x,y : x + y
 	try:
-		bt1.zipwith(bt2,f)
+		bt1.zipwith(f, bt2)
 		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
@@ -197,7 +197,7 @@ def test_zipwith_node_leaf():
 	bt2 = Leaf(2)
 	f = lambda x,y : x + y
 	try:
-		bt1.zipwith(bt2,f)
+		bt1.zipwith(f, bt2)
 		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True

@@ -36,7 +36,7 @@ class SList(list):
         Makes an rightward accumulation of the element on the current instance from an initial value
     zip(l)
         Creates a list of pairs from the element of the current instance and another one
-    zipwith(l, f)
+    map2(l, f)
         Creates a list of new elements using a function from the element of the current instance and another one
     """
 
@@ -229,44 +229,33 @@ class SList(list):
 
     def zip(self, l):
         """
-        Creates a list of pairs from the element of the current instance and another one
+        Creates a list of pairs from the element of the current instance and another sequential list
+
+        Precondition
+        -------------
+        The lengths of self and l should be equal.
 
         Parameters
         ----------
         l : list
             A list to merge the values of the current instance with
-
-        Raises
-        -----
-        NotEqualSizeError
-            If the current instance doesn't have the same number than the input
         """
-        if l.length() != self.length():
-            raise NotEqualSizeError("The lists cannot be zipped (not the same size)")
-        res = SList()
-        for i in range(0, self.length()):
-            res.append((self[i], l[i]))
-        return res
+        assert (len(self) == len(l))
+        return SList([(x, y) for (x, y) in zip(self, l)])
 
-    def zipwith(self, l, f):
+    def map2(self, f, l):
         """
-        Creates a list of new elements using a function from the element of the current instance and another one
+        Creates a list of new elements using a function applied to the elements of the current
+        instance and another sequential list
+
+        Precondition
+        -------------
+        The lengths of self and l should be equal.
 
         Parameters
         ----------
         l : list
-            A list to merge the values of the current instance with
-        f : lambda x, y => z
-            A function to zip the values
-
-        Raises
-        -----
-        NotEqualSizeError
-            If the current instance doesn't have the same number than the input
+        f : lambda x, y: e
         """
-        if l.length() != self.length():
-            raise NotEqualSizeError("The lists cannot be zipped (not the same size)")
-        res = SList()
-        for i in range(0, self.length()):
-            res.append(f(self[i], l[i]))
-        return res
+        assert (len(self) == len(l))
+        return SList([f(x, y) for (x, y) in zip(self, l)])

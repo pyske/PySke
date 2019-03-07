@@ -1,6 +1,7 @@
 from pyske.core.list.slist import SList
 from pyske.core.list.plist import PList
 from pyske.core.support.parallel import *
+from operator import *
 from gc import *
 
 iterations = 10
@@ -20,10 +21,11 @@ def test(f, input, name):
     print(f'  Min time:\t{times.reduce(min)}')
     print(f'  Max time:\t{times.reduce(max)}')
     print(f'  Avg time:\t{times.reduce(add) / times.length()} ')
+    return output
 
 
 input = SList(range(1, 4_000_000))
-add = lambda x, y: x + y
 
-test(lambda l: l.scanp2(add, 0), input, "scanp2")
-test(lambda l: l.scanp(add, 0), input, "scanp")
+t1 = test(lambda l: l.map2(add, l), input, "map2")
+
+assert t1

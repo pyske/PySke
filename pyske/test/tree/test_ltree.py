@@ -194,7 +194,7 @@ def test_zipwith_not_same_size():
 	seg22 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
 	lt2 = LTree([seg21, seg22])
 	try:
-		lt1.zipwith(lt2, sum2)
+		lt1.map2(sum2, lt2)
 		raise TestFailure()
 	except NotEqualSizeError:
 		assert True
@@ -210,7 +210,7 @@ def test_zipwith():
 	seg22 = Segment([TaggedValue(2, "N"),TaggedValue(2, "L"),TaggedValue(2, "L")])
 	seg32 = Segment([TaggedValue(2, "N"),TaggedValue(2, "L"),TaggedValue(2, "L")])
 	lt2 = LTree([seg12, seg22, seg32])
-	res = lt1.zipwith(lt2, sum2)
+	res = lt1.map2(sum2, lt2)
 	seg1_exp = Segment([TaggedValue(3, "C")])
 	seg2_exp = Segment([TaggedValue(3, "N"),TaggedValue(3, "L"),TaggedValue(3, "L")])
 	seg3_exp = Segment([TaggedValue(3, "N"),TaggedValue(3, "L"),TaggedValue(3, "L")])

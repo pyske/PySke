@@ -161,7 +161,6 @@ def test_map_id():
     res = sl.mapi(f)
     assert res == exp
 
-
 # -------------------------- #
 
 def test_reduce_nil():
@@ -318,22 +317,15 @@ def test_zip_cons():
 def test_zip_one_gt():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3])
-    try:
-        res = sl1.zip(sl2)
-        raise TestFailure()
-    except NotEqualSizeError as e:
-        assert True
+    with pytest.raises(AssertionError):
+        sl1.zip(sl2)
 
 
 def test_zip_one_lt():
     sl1 = SList([2, 3])
     sl2 = SList([2, 3, 4])
-    try:
-        res = sl1.zip(sl2)
-        raise TestFailure()
-    except NotEqualSizeError as e:
-        assert True
-
+    with pytest.raises(AssertionError):
+        sl1.zip(sl2)
 
 # -------------------------- #
 
@@ -341,7 +333,7 @@ def test_zipwith_nil():
     sl1 = SList()
     sl2 = SList()
     f = lambda x, y: x + y
-    res = sl1.zipwith(sl2, f)
+    res = sl1.map2(f, sl2)
     exp = SList()
     assert res == exp
 
@@ -350,7 +342,7 @@ def test_zipwith_cons():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3, 4])
     f = lambda x, y: x + y
-    res = sl1.zipwith(sl2, f)
+    res = sl1.map2(f, sl2)
     exp = SList([3, 5, 7])
     assert res == exp
 
@@ -359,22 +351,16 @@ def test_zipwith_one_gt():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3])
     f = lambda x, y: x + y
-    try:
-        res = sl1.zipwith(sl2, f)
-        raise TestFailure()
-    except NotEqualSizeError as e:
-        assert True
+    with pytest.raises(AssertionError):
+        sl1.map2(f, sl2)
 
 
 def test_zipwith_one_lt():
     sl1 = SList([2, 3])
     sl2 = SList([2, 3, 4])
     f = lambda x, y: x + y
-    try:
-        res = sl1.zipwith(sl2, f)
-        raise TestFailure()
-    except NotEqualSizeError as e:
-        assert True
+    with pytest.raises(AssertionError):
+        sl1.map2(f, sl2)
 
 
 # -------------------------- #

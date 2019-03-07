@@ -1,6 +1,6 @@
 from pyske.core.support.errors import IllFormedError, NotEqualSizeError, ApplicationError, EmptyError, NotSameTagError
 from pyske.core.tree.ltree import Segment, TaggedValue
-
+import pytest
 
 def test_has_critical_empty():
 	seg = Segment()
@@ -612,29 +612,23 @@ def test_zipwith_not_equal_size_error():
 	sum2 = lambda x,y : x + y
 	seg1 = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
 	seg2 = Segment([TaggedValue(2,"L")])
-	try :
-		seg1.zipwith(seg2, sum2)
-		raise TestFailure()
-	except NotEqualSizeError :
-		assert True
+	with pytest.raises(NotEqualSizeError):
+		seg1.map2(sum2, seg2)
 
 
 def test_zipwith_not_same_tag_error():
 	sum2 = lambda x,y : x + y
 	seg1 = Segment([TaggedValue(2,"N"),TaggedValue(1,"L"),TaggedValue(2,"L")])
 	seg2 = Segment([TaggedValue(2,"N"),TaggedValue(1,"C"),TaggedValue(2,"L")])
-	try :
-		seg1.zipwith(seg2, sum2)
-		raise TestFailure()
-	except NotSameTagError:
-		assert True
+	with pytest.raises(NotSameTagError):
+		seg1.map2(sum2, seg2)
 
 
 def test_zipwith():
 	sum2 = lambda x,y : x + y
 	seg1 = Segment([TaggedValue(1,"N"),TaggedValue(2,"L"),TaggedValue(3,"L")])
 	seg2 = Segment([TaggedValue(4,"N"),TaggedValue(5,"L"),TaggedValue(6,"L")])
-	res = seg1.zipwith(seg2, sum2)
+	res = seg1.map2(sum2, seg2)
 	exp = Segment([TaggedValue(5,"N"),TaggedValue(7,"L"),TaggedValue(9,"L")])
 	assert res == exp
 
