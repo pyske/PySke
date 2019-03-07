@@ -2,8 +2,10 @@ from pyske.core.list.slist import SList
 from pyske.core.list.plist import PList
 from pyske.core.support.parallel import *
 
+
 def app(l1, l2):
     return SList(l1 + l2)
+
 
 msg = "hello world!"
 pl1 = PList.init(lambda i: msg[i], len(msg))
@@ -24,7 +26,7 @@ s1 = pl9.reduce(app).reduce(lambda x, y: x + y)
 s2 = pl11.to_seq()[0]
 
 at_root(lambda:
-        print(f'Capitalized: \t{ s1 }\n'
-              f'Identity:\t{ s2 }\n'
-              f'Length:\t\t{ n }\n'
-              f'Filtered:\t{ filtered }'))
+        print(f'Capitalized: \t{s1}\n'
+              f'Identity:\t{s2}\n'
+              f'Length:\t\t{n}\n'
+              f'Filtered:\t{filtered}'))

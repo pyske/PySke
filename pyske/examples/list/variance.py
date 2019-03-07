@@ -10,7 +10,7 @@ if len(sys.argv) > 1:
     size = int(sys.argv[1])
 else:
     size = 1000
-X = PList.init(lambda _: random.randint(0,100), size)
+X = PList.init(lambda _: random.randint(0, 100), size)
 
 comm.barrier()
 
@@ -18,16 +18,16 @@ comm.barrier()
 t = PList.init(lambda _: wtime(), nprocs)
 
 # computing the variance
-add = lambda x,y: x+y
+add = lambda x, y: x + y
 n = X.length()
 avg = X.reduce(add) / n
-var = (X.map(lambda x: (x-avg)**2).reduce(add)**0.5) / n
+var = (X.map(lambda x: (x - avg) ** 2).reduce(add) ** 0.5) / n
 
 # stop timing
-elapsed = t.map(lambda x: wtime()-x)
+elapsed = t.map(lambda x: wtime() - x)
 max_elapsed = elapsed.reduce(max)
 avg_elapsed = elapsed.reduce(add) / nprocs
-all_elapsed = elapsed.mapi(lambda i,x: "["+str(i)+"]:"+str(x)).to_seq()  
+all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
 
 # output at processor 0
 at_root(lambda:
