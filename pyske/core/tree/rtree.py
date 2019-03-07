@@ -45,7 +45,7 @@ class RNode:
         Get a BTree from the current instance
     """
 
-    def __init__(self, value, ts=SList()):
+    def __init__(self, value, ts=None):
         if isinstance(value, BTree):
             if value == Leaf(None):
                 raise ConstructorError("A RTree cannot be constructed from a single Leaf that contains None")
@@ -56,7 +56,10 @@ class RNode:
             self.children = rt.get_children()
         else:
             self.value = value
-            self.children = SList(ts)
+            if ts is None:
+                self.children = SList([])
+            else:
+                self.children = SList(ts)
 
     @staticmethod
     def b2r(bt):
@@ -82,7 +85,6 @@ class RNode:
 
         return aux(bt).head()
 
-
     def __str__(self):
         res = "rnode " + str(self.value) + "["
         ch = self.get_children()
@@ -92,7 +94,6 @@ class RNode:
             else:
                 res = res + str(ch[i]) + ", "
         return res + "]"
-
 
     def __eq__(self, other):
         if isinstance(other, RNode):
@@ -106,24 +107,20 @@ class RNode:
             return self.get_value() == other.get_value()
         return False
 
-
     def is_leaf(self):
         """Indicates if the current RNode has no children, and then can be considered as a leaf
         """
         return len(self.children) == 0
-
 
     def is_node(self):
         """Indicates if the current RNode has children, and then can be considered as a node
         """
         return len(self.children) != 0
 
-
     def get_children(self):
         """Get the children of the current RNode
         """
         return self.children
-
 
     def add_children(self, c):
         """Add a children to the ones of the current RNode
@@ -135,12 +132,10 @@ class RNode:
         """
         self.children.append(c)
 
-
     def get_value(self):
         """Get the value of the current RNode
         """
         return self.value
-
 
     def set_value(self, v):
         """Set a new value for the current RNode
@@ -151,7 +146,6 @@ class RNode:
             The new value to set
         """
         self.value = v
-
 
     def map(self, f):
         """Applies a function to every values contained in the current instance
@@ -166,14 +160,14 @@ class RNode:
         ch = self.children.map(lambda x: x.map(f))
         return RNode(v, ch)
 
-
     def reduce(self, f, g):
         """Reduce the current instance into a single value using two operators
 
         Parameters
         ----------
         f : callable
-            A binary operator to combine all sub reduction of the children of the current instance into an intermediate reduction
+            A binary operator to combine all sub reduction of the children of the current instance
+            into an intermediate reduction
         g : callable
             A binary operator to combine the value of the current instance with the intermediate reduction
         """
@@ -188,21 +182,20 @@ class RNode:
         # The final reduction is the result of the combination of sub reductions and the value of the current instance
         return f(self.get_value(), red)
 
-
     def uacc(self, f, g):
         """Makes an upward accumulation of the values in a the current instance using two operators
 
         Parameters
         ----------
         f : callable
-            A binary operator to combine all top values from the accumulation within the children of the current instance into an intermediate accumulation
+            A binary operator to combine all top values from the accumulation within the children of the current
+            instance into an intermediate accumulation
         g : callable
             A binary operator to combine the value of the current instance with the intermediate accumulation
         """
         v = self.reduce(f, g)
         ch = self.children.map(lambda x: x.uacc(f, g))
         return RNode(v, ch)
-
 
     def dacc(self, f, unit_f):
         """Makes an downward accumulation of the values in a the current instance
@@ -222,7 +215,6 @@ class RNode:
         # Since the accumulator changes at each iteration, we need to use a changing parameter, not defined in dacc.
         # Use of an auxiliary function, with as a first accumulator, unit_f
         return dacc2(self, f, unit_f)
-
 
     def zip(self, rt):
         """Zip the values contained in a second RTree with the ones in the current instance
@@ -244,7 +236,6 @@ class RNode:
             ch.append(ch1[i].zip(ch2))
         v = (self.get_value(), rt.get_value())
         return RNode(v, ch)
-
 
     def map2(self, rt, f):
         """Zip the values contained in a second RTree with the ones in the current instance using a function
@@ -268,7 +259,6 @@ class RNode:
             ch.append(ch1[i].map2(f, ch2))
         v = f(self.get_value(), rt.get_value())
         return RNode(v, ch)
-
 
     def racc(self, f, unit_f):
         """Makes a rightward accumulation of the values in the current instance
@@ -296,7 +286,6 @@ class RNode:
             ch.append(cs)
         return RNode(unit_f, ch)
 
-
     def lacc(self, f, unit_f):
         """Makes a leftward accumulation of the values in the current instance
 
@@ -321,7 +310,6 @@ class RNode:
             cs.set_value(rs[i])
             ch.append(cs)
         return RNode(unit_f, ch)
-
 
     def r2b(self):
         """Get a BTree from the current instance

@@ -33,10 +33,11 @@ def scan(op, x):
     res = xs[pid]
     for i in range(pid + 1, nprocs):
         res = op(res, xs[i])
-    if pid!=0:
+    if pid != 0:
         return pre, op(pre, res)
     else:
         return pre, res
+
 
 def get_conc_reader(filename):
     return MPI.File.Open(comm, filename, MPI.MODE_RDONLY)

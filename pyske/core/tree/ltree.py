@@ -80,7 +80,6 @@ class TaggedValue:
             except UnknownTypeError as e:
                 print(str(e))
 
-
     def __str__(self):
         def tag2str(tag):
             if tag == TAG_CRITICAL:
@@ -92,36 +91,30 @@ class TaggedValue:
 
         return LEFT_TV + str(self.val) + SEPARATOR_TV + tag2str(self.tag) + RIGHT_TV
 
-
     def __eq__(self, other):
         if isinstance(other, TaggedValue):
             return (self.tag == other.tag) and (self.val == other.val)
         return False
-
 
     def get_tag(self):
         """Get the tag value used to describe the tag of the current instance
         """
         return self.tag
 
-
     def get_value(self):
         """Get the tag of the current instance
         """
         return self.val
-
 
     def is_leaf(self):
         """Indicates if the current instance is tagged by the Leaf tag
         """
         return self.tag == TAG_LEAF
 
-
     def is_critical(self):
         """Indicates if the current instance is tagged by the Critical tag
         """
         return self.tag == TAG_CRITICAL
-
 
     def is_node(self):
         """Indicates if the current instance is tagged by the Node tag
@@ -140,7 +133,8 @@ class Segment(SList):
     has_critical()
         Indicates if the current instance contains a value tagged by the Critical VTag
     map_local(kl, kn)
-        Applies function kl to each leaf and function kn to each internal node and the m-critical node in a local Segment
+        Applies function kl to each leaf and function kn to each internal node
+        and the m-critical node in a local Segment
     reduce_local(k, phi, psi_l, psi_r)
         Reduces a local Segment into a value
     reduce_global(psi_n)
@@ -152,11 +146,13 @@ class Segment(SList):
     uacc_update(seg, k, lc, rc)
         Makes an update of the current accumulation, using initial values and the top accumulated values
     dacc_path(phi_l, phi_r, psi_u)
-        Finds the m-critical node and then computes two values only on the path from the root node to the m-critical node
+        Finds the m-critical node and then computes two values only on the path from the root node
+        to the m-critical node
     dacc_global(psi_d, c)
         Performs sequential downwards accumulation
     dacc_local(gl, gr, c)
-        Computes local downward accumulation for the current instance using an accumulative parameter resulting of a global downward accumulation
+        Computes local downward accumulation for the current instance using an accumulative parameter
+        resulting of a global downward accumulation
     from_str(s, parser)
         Get a segment from a string value
     zip()
@@ -175,7 +171,6 @@ class Segment(SList):
             return True
         return False
 
-
     def has_critical(self):
         """Indicates if the current instance contains a value tagged by the Critical tag
         """
@@ -184,9 +179,9 @@ class Segment(SList):
                 return True
         return False
 
-
     def map_local(self, kl, kn):
-        """Applies function kl to each leaf and function kn to each internal node and the m-critical node in a local Segment
+        """Applies function kl to each leaf and function kn to each internal node
+        and the m-critical node in a local Segment
 
 
         Parameters
@@ -204,7 +199,6 @@ class Segment(SList):
                 v = TaggedValue(kn(tv.get_value()), tv.get_tag())
             res.append(v)
         return res
-
 
     def reduce_local(self, k, phi, psi_l, psi_r):
         """Reduces a local Segment into a value
@@ -244,7 +238,8 @@ class Segment(SList):
             elif v.is_node():
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "reduce_local cannot be applied if there is a node that does not have two children in the current instance")
+                        "reduce_local cannot be applied if there is a node that does not have"
+                        "two children in the current instance")
                 # We get two sub-reductions to make a reduction with the current node value
                 lv = stack.pop()
                 rv = stack.pop()
@@ -275,7 +270,6 @@ class Segment(SList):
             # The current instance represented a leaf in the global structure of a linearized tree
             return TaggedValue(top, "L")
 
-
     def reduce_global(self, psi_n):
         """Makes a global reduction using local reductions of Segments
 
@@ -286,7 +280,8 @@ class Segment(SList):
         Parameters
         ----------
         psi_n : callable
-            A function used to respect the closure property on k (the initial function used for reduction) to allow partial computation
+            A function used to respect the closure property on k (the initial function used for reduction)
+            to allow partial computation
 
         Raises
         ------
@@ -306,14 +301,14 @@ class Segment(SList):
                 # We get two sub reductions to make a total reduction of the current node
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "reduce_global cannot be applied if there is a node that does not have two children in the current instance")
+                        "reduce_global cannot be applied if there is a node that does not have two children "
+                        "in the current instance")
                 lv = stack.pop()
                 rv = stack.pop()
                 # We process and stack a reduction
                 stack.append(psi_n(lv, g.get_value(), rv))
         top = stack.pop()
         return top
-
 
     def uacc_local(self, k, phi, psi_l, psi_r):
         """Computes local upwards accumulation and reduction
@@ -355,7 +350,8 @@ class Segment(SList):
             elif v.is_node():
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "uacc_local cannot be applied if there is a node that does not have two children in the current instance")
+                        "uacc_local cannot be applied if there is a node that does not have two children "
+                        "in the current instance")
                 # We get the values of two sub upward accumulation
                 lv = stack.pop()
                 rv = stack.pop()
@@ -393,7 +389,6 @@ class Segment(SList):
         # We return both the top values for following global upward accumulation, and the current accumulated subtree
         return TaggedValue(top, tag), res
 
-
     def uacc_global(self, psi_n):
         """Performs sequential upwards accumulation
 
@@ -404,7 +399,8 @@ class Segment(SList):
         Parameters
         ----------
         psi_n : callable
-            A function used to respect the closure property on k (the initial function used for accumulation) to allow partial computation
+            A function used to respect the closure property on k (the initial function used for accumulation)
+            to allow partial computation
 
         Raises
         ------
@@ -417,14 +413,16 @@ class Segment(SList):
         stack = []
         res = Segment()
         for g in self.reverse():
-            # We process a global accumulation using a stack to store previous accumulation, to get them for the accumulation on nodes
+            # We process a global accumulation using a stack to store previous accumulation,
+            # to get them for the accumulation on nodes
             if g.is_leaf():
                 res.insert(0, g)
                 val = g.get_value()
             else:  # g.is_node()
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "uacc_global cannot be applied if there is a node that does not have two children in the current instance")
+                        "uacc_global cannot be applied if there is a node that does not have two children "
+                        "in the current instance")
                 lv = stack.pop()
                 rv = stack.pop()
                 val = psi_n(lv, g.get_value(), rv)
@@ -432,7 +430,6 @@ class Segment(SList):
             stack.append(val)
         # We get the top value of the accumulation
         return res
-
 
     def uacc_update(self, seg2, k, lc, rc):
         """Makes an update of the current accumulation, using initial values and the top accumulated values
@@ -479,7 +476,8 @@ class Segment(SList):
             elif v1.is_node():
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "uacc_update cannot be applied if there is a node that does not have two children in the current instance")
+                        "uacc_update cannot be applied if there is a node that does not have two children "
+                        "in the current instance")
                 # We need two sub accumulation values to process the accumulation of a node
                 lv = stack.pop()
                 rv = stack.pop()
@@ -497,7 +495,8 @@ class Segment(SList):
             else:  # v1.is_critical()
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "uacc_update cannot be applied if there is a node that does not have two children in the current instance")
+                        "uacc_update cannot be applied if there is a node that does not have two children "
+                        "in the current instance")
                 # We need two sub accumulation values to process the accumulation of a critical node
                 lv = stack.pop()
                 rv = stack.pop()
@@ -506,7 +505,6 @@ class Segment(SList):
                 stack.append(val)
                 d = 0
         return res
-
 
     def dacc_path(self, phi_l, phi_r, psi_u):
         """Finds the critical node and then computes two values only on the path from the root node to the critical node
@@ -564,7 +562,6 @@ class Segment(SList):
             raise ApplicationError("dacc_path must be imperatively applied to a Segment which contains a critical node")
         return TaggedValue((to_l, to_r), "N")
 
-
     def dacc_global(self, psi_d, c):
         """Performs sequential downwards accumulation
 
@@ -575,7 +572,8 @@ class Segment(SList):
         Parameters
         ----------
         psi_d : callable
-            A function used to respect the closure property on gr and gl (initial functions used for upward accumulation) to make partial downward accumulation
+            A function used to respect the closure property on gr and gl (initial functions used for up accumulation)
+            to make partial downward accumulation
         c
             Initial value of the accumulator
 
@@ -591,7 +589,7 @@ class Segment(SList):
         for v in self:
             if len(stack) == 0:
                 raise IllFormedError(
-                    "dacc_global cannot be applied to ill-formed Segments that is two leaf values do not not have a parent")
+                    "dacc_global cannot be applied to ill-formed Segments that is two leaf values do not have a parent")
             # We add the previous accumulation as a new value of our result
             val = stack.pop()
             res.append(TaggedValue(val, v.get_tag()))
@@ -604,9 +602,9 @@ class Segment(SList):
                 stack.append(psi_d(val, to_l))
         return res
 
-
     def dacc_local(self, gl, gr, c):
-        """Computes local downward accumulation for the current instance using an accumulative parameter resulting of a global downward accumulation
+        """Computes local downward accumulation for the current instance using an accumulative parameter resulting of a
+        global downward accumulation
 
         Parameters
         ----------
@@ -621,16 +619,19 @@ class Segment(SList):
         ------
         IllFormedError:
             If the current instance does not represent a correct linearized subtree
-            That is there are several leaves that doesn't have a parent in a BTree representation or if there is not a value to accumulate from above
+            That is there are several leaves that doesn't have a parent in a BTree representation or if there is not a
+            value to accumulate from above
         """
-        # We update not finished accumulation locally using the value from the parent in the global representation of a linearized tree
+        # We update not finished accumulation locally using the value from the parent in the global representation of
+        # a linearized tree
         stack = [c]
         res = Segment()
         for v in self:
             if v.is_leaf() or v.is_critical():
                 if len(stack) == 0:
                     raise IllFormedError(
-                        "dacc_local cannot be applied if there are two leaf values, or critical values that do not have a parent")
+                        "dacc_local cannot be applied if there are two leaf values, or critical values that"
+                        "do not have a parent")
                 # We get the accumulated value passed from the last parent
                 val = stack.pop()
                 res.append(TaggedValue(val, v.get_tag()))
@@ -645,7 +646,6 @@ class Segment(SList):
                 stack.append(gr(val, v.get_value()))
                 stack.append(gl(val, v.get_value()))
         return res
-
 
     def get_left(self, i):
         """Get the left children of a value at the i-th index
@@ -664,7 +664,6 @@ class Segment(SList):
         assert not self[i].is_leaf(), "A leaf value doesn't have a left children"
         assert i < self.length() - 1, "Cannot get the left children of a node in an ill-formed Segment"
         return self[i + 1]
-
 
     def get_right(self, i):
         """Get the right children of a value at the i-th index
@@ -691,7 +690,6 @@ class Segment(SList):
 
         j = get_right_index(self, i)
         return self[j]
-
 
     def zip(self, seg):
         """Zip the values contained in a second Segment with the ones in the current instance
@@ -720,7 +718,6 @@ class Segment(SList):
             tv = TaggedValue((tv1.get_value(), tv2.get_value()), tv1.get_tag())
             res.append(tv)
         return res
-
 
     def map2(self, f, seg):
         """Zip the values contained in a second Segment with the ones in the current instance using a function
@@ -751,7 +748,6 @@ class Segment(SList):
             tv = TaggedValue(f(tv1.get_value(), tv2.get_value()), tv1.get_tag())
             res.append(tv)
         return res
-
 
     @staticmethod
     def from_str(s, parser=int):
@@ -815,7 +811,6 @@ class LTree(SList):
             return True
         return False
 
-
     def __str__(self):
         res = ""
         for i in range(0, self.length()):
@@ -860,16 +855,15 @@ class LTree(SList):
             return res
 
         # Get a LTree from a BTree
-        up_div = lambda n, m_val: (int(n / m_val) + (0 if n % m_val == 0 else 1))
+        def up_div(n, m_val): (int(n / m_val) + (0 if n % m_val == 0 else 1))
         bt_one = bt.map(lambda x: 1, lambda x: 1)
         bt_size = bt_one.uacc(lambda x, y, z: x + y + z)
         bt_tags = bt_size.mapt(lambda x: TAG_LEAF,
-                               lambda x, y, z: TAG_CRITICAL if up_div(x, m) > up_div(y.get_value(), m) and up_div(x,
-                                                                                                                  m) > up_div(
-                                   z.get_value(), m) else TAG_NODE)
+                               lambda x, y, z: TAG_CRITICAL
+                               if up_div(x, m) > up_div(y.get_value(), m) and up_div(x, m) > up_div(z.get_value(), m)
+                               else TAG_NODE)
         bt_val = bt.map2(lambda x, y: TaggedValue(x, y), bt_tags)
         return LTree(__tv2lv(bt_val))
-
 
     @staticmethod
     def init_from_file(filename, parser=int):
@@ -893,7 +887,6 @@ class LTree(SList):
         f.close()
         return res
 
-
     def write_file(self, filename):
         """Write a file that contains the current instance
 
@@ -907,7 +900,6 @@ class LTree(SList):
         with open(filename, "w+") as f:
             f.write(str(self))
         f.close()
-
 
     def map(self, kl, kn):
         """Applies function to every element of the current instance
@@ -928,7 +920,6 @@ class LTree(SList):
         for seg in self:
             res.append(seg.map_local(kl, kn))
         return res
-
 
     def reduce(self, k, phi, psi_n, psi_l, psi_r):
         """Makes a reduction of the current instance into a single value
@@ -964,7 +955,6 @@ class LTree(SList):
 
         # The local reductions are reduced into a single value with reduce_global
         return tops.reduce_global(psi_n)
-
 
     def uacc(self, k, phi, psi_n, psi_l, psi_r):
         """Processes an upward accumulation into the current instance
@@ -1018,7 +1008,6 @@ class LTree(SList):
                 res.append(lt2[i])
         return res
 
-
     def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
         """Processes an downward accumulation into the current instance
 
@@ -1068,7 +1057,6 @@ class LTree(SList):
             res.append(self[i].dacc_local(gl, gr, gt2[i].get_value()))
         return res
 
-
     def zip(self, lt):
         """Zip the values contained in a second LTree with the ones in the current instance
 
@@ -1086,7 +1074,6 @@ class LTree(SList):
         for i in range(self.length()):
             res.append(self[i].zip(lt[i]))
         return res
-
 
     def map2(self, f, lt):
         """Zip the values contained in a second LTree with the ones in the current instance using a function
@@ -1107,7 +1094,6 @@ class LTree(SList):
         for i in range(self.length()):
             res.append(self[i].map2(f, lt[i]))
         return res
-
 
     def deserialization(self):
         """Get a binary tree from its linear representation
@@ -1173,4 +1159,4 @@ class LTree(SList):
                 gt.append(TAG_NODE)
             else:
                 gt.append(TAG_LEAF)
-        return __remove_annotation( __rev_segment_to_trees(list_of_btree, gt))
+        return __remove_annotation(__rev_segment_to_trees(list_of_btree, gt))

@@ -9,7 +9,7 @@ class NotEqualSizeError(Exception):
     """
 
     def __init__(self, message):
-        self.message = "[NotEqualSizeError] "+ message
+        self.message = "[NotEqualSizeError] " + message
 
 
 class EmptyError(Exception):
@@ -23,7 +23,7 @@ class EmptyError(Exception):
     """
 
     def __init__(self, message):
-        self.message = "[EmptyError] "+ message
+        self.message = "[EmptyError] " + message
 
 
 class UnknownTypeError(Exception):
@@ -37,7 +37,7 @@ class UnknownTypeError(Exception):
     """
 
     def __init__(self, message):
-        self.message = "[UnknownTypeError] "+ message
+        self.message = "[UnknownTypeError] " + message
 
 
 class IllFormedError(Exception):
@@ -51,7 +51,7 @@ class IllFormedError(Exception):
     """
 
     def __init__(self, message):
-        self.message = "[IllFormedError] "+ message
+        self.message = "[IllFormedError] " + message
 
 
 class ApplicationError(Exception):
@@ -65,7 +65,7 @@ class ApplicationError(Exception):
     """
     
     def __init__(self, message):
-        self.message = "[ApplicationError] "+ message
+        self.message = "[ApplicationError] " + message
 
 
 class NotSameTagError(Exception):
@@ -79,7 +79,7 @@ class NotSameTagError(Exception):
     """
 
     def __init__(self, message):
-        self.message = "[EmptyError] "+ message
+        self.message = "[EmptyError] " + message
 
 
 class ConstructorError(Exception):
@@ -93,4 +93,4 @@ class ConstructorError(Exception):
     """
     
     def __init__(self, message):
-        self.message = "[ConstructorError] "+ message
+        self.message = "[ConstructorError] " + message

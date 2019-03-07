@@ -39,7 +39,6 @@ class PTree:
             for i_seg in range(self.__start_index, self.__start_index + self.__nb_segs):
                 self.__content.extend(lt[i_seg])
 
-
     @staticmethod
     def init(pt, content):
         """Factory for distributed tree.
@@ -60,7 +59,6 @@ class PTree:
         p.__nb_segs = pt.__nb_segs
         p.__content = content
         return p
-
 
     @staticmethod
     def init_from_file(filename, parser=int):
@@ -102,7 +100,6 @@ class PTree:
                 count_line = count_line + 1
         p.__content = content
         return p
-
 
     def __str__(self):
         return "pid[" + str(pid) + "]:\n" + \
@@ -293,7 +290,6 @@ class PTree:
         new_content = SList([])
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            # new_content.extend(Segment(self.__content[start:start+offset]).dacc_local(gl, gr, gt2[self.__start_index + i].get_value()))
             new_content.extend(Segment(self.__content[start:start + offset]).dacc_local(gl, gr, gt2[i].get_value()))
         return PTree.init(self, new_content)
 
@@ -313,9 +309,9 @@ class PTree:
         new_content = SList([])
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            new_content.extend(Segment(self.__content[start:start+offset]).zip(Segment(pt.__content[start:start+offset])))
+            new_content.extend(Segment(self.__content[start:start+offset])
+                               .zip(Segment(pt.__content[start:start+offset])))
         return PTree.init(self, new_content)
-
 
     def map2(self, pt, f):
         """Map2 skeleton for distributed tree

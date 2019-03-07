@@ -35,7 +35,8 @@ class SList(list):
     scan(f, c)
         Makes an total rightward accumulation of the element on the current instance from an initial value
     scanl(f, c)
-        Makes a rightward accumulation of the values from an initial one, without considering the last value of the instance
+        Makes a rightward accumulation of the values from an initial one,
+        without considering the last value of the instance
     scanr(f)
         Makes a total leftward accumulation of the values
     scanp(f, c)
@@ -43,7 +44,8 @@ class SList(list):
     scanp2(f, c)
          Makes an total lefttward accumulation of the element on the current instance from an initial value
     scanl_last(f, c)
-        Makes a rightward accumulation of the values from an initial one, considering the last accumulation as an external value
+        Makes a rightward accumulation of the values from an initial one,
+        considering the last accumulation as an external value
     zip(l)
         Creates a list of pairs from the element of the current instance and another one
     map2(l, f)
@@ -57,7 +59,6 @@ class SList(list):
             if i != self.length() - 1:
                 res = res + SEPARATOR_LIST + " "
         return res + RIGHT_LIST
-
 
     @staticmethod
     def from_str(s, parser=int):
@@ -78,7 +79,6 @@ class SList(list):
             res.append(parser(v))
         return res
 
-
     def head(self):
         """Gives the first element of the current instance
         """
@@ -87,18 +87,15 @@ class SList(list):
         else:
             return self[0]
 
-
     def tail(self):
         """Gives the the current instance without its first element
         """
         return SList(self[1:])
 
-
     def length(self):
         """Gives the number of element in the current instance
         """
         return len(self)
-
 
     def filter(self, p):
         """Removes all the elements that don't verify a predicate
@@ -110,12 +107,10 @@ class SList(list):
         """
         return SList(filter(p, self))
 
-
     def empty(self):
         """Indicates if a list is empty
         """
         return self.length() == 0
-
 
     def reverse(self):
         """Reverse a list
@@ -124,7 +119,6 @@ class SList(list):
         for i in range(self.length() - 1, -1, -1):
             rev.append(self[i])
         return rev
-
 
     def map(self, f):
         """Applies f to every element of the current instance
@@ -139,7 +133,6 @@ class SList(list):
         """
         return SList(map(f, self))
 
-
     def mapi(self, f):
         """Applies f to every index and element of the current instance
 
@@ -152,7 +145,6 @@ class SList(list):
         The function to apply to every index and element of the current instance
         """
         return SList([f(i, self[i]) for i in range(0, len(self))])
-
 
     def reduce(self, f, e=None):
         """Reduce the current instance using a reduction function
@@ -171,7 +163,6 @@ class SList(list):
             return functools.reduce(f, self)
         else:
             return functools.reduce(f, self, e)
-
 
     def scan(self, f, c):
         """Makes total a rightward accumulation of the values from an initial one
@@ -195,9 +186,9 @@ class SList(list):
             res[i] = c
         return res
 
-
     def scanl(self, f, c):
-        """Makes a rightward accumulation of the values from an initial one, without considering the last value of the instance
+        """Makes a rightward accumulation of the values from an initial one,
+        without considering the last value of the instance
         The result of scanl is a list of size n where n is the size of self.
 
         Definition:
@@ -216,7 +207,6 @@ class SList(list):
             res[i] = c
             c = f(c, self[i])
         return res
-
 
     def scanr(self, f):
         """Makes a rightward accumulation of the values.
@@ -238,15 +228,16 @@ class SList(list):
             res[i] = c
         return res
 
-
     def scanl_last(self, f, c):
-        """Makes a rightward accumulation of the values from an initial one, considering the last accumulation as an external value.
+        """Makes a rightward accumulation of the values from an initial one,
+        considering the last accumulation as an external value.
         The result of scanl_last is a list of size n where n is the size of self
         and one additional value corresponding to the total accumulation.
 
         Definition:
             scanl_last f c [] = ([],c)
-            scanl_last f c [x_1, x_2, ..., x_n] = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
+            scanl_last f c [x_1, x_2, ..., x_n]
+                = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
 
         Parameters
         ----------
@@ -258,7 +249,6 @@ class SList(list):
         res = self.scan(f, c)
         last = res.pop()
         return res, last
-
 
     def scanp(self, f, c):
         """TODO
@@ -287,7 +277,6 @@ class SList(list):
                 res.append(c)
             return res.reverse()
 
-
     def scanp2(self, f, c):
         """Makes a leftward accumulation of the values from an initial one.
         The result of scanp2 is a list of size n where n is the size of self
@@ -311,7 +300,6 @@ class SList(list):
             c = f(self[i - 1], c)
         return res
 
-
     def zip(self, l):
         """Creates a list of pairs from the element of the current instance and another sequential list
 
@@ -326,7 +314,6 @@ class SList(list):
         """
         assert (len(self) == len(l))
         return SList([(x, y) for (x, y) in zip(self, l)])
-
 
     def map2(self, f, l):
         """Creates a list of new elements using a function applied to the elements of the current
