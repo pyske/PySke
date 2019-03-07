@@ -220,7 +220,7 @@ class Segment(SList):
             If the current instance does not represent a correct linearized subtree
             That is there is a node that does not have two children which can be either a leaf value or a critical value
         """
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("reduce_local cannot be applied to an empty Segment")
         stack = []
         d = MINUS_INFINITY
@@ -285,7 +285,7 @@ class Segment(SList):
         """
         if self.has_critical():
             raise ApplicationError("reduce_global cannot be applied to a Segments which contains a critical")
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("reduce_global cannot be applied to an empty Segment")
         stack = []
         for g in self.reverse():
@@ -329,7 +329,7 @@ class Segment(SList):
             That is there is a node that doesn't have two children which can be either a leaf value or a critical value
         """
 
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("uacc_local cannot be applied to an empty Segment")
         stack = []
         d = MINUS_INFINITY
@@ -518,7 +518,7 @@ class Segment(SList):
             If the current instance does not contain a critical value
         """
 
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("dacc_path cannot be applied to an empty Segment")
         d = MINUS_INFINITY
         # The value to pass to the left children for a total downward accumulation
@@ -919,7 +919,7 @@ class LTree(SList):
         EmptyError:
             If the current instance is empty
         """
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("map cannot be applied to an empty linearized tree")
         res = LTree()
         for seg in self:
@@ -954,7 +954,7 @@ class LTree(SList):
             If the current instance is empty
         """
 
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("reduce cannot be applied to an empty linearized tree")
         tops = Segment()
 
@@ -993,7 +993,7 @@ class LTree(SList):
             If the current instance is empty
         """
 
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("uacc cannot be applied to an empty linearized tree")
         gt = Segment()
         lt2 = LTree()
@@ -1052,7 +1052,7 @@ class LTree(SList):
             If the current instance is empty
         """
 
-        if self.is_empty():
+        if self.empty():
             raise EmptyError("dacc cannot be applied to an empty linearized tree")
         gt = Segment()
         res = LTree()
@@ -1137,7 +1137,7 @@ class LTree(SList):
         def __lv2ibt(seg):
             stack = []
             has_crit = False
-            if seg.is_empty():
+            if seg.empty():
                 raise EmptyError("An empty Segment cannot be transformed into a BTree")
             for i in range(seg.length() - 1, -1, -1):
                 v = seg[i]

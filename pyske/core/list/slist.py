@@ -61,7 +61,7 @@ class SList(list):
         """
         Gives the first element of the current instance
         """
-        if self.is_empty():
+        if self.empty():
             return None
         else:
             return self[0]
@@ -89,7 +89,7 @@ class SList(list):
         """
         return SList(filter(p, self))
 
-    def is_empty(self):
+    def empty(self):
         """
         Indicates if a list is empty
         """
@@ -212,7 +212,7 @@ class SList(list):
         """
         res = SList()
         res.append(c)
-        if self.is_empty():
+        if self.empty():
             return res
         else:
             for i in range(self.length() - 1, 0, -1):

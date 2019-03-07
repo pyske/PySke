@@ -54,7 +54,7 @@ class RNode:
             self.children = rt.get_children()
         else:
             self.value = value
-            self.children = ts
+            self.children = SList(ts)
 
     def b2r(bt):
         def aux(bt):
@@ -155,7 +155,7 @@ class RNode:
         """
         v = f(self.get_value())
         # To each element of the list of children, we apply the RNode.map function
-        ch = self.get_children().map(lambda x: x.map(f))
+        ch = self.children.map(lambda x: x.map(f))
         return RNode(v, ch)
 
     def reduce(self, f, g):
@@ -169,10 +169,10 @@ class RNode:
         g : lambda x, y => z
             A binary operator to combine the value of the current instance with the intermediate reduction
         """
-        if self.get_children.empty():
+        if self.children.empty():
             return self.get_value()
         # We calculate the reduction of each childen
-        reductions = self.get_children().map(lambda x: x.reduce(f, g))
+        reductions = self.children.map(lambda x: x.reduce(f, g))
         # We combine every sub reductions using g
         red = reductions[0]
         for i in range(1, reductions.length()):
@@ -192,7 +192,7 @@ class RNode:
             A binary operator to combine the value of the current instance with the intermediate accumulation
         """
         v = self.reduce(f, g)
-        ch = self.get_children().map(lambda x: x.uacc(f, g))
+        ch = self.children.map(lambda x: x.uacc(f, g))
         return RNode(v, ch)
 
     def dacc(self, f, unit_f):
@@ -207,15 +207,13 @@ class RNode:
             A value such as, forall x, f(x, unit_f) = x
         """
 
-        def dacc2(self, f, c):
+        def dacc2(t, f, c):
             # Auxiliary function to make an accumulation with an arbitrary accumulator
-            a = self.get_value()
-            ch = self.get_children().map(lambda x: x.dacc2(f, f(c, a)))
-            return RNode(c, ch)
+            return RNode(c, t.children.map(lambda x: dacc2(x, f, f(c, t.get_value()))))
 
         # Since the accumulator changes at each iteration, we need to use a changing parameter, not defined in dacc.
         # Use of an auxiliary function, with as a first accumulator, unit_f
-        return self.dacc2(f, unit_f)
+        return dacc2(self, f, unit_f)
 
     def zip(self, rt):
         """
@@ -277,13 +275,12 @@ class RNode:
         unit_f :
             A value such as, forall x, f(x, unit_f) = x
         """
-        # TODO test to check if it does match its specification:
         # rAcc (+) (RNode a ts)
         #	= let rs = scanl (+) [root ts[i] | i in [1 .. #ts]]
         #	in  RNode unit_(+) [setroot (rAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
         rv = self.get_children().map(lambda x: x.get_value())
         rs = rv.scanl(f, unit_f)
-        ch = []
+        ch = SList()
         ch0 = self.get_children()
         for i in range(0, ch0.length()):
             c = ch0[i]
@@ -303,13 +300,12 @@ class RNode:
         unit_f :
             A value such as, forall x, f(x, unit_f) = x
         """
-        # TODO test to check if it does match its specification:
         # lAcc (+) (RNode a ts)
         #	= let rs = scan2 (+) [root ts[i] | i in [1 .. #ts]]
         #	in  RNode unit_(+) [setroot (lAcc (+) ts[i]) r[i] | i in [1 .. #ts]]
         rv = self.get_children().map(lambda x: x.get_value())
         rs = rv.scanp(f, unit_f)
-        ch = []
+        ch = SList()
         ch0 = self.get_children()
         for i in range(0, ch0.length()):
             c = ch0[i]
@@ -330,7 +326,7 @@ class RNode:
             return Node(a, left, right)
 
         def r2b2(ts):
-            if ts.is_empty():
+            if ts.empty():
                 return Leaf(None)
             else:
                 h = ts.head()

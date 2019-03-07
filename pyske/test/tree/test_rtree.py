@@ -92,3 +92,85 @@ def test_r2b_2():
 		Leaf(None)
 		)
 	assert res == exp
+
+
+def test_map():
+    rt = RNode(15, [RNode(24),
+                    RNode(32, [RNode(56),
+                               RNode(63)]),
+                    RNode(41)])
+    res = rt.map(lambda x: str(x))
+    exp = RNode("15", [RNode("24"),
+                       RNode("32", [RNode("56"),
+                                    RNode("63")]),
+                       RNode("41")])
+
+
+def test_reduce():
+    rt = RNode(15, [RNode(24),
+                    RNode(32, [RNode(56),
+                               RNode(63)]),
+                    RNode(41)])
+    plus2 = lambda x, y: x+y
+    times2 = lambda x, y: x*y
+    res = rt.reduce(plus2,times2)
+    exp =  3503055
+    assert res == exp
+
+
+def test_uacc():
+    rt = RNode(15, [RNode(24),
+                    RNode(32, [RNode(56),
+                               RNode(63)]),
+                    RNode(41)])
+    plus2 = lambda x, y: x+y
+    times2 = lambda x, y: x*y
+    res = rt.uacc(plus2,times2)
+    exp =  RNode(3503055, [RNode(24),
+                           RNode(3560,[RNode(56),
+                                     RNode(63)]),
+                           RNode(41)])
+    assert res == exp
+
+
+def test_dacc():
+    rt = RNode(15, [RNode(24),
+                    RNode(32, [RNode(56),
+                               RNode(63)]),
+                    RNode(41)])
+    plus2 = lambda x, y: x+y
+    res = rt.dacc(plus2,0)
+    exp =  RNode(0, [RNode(15),
+                    RNode(15,[RNode(47),
+                              RNode(47)]),
+                    RNode(15)])
+    assert res == exp
+
+
+def test_lacc():
+    rt = RNode(15, [RNode(24),
+                    RNode(32, [RNode(56),
+                               RNode(63)]),
+                    RNode(41)])
+    plus2 = lambda x, y: x+y
+    res = rt.lacc(plus2, 0)
+    exp =  RNode(0, [RNode(73),
+                    RNode(41,[RNode(63),
+                              RNode(0)]),
+                    RNode(0)])
+    assert res == exp
+
+
+def test_racc():
+    rt = RNode(15, [RNode(24),
+                    RNode(32,[RNode(56),
+                              RNode(63)]),
+                    RNode(41)])
+    plus2 = lambda x, y: x+y
+    res = rt.racc(plus2, 0)
+    exp =  RNode(0, [RNode(0),
+                    RNode(24,
+                        [RNode(0),
+                         RNode(56)]),
+                    RNode(56)])
+    assert res == exp

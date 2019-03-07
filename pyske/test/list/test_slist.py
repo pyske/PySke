@@ -83,14 +83,14 @@ def test_filter():
 def test_empty_true():
     sl = SList()
     exp = True
-    res = sl.is_empty()
+    res = sl.empty()
     assert res == exp
 
 
 def test_empty_false():
     sl = SList([1, 2, 3])
     exp = False
-    res = sl.is_empty()
+    res = sl.empty()
     assert res == exp
 
 
