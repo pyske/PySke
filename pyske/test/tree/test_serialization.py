@@ -1,6 +1,5 @@
 from pyske.core.tree.ltree import LTree, Segment, TaggedValue
 from pyske.core.tree.btree import Node, Leaf
-from pyske.test.support.run import run_tests
 
 # -------------------------- #
 
@@ -132,8 +131,6 @@ def test_serialization_2_2():
 	exp = LTree([seg1, seg2, seg3, seg4, seg5, seg6, seg7, seg8, seg9, seg10, seg11, seg12, seg13])
 	assert res == exp
 
-tests_serialization = [test_serialization_1_4,test_serialization_1_3,test_serialization_1_2,test_serialization_1_1,test_serialization_2_5,test_serialization_2_4,test_serialization_2_3,test_serialization_2_2]
-
 # -------------------------- #
 
 def test_deserialization_1_4():
@@ -255,11 +252,3 @@ def test_deserialization_2_2():
 	lt = LTree([seg1, seg2, seg3, seg4, seg5, seg6, seg7, seg8, seg9, seg10, seg11, seg12, seg13])
 	res = lt.deserialization()
 	assert res == exp
-
-tests_deserialization = [test_deserialization_1_4,test_deserialization_1_3,test_deserialization_1_2,test_deserialization_1_1,test_deserialization_2_5,test_deserialization_2_4,test_deserialization_2_3,test_deserialization_2_2]
-
-# -------------------------- #
-
-fcts = tests_serialization + tests_deserialization 
-
-run_tests(fcts, "serialization")

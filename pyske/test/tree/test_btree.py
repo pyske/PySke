@@ -1,7 +1,5 @@
 from pyske.core.tree.btree import BTree, Leaf, Node
 from pyske.core.support.errors import NotEqualSizeError
-from pyske.test.support.errors import TestFailure
-from pyske.test.support.run import run_tests
 
 # -------------------------- #
 
@@ -18,8 +16,6 @@ def test_is_leaf_false():
 	res = bt.is_leaf()
 	assert exp == res
 
-tests_is_leaf = [test_is_leaf_true, test_is_leaf_false]
-
 # -------------------------- #
 
 def test_is_node_false():
@@ -34,8 +30,6 @@ def test_is_node_true():
 	exp = True
 	res = bt.is_node()
 	assert exp == res
-
-tests_is_node = [test_is_node_false, test_is_node_true]
 
 # -------------------------- #
 
@@ -56,8 +50,6 @@ def test_map_node():
 	exp = Node(0, Leaf(3), Leaf(4))
 	assert exp == res
 
-tests_map = [test_map_leaf, test_map_node]
-
 # -------------------------- #
 
 def test_mapt_leaf():
@@ -77,8 +69,6 @@ def test_mapt_node():
 	exp = Node(3, Leaf(3), Leaf(4))
 	assert exp == res
 
-tests_mapt = [test_mapt_leaf, test_mapt_node]
-
 # -------------------------- #
 
 def test_reduce_leaf():
@@ -96,9 +86,6 @@ def test_reduce_node():
 	exp = 3
 	assert exp == res
 
-
-tests_reduce = [test_reduce_leaf, test_reduce_node]
-
 # -------------------------- #
 
 def test_uacc_leaf():
@@ -115,8 +102,6 @@ def test_uacc_node():
 	res = bt.uacc(k)
 	exp =  Node(6, Leaf(2), Leaf(3))
 	assert exp == res
-
-tests_uacc = [test_uacc_leaf, test_uacc_node]
 
 # -------------------------- #
 
@@ -138,8 +123,6 @@ def test_dacc_node():
 	res = bt.dacc(gl, gr, c)
 	exp = Node(0, Node(1, Leaf(3), Leaf(0)), Leaf(0))
 	assert exp == res
-
-tests_dacc = [test_dacc_leaf, test_dacc_node]
 
 # -------------------------- #
 
@@ -177,8 +160,6 @@ def test_zip_node_leaf():
 		raise TestFailure()
 	except NotEqualSizeError as e:
 		assert True
-
-tests_zip = [test_zip_leaf, test_zip_node, test_zip_leaf_node, test_zip_node_leaf]
 
 # -------------------------- #
 
@@ -221,8 +202,6 @@ def test_zipwith_node_leaf():
 	except NotEqualSizeError as e:
 		assert True
 
-tests_zipwith = [test_zipwith_leaf, test_zipwith_node, test_zipwith_leaf_node, test_zipwith_node_leaf]
-
 # -------------------------- #
 
 def test_getchl_leaf():
@@ -247,9 +226,6 @@ def test_getchl_node_left():
 	res = bt.getchl(c)
 	exp =  Node(4, Node(2, Leaf(c), Leaf(c)), Leaf(c))
 	assert res == exp
-
-
-tests_getchl = [test_getchl_leaf, test_getchl_node_right, test_getchl_node_left]
 
 # -------------------------- #
 
@@ -277,20 +253,4 @@ def test_getchr_node_left():
 	assert res == exp
 
 
-tests_getchr = [test_getchr_leaf, test_getchr_node_right, test_getchr_node_left]
-
 # -------------------------- #
-
-# TODO
-
-tests_size = []
-
-# -------------------------- #
-
-
-fcts = tests_is_leaf + tests_is_node + tests_map + tests_mapt\
-	+ tests_reduce + tests_uacc + tests_dacc + tests_zip\
-	+ tests_zipwith + tests_getchl + tests_getchr + tests_size 
-
-
-run_tests(fcts, "btree")

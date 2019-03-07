@@ -1,8 +1,7 @@
-from pyske.test.support.run import run_tests
 from pyske.core.tree.ltree import LTree, Segment, TaggedValue
 from pyske.core.list.slist import SList
 from pyske.core.support.errors import IllFormedError, EmptyError, NotEqualSizeError
-from pyske.test.support.errors import TestFailure
+
 
 def test_map_empty():
 	lt = LTree()
@@ -221,9 +220,3 @@ def test_zipwith():
 tests_zipwith = [test_zipwith_not_same_size, test_zipwith]
 
 # -------------------------- #
-
-
-fcts = tests_map + \
-		tests_reduce + tests_uacc + tests_dacc + tests_zip + tests_zipwith 
-
-run_tests(fcts, "ltree")

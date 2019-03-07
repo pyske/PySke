@@ -1,5 +1,3 @@
-from pyske.test.support.run import run_tests
-from pyske.test.support.errors import TestFailure
 from pyske.core.support.errors import IllFormedError, NotEqualSizeError, ApplicationError, EmptyError, NotSameTagError
 from pyske.core.tree.ltree import Segment, TaggedValue
 
@@ -29,7 +27,7 @@ def test_has_critical_yes():
 	res = seg.has_critical()
 	assert exp == res
 
-tests_has_critical = [test_has_critical_empty, test_has_critical_no, test_has_critical_yes]
+
 	
 # -------------------------- #
 
@@ -46,7 +44,6 @@ def test_map_local():
 	exp = Segment([TaggedValue(0,"N"), TaggedValue(3,"L"), TaggedValue(2,"C")])
 	assert exp == res
 
-tests_map_local = [test_map_local_empty, test_map_local] 
 
 # -------------------------- #
 
@@ -89,8 +86,6 @@ def test_reduce_local_leaf():
 	exp = TaggedValue(6,"L")
 	assert res == exp
 
-
-tests_reduce_local = [test_reduce_local_empty, test_reduce_local_illformed, test_reduce_local_node, test_reduce_local_leaf] 
 
 # -------------------------- #
 
@@ -140,8 +135,6 @@ def test_reduce_global_node():
 	assert res == exp
 
 
-tests_reduce_global = [test_reduce_global_has_critical,test_reduce_global_empty,test_reduce_global_illformed,test_reduce_global_leaf,test_reduce_global_node] 
-
 # -------------------------- #
 
 def test_uacc_local_empty():
@@ -181,8 +174,6 @@ def test_uacc_local_leaf():
 	res = seg.uacc_local(sum3, id_f, sum3, sum3)
 	exp = (TaggedValue(9,"L"), Segment([TaggedValue(9,"N"),  TaggedValue(2,"L"), TaggedValue(6,"N"), TaggedValue(2,"L"), TaggedValue(3,"L")]))
 	assert res == exp
-
-tests_uacc_local = [test_uacc_local_empty, test_uacc_local_illformed, test_uacc_local_node, test_uacc_local_leaf] 
 
 # -------------------------- #
 phi = lambda b : (1, 0, 0, 1)
@@ -262,8 +253,6 @@ def test_uacc_update_prefix():
 	assert res == exp
 
 
-tests_uacc_prefix = [test_uacc_update_prefix, test_uacc_global_prefix, test_uacc_local_prefix_1, test_uacc_local_prefix_2, test_uacc_local_prefix_3]
-
 # -------------------------- #
 
 def test_uacc_global_has_critical():
@@ -310,8 +299,6 @@ def test_uacc_global_node():
 	res = seg.uacc_global(sum3)
 	exp = Segment([TaggedValue(9,"N"),  TaggedValue(2,"L"), TaggedValue(6,"N"), TaggedValue(2,"L"), TaggedValue(3,"L")])
 	assert res == exp
-
-tests_uacc_global = [test_uacc_global_has_critical, test_uacc_global_empty, test_uacc_global_illformed, test_uacc_global_leaf, test_uacc_global_node] 
 
 # -------------------------- #
 
@@ -386,8 +373,6 @@ def test_uacc_update_node():
 	exp = Segment([TaggedValue(12,"N"),  TaggedValue(2,"L"), TaggedValue(9,"N"), TaggedValue(2,"L"), TaggedValue(6,"C")])
 	assert res == exp
 
-tests_uacc_update = [test_uacc_update_empty, test_uacc_update_not_same_size, test_uacc_update_illformed_node, test_uacc_update_illformed_critical, test_uacc_update_node, test_uacc_update_leaf] 
-
 # -------------------------- #
 
 def test_dacc_path_empty():
@@ -420,8 +405,6 @@ def test_dacc_path_gt_node():
 	res = seg.dacc_path(id_f, id_f, sum2)
 	exp = TaggedValue((5,5),"N")
 	assert res == exp
-
-tests_dacc_path = [test_dacc_path_empty, test_dacc_path_has_no_critical, test_dacc_path_gt_node] 
 
 # -------------------------- #
 
@@ -462,8 +445,6 @@ def test_dacc_global():
 	res = seg.dacc_global(sum2, c)
 	exp = Segment([TaggedValue(2,"N"),  TaggedValue(3,"L"), TaggedValue(3,"N"), TaggedValue(4,"L"), TaggedValue(5,"L")])
 	assert res == exp
-
-tests_dacc_global = [test_dacc_global_empty, test_dacc_global_double_leaf, test_dacc_global_has_critical, test_dacc_global] 
 
 # -------------------------- #
 
@@ -507,8 +488,6 @@ def test_dacc_local():
 	exp = Segment([TaggedValue(400,"N"),  TaggedValue(631,"L"), TaggedValue(169,"N"), TaggedValue(647,"L"), TaggedValue(-309,"C")])
 	assert res == exp
 
-tests_dacc_local = [test_dacc_local_stack_empty_leaf, test_dacc_local_stack_empty_critical, test_dacc_local] 
-
 # -------------------------- #
 
 def test_get_left_has_critical():
@@ -548,8 +527,6 @@ def test_get_left():
 	exp = TaggedValue(1,"L")
 	assert res == exp
 
-
-tests_get_left = [test_get_left_has_critical, test_get_left_is_leaf, test_get_left_illformed, test_get_left]
 
 # -------------------------- #
 
@@ -599,8 +576,6 @@ def test_get_right_not_direct():
 	assert res == exp
 
 
-tests_get_right = [test_get_right_has_critical, test_get_right_is_leaf, test_get_right_illformed, test_get_right_direct, test_get_right_not_direct]
-
 # -------------------------- #
 
 def test_zip_not_equal_size_error():
@@ -629,8 +604,6 @@ def test_zip():
 	res = seg1.zip(seg2)
 	exp = Segment([TaggedValue((1,4),"N"),TaggedValue((2,5),"L"),TaggedValue((3,6),"L")])
 	assert res == exp
-
-tests_zip = [test_zip_not_equal_size_error, test_zip_not_same_tag_error, test_zip]
 
 # -------------------------- #
 
@@ -665,8 +638,6 @@ def test_zipwith():
 	exp = Segment([TaggedValue(5,"N"),TaggedValue(7,"L"),TaggedValue(9,"L")])
 	assert res == exp
 
-tests_zipwith = [test_zipwith_not_equal_size_error, test_zipwith_not_same_tag_error, test_zipwith]
-
 # -------------------------- #
 
 def test_from_str():
@@ -675,15 +646,4 @@ def test_from_str():
 	exp = Segment([TaggedValue(11,"N"),TaggedValue(2,"L"),TaggedValue(3,"C")])
 	assert res == exp
 
-tests_from_str = [test_from_str]
-
 # -------------------------- #
-
-fcts = tests_has_critical + tests_map_local \
-	+ tests_reduce_local + tests_reduce_global \
-	+ tests_uacc_local + tests_uacc_global + tests_uacc_update \
-	+ tests_dacc_path + tests_dacc_global + tests_dacc_local \
-	+ tests_get_left + tests_get_right \
-	+ tests_uacc_prefix + tests_zip + tests_zipwith + tests_from_str
-
-run_tests(fcts, "segment")

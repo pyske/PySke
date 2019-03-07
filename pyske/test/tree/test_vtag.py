@@ -1,7 +1,5 @@
 from pyske.core.tree.ltree import parseVTag,VTag_LEAF,VTag_NODE,VTag_CRITICAL
 from pyske.core.support.errors import UnknownTypeError
-from pyske.test.support.errors import TestFailure
-from pyske.test.support.run import run_tests
 
 def test_parseVTag_leaf():
 	tag = "L"
@@ -33,8 +31,3 @@ def test_parseVTag_unknown():
 		raise TestFailure()
 	except UnknownTypeError as e:
 		assert True
-
-
-fcts = [test_parseVTag_leaf, test_parseVTag_node, test_parseVTag_critical, test_parseVTag_unknown]
-
-run_tests(fcts, "vtag")
