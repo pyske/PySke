@@ -1,5 +1,6 @@
 from pyske.core.support.errors import NotEqualSizeError, EmptyError
 from pyske.core.list.slist import SList
+import pytest
 
 # -------------------------- #
 
@@ -206,6 +207,12 @@ def test_scan_cons():
 	assert res == exp
 
 # -------------------------- #
+
+def test_scanr_empty():
+	with pytest.raises(AssertionError):
+		sl = SList()
+		f = lambda x, y: x + y
+		sl.scanr(f)
 
 def test_scanr_singleton():
 	sl = SList([1])
