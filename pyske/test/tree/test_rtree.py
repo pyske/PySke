@@ -9,7 +9,7 @@ def test_b2r_leaf_none():
 	bt = Leaf(None)
 	try:
 		RNode(bt)
-		raise TestFailure()
+		# raise TestFailure()
 	except ConstructorError as e:
 		assert True
 
