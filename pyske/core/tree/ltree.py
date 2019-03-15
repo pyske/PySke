@@ -191,13 +191,14 @@ class Segment(SList):
         kn : callable
             The function to apply to every values tagged by CRITICAL or NODE of the current instance
         """
-        res = Segment()
-        for tv in self:
+        res = Segment([None] * self.length())
+        for i in range(self.length()):
+            tv = self[i]
             if tv.is_leaf():
                 v = TaggedValue(kl(tv.get_value()), tv.get_tag())
             else:  # v.is_node() or v.is_critical()
                 v = TaggedValue(kn(tv.get_value()), tv.get_tag())
-            res.append(v)
+            res[i] = v
         return res
 
     def reduce_local(self, k, phi, psi_l, psi_r):
@@ -337,13 +338,13 @@ class Segment(SList):
         assert not self.empty(), "uacc_local cannot be applied to an empty Segment"
         stack = []
         d = MINUS_INFINITY
-        res = Segment()
+        res = Segment([None] * self.length())
         has_crit = False
-
-        for v in self.reverse():
+        for i in reversed(range(self.length())):
+            v = self[i]
             # We stack all the values of previous accumulation
             if v.is_leaf():
-                res.insert(0, v)
+                res[i] = v
                 stack.append(v.get_value())
                 d = d + 1
 
@@ -361,26 +362,26 @@ class Segment(SList):
                     # We process and stack the value of a partial accumulation
                     val = phi(v.get_value())
                     stack.append(psi_l(lv, val, rv))
-                    res.insert(0, None)
+                    res[i] = None
                 elif d == 1:
                     # The current node is an ancestor of a critical value by the left
                     # That is, there is a critical value on its left children in a BTree representation
                     # We process and stack the value of a partial accumulation
                     val = phi(v.get_value())
                     stack.append(psi_r(lv, val, rv))
-                    res.insert(0, None)
+                    res[i] = None
                     d = 0
                 else:
                     # We did not meet a critical value, we can process a normal upward accumulation with k
                     val = k(lv, v.get_value(), rv)
-                    res.insert(0, TaggedValue(val, v.get_tag()))
+                    res[i] = TaggedValue(val, v.get_tag())
                     stack.append(val)
                     d = d - 1
 
             else:  # v.is_critical()
                 # The current value is critical. We make a partial accumulation with phi and stack the result
                 stack.append(phi(v.get_value()))
-                res.insert(0, None)
+                res[i] = None
                 d = 0
                 has_crit = True
 
@@ -411,12 +412,13 @@ class Segment(SList):
         assert not self.has_critical(), "uacc_global cannot be applied to a Segments which contains a critical"
 
         stack = []
-        res = Segment()
-        for g in self.reverse():
+        res = Segment([None] * self.length())
+        for i in reversed(range(self.length())):
+            g = self[i]
             # We process a global accumulation using a stack to store previous accumulation,
             # to get them for the accumulation on nodes
             if g.is_leaf():
-                res.insert(0, g)
+                res[i] = g
                 val = g.get_value()
             else:  # g.is_node()
                 if len(stack) < 2:
@@ -426,7 +428,7 @@ class Segment(SList):
                 lv = stack.pop()
                 rv = stack.pop()
                 val = psi_n(lv, g.get_value(), rv)
-                res.insert(0, TaggedValue(val, g.get_tag()))
+                res[i] = TaggedValue(val, g.get_tag())
             stack.append(val)
         # We get the top value of the accumulation
         return res
@@ -459,8 +461,8 @@ class Segment(SList):
 
         stack = [rc, lc]
         d = MINUS_INFINITY
-        res = Segment()
-        for i in range(seg2.length() - 1, -1, -1):
+        res = Segment([None] * self.length())
+        for i in reversed(range(seg2.length())):
             v1 = self[i]
             v2 = seg2[i]
             # We update the accumulation from seg2
@@ -469,7 +471,7 @@ class Segment(SList):
 
             if v1.is_leaf():
                 # The result of the accumulation is the node made in seg2
-                res.insert(0, v2)
+                res[i] = v2
                 stack.append(v2.get_value())
                 d = d + 1
 
@@ -484,12 +486,12 @@ class Segment(SList):
                 if d == 0 or d == 1:
                     # We met a critical value before, so the accumulation is not completed yet
                     val = k(lv, v1.get_value(), rv)
-                    res.insert(0, TaggedValue(val, v1.get_tag()))
+                    res[i] = TaggedValue(val, v1.get_tag())
                     stack.append(val)
                     d = 0
                 else:
                     # We did not meet a critical value before, so the accumulation is completed yet
-                    res.insert(0, v2)
+                    res[i] = v2
                     stack.append(v2.get_value())
                     d = d - 1
             else:  # v1.is_critical()
@@ -501,7 +503,7 @@ class Segment(SList):
                 lv = stack.pop()
                 rv = stack.pop()
                 val = k(lv, v1.get_value(), rv)
-                res.insert(0, TaggedValue(val, v1.get_tag()))
+                res[i] = TaggedValue(val, v1.get_tag())
                 stack.append(val)
                 d = 0
         return res
@@ -584,15 +586,17 @@ class Segment(SList):
             That is there are several leaves that doesn't have a parent in a BTree representation
         """
         stack = [c]
-        res = Segment()
+        res = Segment([None] * self.length())
         assert not self.has_critical(), "dacc_global cannot be applied to Segment which contains a critical node"
-        for v in self:
+
+        for i in range(self.length()):
+            v = self[i]
             if len(stack) == 0:
                 raise IllFormedError(
                     "dacc_global cannot be applied to ill-formed Segments that is two leaf values do not have a parent")
             # We add the previous accumulation as a new value of our result
             val = stack.pop()
-            res.append(TaggedValue(val, v.get_tag()))
+            res[i] = TaggedValue(val, v.get_tag())
 
             # If the current value is node, we need to update the value to pass to the right, and left children
             # These values are contained in the stack
@@ -625,8 +629,9 @@ class Segment(SList):
         # We update not finished accumulation locally using the value from the parent in the global representation of
         # a linearized tree
         stack = [c]
-        res = Segment()
-        for v in self:
+        res = Segment([None] * self.length())
+        for i in range(self.length()):
+            v = self[i]
             if v.is_leaf() or v.is_critical():
                 if len(stack) == 0:
                     raise IllFormedError(
@@ -634,7 +639,7 @@ class Segment(SList):
                         "do not have a parent")
                 # We get the accumulated value passed from the last parent
                 val = stack.pop()
-                res.append(TaggedValue(val, v.get_tag()))
+                res[i] = TaggedValue(val, v.get_tag())
             else:  # v.is_node()
                 if len(stack) == 0:
                     raise IllFormedError(
@@ -642,7 +647,7 @@ class Segment(SList):
                 val = stack.pop()
                 # We get the accumulated value passed from the last parent
                 # And two new ones, one for the left children, and one to the right, using the gr and gl functions
-                res.append(TaggedValue(val, v.get_tag()))
+                res[i] = TaggedValue(val, v.get_tag())
                 stack.append(gr(val, v.get_value()))
                 stack.append(gl(val, v.get_value()))
         return res
@@ -709,14 +714,14 @@ class Segment(SList):
             If two values with not the same tag are trying to be zipped together
         """
         assert self.length() == seg.length(), "The linearized trees have not the same shape"
-        res = Segment()
+        res = Segment([None] * self.length())
         for j in range(self.length()):
             tv1 = self[j]
             tv2 = seg[j]
             if tv1.get_tag() != tv2.get_tag():
                 raise NotSameTagError("Two zipped values have not the same tag")
             tv = TaggedValue((tv1.get_value(), tv2.get_value()), tv1.get_tag())
-            res.append(tv)
+            res[j] = tv
         return res
 
     def map2(self, f, seg):
@@ -739,14 +744,14 @@ class Segment(SList):
             If two values with not the same tag are trying to be zipped together
         """
         assert self.length() == seg.length(), "The linearized trees have not the same shape"
-        res = Segment()
+        res = Segment([None] * self.length())
         for j in range(self.length()):
             tv1 = self[j]
             tv2 = seg[j]
             if tv1.get_tag() != tv2.get_tag():
                 raise NotSameTagError("Two zipped values have not the same tag")
             tv = TaggedValue(f(tv1.get_value(), tv2.get_value()), tv1.get_tag())
-            res.append(tv)
+            res[j] = tv
         return res
 
     @staticmethod
@@ -855,7 +860,7 @@ class LTree(SList):
             return res
 
         # Get a LTree from a BTree
-        def up_div(n, m_val): (int(n / m_val) + (0 if n % m_val == 0 else 1))
+        def up_div(n, m_val): return int(n / m_val) + (0 if n % m_val == 0 else 1)
         bt_one = bt.map(lambda x: 1, lambda x: 1)
         bt_size = bt_one.uacc(lambda x, y, z: x + y + z)
         bt_tags = bt_size.mapt(lambda x: TAG_LEAF,
@@ -916,9 +921,9 @@ class LTree(SList):
             Function to apply to every node value of the current instance
         """
         assert not self.empty(), "map cannot be applied to an empty linearized tree"
-        res = LTree()
-        for seg in self:
-            res.append(seg.map_local(kl, kn))
+        res = LTree([None] * self.length())
+        for i in range(self.length()):
+            res[i] = self[i].map_local(kl, kn)
         return res
 
     def reduce(self, k, phi, psi_n, psi_l, psi_r):
@@ -947,12 +952,10 @@ class LTree(SList):
             A function used to respect the closure property to make partial computation on the right
         """
         assert not self.empty(), "reduce cannot be applied to an empty linearized tree"
-        tops = Segment()
-
+        tops = Segment([None] * self.length())
         # We start by doing local reductions on each Segment, representing a sub part of the tree
-        for seg in self:
-            tops.append(seg.reduce_local(k, phi, psi_l, psi_r))
-
+        for i in range(self.length()):
+            tops[i] = self[i].reduce_local(k, phi, psi_l, psi_r)
         # The local reductions are reduced into a single value with reduce_global
         return tops.reduce_global(psi_n)
 
@@ -982,30 +985,31 @@ class LTree(SList):
             A function used to respect the closure property to make partial computation on the right
         """
         assert not self.empty(), "uacc cannot be applied to an empty linearized tree"
-        gt = Segment()
-        lt2 = LTree()
+        gt = Segment([None]*self.length())
+        lt2 = LTree([None]*self.length())
         # We first make a local accumulation to get
         # * Locally non complete accumulated segments
         # * The top value of accumulations, to later pass them for a complete accumulation
-        for seg in self:
-            (top, res) = seg.uacc_local(k, phi, psi_l, psi_r)
-            gt.append(top)
-            lt2.append(res)
+        for i in range(self.length()):
+            (top, res) = self[i].uacc_local(k, phi, psi_l, psi_r)
+            gt[i] = top
+            lt2[i] = res
 
         # We get real top values of accumulation considering a full linearized tree
         gt2 = gt.uacc_global(psi_n)
 
-        res = LTree()
+        res = LTree([None]*gt.length())
         # We update each segment using the real top values calculated previously,
         # the non complete accumulated segments and the initial segments
-        for i in range(0, gt.length()):
+        # print(gt2)
+        # print(lt2)
+        for i in range(gt.length()):
             if gt[i].is_node():
                 lc = gt2.get_left(i).get_value()
-                rc = gt2.get_left(i).get_value()
-                seg_res = self[i].uacc_update(lt2[i], k, lc, rc)
-                res.append(seg_res)
+                rc = gt2.get_right(i).get_value()
+                res[i] = self[i].uacc_update(lt2[i], k, lc, rc)
             else:
-                res.append(lt2[i])
+                res[i] = lt2[i]
         return res
 
     def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
@@ -1038,23 +1042,23 @@ class LTree(SList):
             A function used to respect the closure property to make partial computation
         """
         assert not self.empty(), "dacc cannot be applied to an empty linearized tree"
-        gt = Segment()
-        res = LTree()
+        gt = Segment([None] * self.length())
+        res = LTree([None] * self.length())
         # We first find the values to pass to sub trees for each segment that contains critical values
         # That is incomplete subtrees (which have node with left and right children not contained in the same segment)
-        for seg in self:
+        for i in range(self.length()):
+            seg = self[i]
             if seg.has_critical():
-                gt.append(seg.dacc_path(phi_l, phi_r, psi_u))
+                gt[i] = seg.dacc_path(phi_l, phi_r, psi_u)
             else:
-                v = seg[0]
-                gt.append(TaggedValue(v.get_value(), "L"))
+                gt[i] = TaggedValue(seg[0].get_value(), "L")
 
         # We process a global downward accumulation using the initial value of the accumulator
         gt2 = gt.dacc_global(psi_d, c)
 
         # We finally pass the values of global accumulation to each segment, to update their local accumulation
-        for i in range(0, gt.length()):
-            res.append(self[i].dacc_local(gl, gr, gt2[i].get_value()))
+        for i in range(gt.length()):
+            res[i] = self[i].dacc_local(gl, gr, gt2[i].get_value())
         return res
 
     def zip(self, lt):
@@ -1070,9 +1074,9 @@ class LTree(SList):
             The LTree to zip with the current instance
         """
         assert self.length() == lt.length(), "The linearized trees have not the same shape"
-        res = LTree()
+        res = LTree([None] * self.length())
         for i in range(self.length()):
-            res.append(self[i].zip(lt[i]))
+            res[i] = self[i].zip(lt[i])
         return res
 
     def map2(self, f, lt):
@@ -1084,15 +1088,15 @@ class LTree(SList):
 
         Parameters
         ----------
+         f : callable
+            A function to zip values
         lt : :obj:`LTree`
             The LTree to zip with the current instance
-        f : callable
-            A function to zip values
         """
-        res = LTree()
+        res = LTree([None] * self.length())
         assert self.length() == lt.length(), "The linearized trees have not the same shape"
         for i in range(self.length()):
-            res.append(self[i].map2(f, lt[i]))
+            res[i] = self[i].map2(f, lt[i])
         return res
 
     def deserialization(self):

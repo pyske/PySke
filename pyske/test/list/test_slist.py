@@ -240,6 +240,33 @@ def test_scanr_non_singleton():
     assert res == exp
 
 
+def test_scanr_full_distribution():
+    sl = SList([(0, 1), (1, 3), (0, 3), (0, 3), (0, 3)])
+
+    def f(x, y):
+        (x1, y1) = x
+        (x2, y2) = y
+        return x1 + y1, y2
+
+    res = sl.scanr(f)
+    exp = SList([(0, 1), (1, 3), (4, 3), (7, 3), (10, 3)])
+    assert res == exp
+
+
+def test_scanr_full_distribution2():
+        sl = SList([(0, 1), (1, 3), (4, 3)])
+
+        def f(x, y):
+            (x1, y1) = x
+            (x2, y2) = y
+            return x1 + y1, y2
+
+        res = sl.scanr(f)
+        exp = SList([(0, 1), (1, 3), (4, 3)])
+        assert res == exp
+
+
+
 # -------------------------- #
 
 def test_scanl_empty():
@@ -256,7 +283,6 @@ def test_scanl_non_empty():
     res = sl.scanl(f, 0)
     exp = SList([0, 1, 3, 6])
     assert res == exp
-
 
 # -------------------------- #
 

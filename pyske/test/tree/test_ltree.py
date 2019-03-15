@@ -1,7 +1,7 @@
 import pytest
 
 from pyske.core.tree.ltree import LTree, Segment, TaggedValue
-from pyske.core.support.errors import IllFormedError, EmptyError, NotEqualSizeError
+from pyske.core.support.errors import IllFormedError
 
 
 def test_map_empty():
@@ -29,7 +29,6 @@ def test_map_not_empty():
 	exp = LTree([seg1_exp,seg2_exp,seg3_exp])
 	assert res == exp
 
-tests_map = [test_map_empty,test_map_not_empty]
 
 # -------------------------- #
 
@@ -62,7 +61,6 @@ def test_reduce():
 	exp = 13 + 31 + 47 + 32 + 72 + 92 + 42
 	assert res == exp
 
-tests_reduce  = [test_reduce_empty, test_reduce_illformed, test_reduce]
 
 # -------------------------- #
 
@@ -96,8 +94,8 @@ def test_uacc():
 	seg3_exp = Segment([TaggedValue(72+92+42, "N"),TaggedValue(92, "L"),TaggedValue(42, "L")])
 	exp = LTree([seg1_exp, seg2_exp, seg3_exp])
 
+	assert exp == res
 
-tests_uacc = [test_uacc_empty, test_uacc_illformed, test_uacc]
 
 # -------------------------- #
 
@@ -127,8 +125,6 @@ def test_dacc():
 
 	assert res == exp
 
-
-tests_dacc = [test_dacc_empty, test_dacc]
 
 # -------------------------- #
 
@@ -160,11 +156,10 @@ def test_zip():
 	exp = LTree([seg1_exp, seg2_exp, seg3_exp])
 	assert res == exp
 
-tests_zip = [test_zip_not_same_size, test_zip]
 
 # -------------------------- #
 
-def test_zipwith_not_same_size():
+def test_map2_not_same_size():
 	sum2 = lambda x,y : x + y
 	seg11 = Segment([TaggedValue(13, "C")])
 	seg21 = Segment([TaggedValue(31, "N"),TaggedValue(47, "L"),TaggedValue(32, "L")])
@@ -177,7 +172,7 @@ def test_zipwith_not_same_size():
 		lt1.map2(sum2, lt2)
 
 
-def test_zipwith():
+def test_map2():
 	sum2 = lambda x,y : x + y
 	seg11 = Segment([TaggedValue(1, "C")])
 	seg21 = Segment([TaggedValue(1, "N"),TaggedValue(1, "L"),TaggedValue(1, "L")])
@@ -193,7 +188,3 @@ def test_zipwith():
 	seg3_exp = Segment([TaggedValue(3, "N"),TaggedValue(3, "L"),TaggedValue(3, "L")])
 	exp = LTree([seg1_exp, seg2_exp, seg3_exp])
 	assert res == exp
-
-tests_zipwith = [test_zipwith_not_same_size, test_zipwith]
-
-# -------------------------- #

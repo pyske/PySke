@@ -1,4 +1,4 @@
-from pyske.core.tree.ltree import TaggedValue, Segment
+from pyske.core.tree.ltree import TaggedValue, Segment, LTree
 from pyske.core.support.parallel import *
 from pyske.core.support.separate import *
 
@@ -10,6 +10,7 @@ TAG_COMM_UACC_2 = int(TAG_BASE + "22")
 TAG_COMM_DACC_1 = int(TAG_BASE + "31")
 TAG_COMM_DACC_2 = int(TAG_BASE + "32")
 TAG_COMM_MERGE = int(TAG_BASE + "00")
+TAG_TO_SEQ = int(TAG_BASE + "01")
 
 
 class PTree:
@@ -30,7 +31,7 @@ class PTree:
         self.__start_index = 0
         self.__nb_segs = 0
         self.__content = SList([])
-        if lt is None:
+        if lt is not None:
             (distribution, global_index) = distribute_tree(lt, nprocs)
             self.__distribution = distribution
             self.__global_index = global_index
@@ -38,6 +39,15 @@ class PTree:
             self.__nb_segs = distribution[pid]
             for i_seg in range(self.__start_index, self.__start_index + self.__nb_segs):
                 self.__content.extend(lt[i_seg])
+
+    def __eq__(self, other):
+        if isinstance(other, PTree):
+            return self.__distribution == other.__distribution \
+                   and self.__global_index == other.__distribution \
+                   and self.__start_index == other.__start_index \
+                   and self.__nb_segs == other.__nb_segs \
+                   and self.__content == other.__content
+        return False
 
     @staticmethod
     def init(pt, content):
@@ -128,7 +138,7 @@ class PTree:
         kn : callable
             Function to apply to every node value of the current instance
         """
-        content = SList([])
+        content = SList()
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
             content.extend(Segment(self.__content[start:start + offset]).map_local(kl, kn))
         return PTree.init(self, content)
@@ -155,9 +165,11 @@ class PTree:
             A function used to respect the closure property to make partial computation on the right
         """
         # Step 1 : Local Reduction
-        gt = Segment([])
+        gt = Segment([None] * self.__nb_segs)
+        i = 0
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            gt.append(Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r))
+            gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
+            i = i+1
         # Step 2 : Gather local Results
         if pid == 0:
             for i in range(1, nprocs):
@@ -188,13 +200,16 @@ class PTree:
         psi_r : callable
             A function used to respect the closure property to make partial computation on the right
         """
+        assert self.__distribution != []
         # Step 1 : Local Upwards Accumulation
-        gt = Segment([])
-        lt2 = SList([])
+        gt = Segment([None] * self.__nb_segs)
+        lt2 = SList([None] * self.__nb_segs)
+        i = 0
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
             (top, res) = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
-            gt.append(top)
-            lt2.append(res)
+            gt[i] = top
+            lt2[i] = res
+            i = i + 1
 
         # Step 2 : Gather local Results
         if pid == 0:
@@ -209,7 +224,7 @@ class PTree:
             gt2 = gt.uacc_global(psi_n)
             for i in range(len(gt2)):
                 if gt2[i].is_node():
-                    gt2[i] = TaggedValue((gt2.get_left(i).get_value(), gt2.get_left(i).get_value()), gt2[i].get_tag())
+                    gt2[i] = TaggedValue((gt2.get_left(i).get_value(), gt2.get_right(i).get_value()), gt2[i].get_tag())
 
         # Step 4 : Distributing Global Result
         start = 0
@@ -223,7 +238,7 @@ class PTree:
             gt2 = comm.recv(source=0, tag=TAG_COMM_UACC_2)['g']
 
         # Step 5 : Local Updates
-        new_content = SList([])
+        content = SList()
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
             if gt[i].is_node():
@@ -231,9 +246,9 @@ class PTree:
                 val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
             else:
                 val = lt2[i]
-            new_content.extend(val)
+            content.extend(val)
 
-        return PTree.init(self, new_content)
+        return PTree.init(self, content)
 
     def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
         """Downward accumulation skeleton for distributed tree
@@ -261,13 +276,15 @@ class PTree:
             A function used to respect the closure property to make partial computation
         """
         # Step 1 : Computing Local Intermediate Values
-        gt = Segment([])
+        gt = Segment([None] * self.__nb_segs)
+        i = 0
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
             seg = Segment(self.__content[start:start + offset])
             if seg.has_critical():
-                gt.append(seg.dacc_path(phi_l, phi_r, psi_u))
+                gt[i] = seg.dacc_path(phi_l, phi_r, psi_u)
             else:
-                gt.append(TaggedValue(seg[0].get_value(), "L"))
+                gt[i] = TaggedValue(seg[0].get_value(), "L")
+            i = i + 1
         # Step 2 : Gather Local Results
         if pid == 0:
             for iproc in range(1, nprocs):
@@ -287,11 +304,11 @@ class PTree:
         else:
             gt2 = comm.recv(source=0, tag=TAG_COMM_UACC_2)['g']
         # Step 5 : Local Downward Accumulation
-        new_content = SList([])
+        content = SList([])
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            new_content.extend(Segment(self.__content[start:start + offset]).dacc_local(gl, gr, gt2[i].get_value()))
-        return PTree.init(self, new_content)
+            content.extend(Segment(self.__content[start:start + offset]).dacc_local(gl, gr, gt2[i].get_value()))
+        return PTree.init(self, content)
 
     def zip(self, pt):
         """Zip skeleton for distributed tree
@@ -306,14 +323,14 @@ class PTree:
             The PTree to zip with the current instance
         """
         assert self.__distribution == pt.__distribution
-        new_content = SList([])
+        content = SList([])
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            new_content.extend(Segment(self.__content[start:start+offset])
+            content.extend(Segment(self.__content[start:start+offset])
                                .zip(Segment(pt.__content[start:start+offset])))
-        return PTree.init(self, new_content)
+        return PTree.init(self, content)
 
-    def map2(self, pt, f):
+    def map2(self, f, pt):
         """Map2 skeleton for distributed tree
 
         Precondition
@@ -328,9 +345,33 @@ class PTree:
             A function to zip values
         """
         assert self.__distribution == pt.__distribution
-        new_content = SList([])
+        content = SList([])
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            new_content.extend(
+            content.extend(
                 Segment(self.__content[start:start + offset]).map2(f, Segment(pt.__content[start:start + offset])))
-        return PTree.init(self, new_content)
+        return PTree.init(self, content)
+
+    def get_full_index(self):
+        def f(x, y):
+            (x1, y1) = x
+            (x2, y2) = y
+            return x1 + y1, y2
+        return SList(self.__global_index.scanr(f))
+
+    def to_seq(self):
+        full_content = []
+        if pid == 0:
+            full_index = self.get_full_index()
+            res = LTree([None] * full_index.length())
+            full_content.extend(self.__content)
+            for iproc in range(1, nprocs):
+                full_content.extend(comm.recv(source=iproc, tag=TAG_TO_SEQ)['c'])
+
+            for i in range(full_index.length()):
+                (start, offset) = full_index[i]
+                res[i] = full_content[start:start + offset]
+            return res
+        else:
+            comm.send({'c': self.__content}, dest=0, tag=TAG_TO_SEQ)
+            return None

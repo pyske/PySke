@@ -2,7 +2,7 @@ from pyske.core.list.slist import SList
 
 
 def distribute_tree(lt, n):
-	def sum3(x, y, z): x+y+z
+	def sum3(x, y, z): return x+y+z
 	total_size = lt.map(lambda x: 1, lambda x: 1).reduce(sum3, lambda x: x, sum3, sum3, sum3)
 	avg_elements = int(total_size / n)
 

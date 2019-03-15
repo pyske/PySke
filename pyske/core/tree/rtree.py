@@ -256,7 +256,7 @@ class RNode:
         assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
         ch = SList([])
         for i in range(0, ch1.length()):
-            ch.append(ch1[i].map2(f, ch2))
+            ch.append(ch1[i].map2(ch2, f))
         v = f(self.get_value(), rt.get_value())
         return RNode(v, ch)
 

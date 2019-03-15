@@ -1,7 +1,5 @@
-from pyske.core.support.errors import NotEqualSizeError, EmptyError
 from pyske.core.list.slist import SList
 from pyske.core.list.plist import PList
-from pyske.core.support.parallel import *
 
 
 def app(l1, l2):
