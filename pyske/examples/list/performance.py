@@ -26,6 +26,6 @@ def test(f, input, name):
 
 input = SList(range(1, 4_000_000))
 
-t1 = test(lambda l: l.map2(add, l), input, "map2")
+t1 = test(lambda l: l.map2(l, add), input, "map2")
 
 assert t1
