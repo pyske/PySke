@@ -40,15 +40,13 @@ class SList(list):
     scanr(f)
         Makes a total leftward accumulation of the values
     scanp(f, c)
-        TODO
-    scanp2(f, c)
          Makes an total lefttward accumulation of the element on the current instance from an initial value
     scanl_last(f, c)
         Makes a rightward accumulation of the values from an initial one,
         considering the last accumulation as an external value
     zip(l)
         Creates a list of pairs from the element of the current instance and another one
-    map2(l, f)
+    map2(f, l)
         Creates a list of new elements using a function from the element of the current instance and another one
     """
 
@@ -251,39 +249,12 @@ class SList(list):
         return res, last
 
     def scanp(self, f, c):
-        """TODO
-        The result of scanp is a list of size n where n is the size of self.
-
-        Definition:
-            scanp f c [] = []
-            scanp f c [x_1, x_2, ..., x_n] = [f(x_n, c), ..., f(x_2, f(x_3, f(..., c)))]
-
-        Parameters
-        ----------
-        f : callable
-            A function to make a new accumulation from the previous accumulation and a current value
-            Usually, f is associative.
-        c
-            Initial value for the accumulator.
-            Usually, c is the unit of f, i.e. f(x, c) = f(c, x) = x
-        """
-        res = SList()
-        res.append(c)
-        if self.empty():
-            return res
-        else:
-            for i in range(self.length() - 1, 0, -1):
-                c = f(self[i], c)
-                res.append(c)
-            return res.reverse()
-
-    def scanp2(self, f, c):
         """Makes a leftward accumulation of the values from an initial one.
-        The result of scanp2 is a list of size n where n is the size of self
+        The result of scanp is a list of size n where n is the size of self
         and one additional value corresponding to the total accumulation.
 
         Definition:
-            scanp2 f c [x_1, x_2, ..., x_n] = [f(x_2, f(x_3, f(..., c))), ..., f(x_n, c), c]
+            scanp f c [x_1, x_2, ..., x_n] = [f(x_2, f(x_3, f(..., c))), ..., f(x_n, c), c]
 
         Parameters
         ----------
@@ -325,8 +296,10 @@ class SList(list):
 
         Parameters
         ----------
+        f : callable
+             A function to zip values
         l : list
-        f : lambda x, y: e
+            The second list to zip with the current instance
         """
         assert (len(self) == len(l))
         return SList([f(x, y) for (x, y) in zip(self, l)])
