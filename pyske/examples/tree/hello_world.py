@@ -1,16 +1,13 @@
-import random
-
-from pyske.core.tree.btree import BTree, Node, Leaf
 from pyske.core.tree.ltree import LTree
 from pyske.core.tree.ptree import PTree
 
 from pyske.core.support.generate import *
 from pyske.core.support.parallel import *
 
-from pyske.application.tree .prefix import prefix
-from pyske.application.tree.size import size
-from pyske.application.tree.size_by_node import size_by_node
-from pyske.application.tree.ancestors import ancestors
+from pyske.examples.tree.prefix import prefix
+from pyske.examples.tree.size import size
+from pyske.examples.tree.size_by_node import size_by_node
+from pyske.examples.tree.ancestors import ancestors
 
 msg = "hello world!"
 frdm = lambda : msg[random.randint(0,len(msg)-1)]
