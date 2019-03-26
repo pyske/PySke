@@ -1,8 +1,8 @@
 from pyske.core.list.slist import SList
 from pyske.core.list.plist import PList
 from pyske.core.support.parallel import *
-import sys
-import random
+import sys, random
+from operator import add
 from mpi4py import MPI
 
 # Generating a parallel list of the size specified on the command line or 1000
@@ -10,7 +10,7 @@ if len(sys.argv) > 1:
     size = int(sys.argv[1])
 else:
     size = 1000
-X = PList.init(lambda _: random.randint(0, 100), size)
+X = PList.init(lambda _: 50+random.randint(0, 10), size)
 
 comm.barrier()
 
@@ -18,10 +18,10 @@ comm.barrier()
 t = PList.init(lambda _: wtime(), nprocs)
 
 # computing the variance
-add = lambda x, y: x + y
 n = X.length()
 avg = X.reduce(add) / n
-var = (X.map(lambda x: (x - avg) ** 2).reduce(add) ** 0.5) / n
+def f(x): return (x-avg) ** 2
+var = X.map(f).reduce(add) / n
 
 # stop timing
 elapsed = t.map(lambda x: wtime() - x)
