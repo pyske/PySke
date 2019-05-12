@@ -26,6 +26,7 @@ def test(f, input, name):
 
 input = SList(range(1, 4_000_000))
 
-t1 = test(lambda l: l.map2(l, add), input, "map2")
+t1 = test(lambda l: l.map2(add, l), input, "map2")
+t2 = test(lambda l: l.zip(l).map(lambda p:add(p[0],p[1])), input, "map/zip")
 
-assert t1
+assert t1 == t2
