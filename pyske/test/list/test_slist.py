@@ -163,6 +163,28 @@ def test_map_id():
 
 # -------------------------- #
 
+def test_map_reduce_nil():
+    e = 1232
+    sl = SList()
+    f = lambda x: x+1
+    op = lambda x, y: x + y
+    res = sl.map_reduce(f, op, e)
+    exp = e
+    assert res == exp
+
+
+def test_map_reduce_cons():
+    sl = SList([1, 2, 3, 4])
+    f = lambda x: x+1
+    op = lambda x, y: x + y
+    res = sl.map_reduce(f, op)
+    exp = sl.map(f).reduce(op)
+    assert res == exp
+
+
+# -------------------------- #
+
+
 def test_reduce_nil():
     e = 1232
     sl = SList()

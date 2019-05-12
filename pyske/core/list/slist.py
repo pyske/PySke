@@ -85,6 +85,7 @@ class SList(list):
         else:
             return self[0]
 
+
     def tail(self):
         """Gives the the current instance without its first element
         """
@@ -135,7 +136,7 @@ class SList(list):
         """Applies f to every index and element of the current instance
 
         Definition:
-        map f [x0, x1, ..., xn] = [f(0,x0), f(1,x1), ..., f(n,xn)]
+        mapi f [x0, x1, ..., xn] = [f(0,x0), f(1,x1), ..., f(n,xn)]
 
         Parameters
         ----------
@@ -143,6 +144,31 @@ class SList(list):
         The function to apply to every index and element of the current instance
         """
         return SList([f(i, self[i]) for i in range(0, len(self))])
+
+    def map_reduce(self, f, op, e=None):
+        """Reduce the current instance using a reduction function
+
+        Definition:
+        map_reduce f op [x1, x2, ..., xn] e = op(op(op(e, f x1), ...), f xn)
+
+        Parameters
+        ----------
+        f : callable
+            The used function to reduce the current instance
+        e : optional
+            Default value for reduction
+        """
+        if self.empty():
+            return e
+        else:
+            if e is None:
+                res = f(self[0])
+            else:
+                res = op(e, f(self[0]))
+            for i in range(1, self.length()):
+                res = op(res, f(self[i]))
+            return res
+
 
     def reduce(self, f, e=None):
         """Reduce the current instance using a reduction function

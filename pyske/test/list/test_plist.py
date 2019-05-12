@@ -46,6 +46,69 @@ def test_mapi_empty():
     exp = []
     assert res == exp
 
+# -------------------------- #
+
+def test_reduce_nil():
+    e = 0
+    sl = SList()
+    pl = PList.from_seq(sl)
+    f = lambda x, y: x + y
+    res = pl.reduce(f, e)
+    exp = e
+    assert res == exp
+
+
+def test_reduce_cons():
+    sl = SList([1, 2, 3, 4])
+    pl = PList.from_seq(sl)
+    f = lambda x, y: x + y
+    res = pl.reduce(f)
+    exp = 10
+    assert res == exp
+
+
+def test_reduce_sum_empty():
+    e = 0
+    sl = SList()
+    pl = PList.from_seq(sl)
+    f = lambda x, y: x + y
+    exp = e
+    res = pl.reduce(f, e)
+    assert res == exp
+
+
+def test_reduce_sum_non_empty():
+    sl = SList([1, 2, 3, 4, 5, 6])
+    pl = PList.from_seq(sl)
+    f = lambda x, y: x + y
+    exp = 21
+    res = pl.reduce(f, 0)
+    assert res == exp
+
+
+# -------------------------- #
+
+def test_map_reduce_nil():
+    e = 0
+    sl = SList()
+    pl = PList.from_seq(sl)
+    f = lambda x: x + 1
+    op = lambda x, y: x + y
+    res = pl.map_reduce(f, op, e)
+    exp = e
+    assert res == exp
+
+
+def test_map_reduce_cons():
+    sl = SList([1, 2, 3, 4])
+    pl = PList.from_seq(sl)
+    f = lambda x: x + 1
+    op = lambda x, y: x + y
+    res = pl.map_reduce(f, op)
+    exp = pl.map(f).reduce(op)
+    assert res == exp
+
+# -------------------------- #
 
 def test_mapi_non_empty():
     f = lambda i, x: f'{i}:{x.upper()}'

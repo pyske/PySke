@@ -70,6 +70,17 @@ class PList:
             partials = SList(comm.allgather(partial))
         return partials.reduce(op, e)
 
+    def map_reduce(self, f, op, e=None):
+        if e is None:
+            assert (self.__global_size >= 1)
+            partial = None if self.__local_size == 0 else SList(self.__content).map_reduce(f, op)
+            partials = SList(comm.allgather(partial)).filter(lambda x: x is not None)
+        else:
+            # assert: (op, e) form a monoid
+            partial = SList(self.__content).map_reduce(f, op, e)
+            partials = SList(comm.allgather(partial))
+        return partials.reduce(op, e)
+
     def __get_shape(self):
         p = PList()
         p.__local_size = self.__local_size
