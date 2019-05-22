@@ -96,7 +96,7 @@ class Leaf(BTree):
         """
         self.value = v
 
-    def map(self, kl, kn):
+    def map(self, kl, kn, acc=lambda x: x):
         """Applies functions to every leaf and to every node values
 
         Parameters
@@ -106,9 +106,9 @@ class Leaf(BTree):
         kn : callable
             A function to apply to every node values of the current instance
         """
-        return Leaf(kl(self.get_value()))
+        return acc(Leaf(kl(self.get_value())))
 
-    def mapt(self, kl, kn):
+    def mapt(self, kl, kn, acc=lambda x: x):
         """Applies a function to every leaf values the current instance, and another one to every subtrees that are nodes
 
         Parameters
@@ -118,9 +118,9 @@ class Leaf(BTree):
         kn : callable
             The function to apply to every node subtrees of the current instance
         """
-        return Leaf(kl(self.get_value()))
+        return acc(Leaf(kl(self.get_value())))
 
-    def reduce(self, k):
+    def reduce(self, k, acc=lambda x: x):
         """Reduces a BTree into a single value using a function k
 
         If the BTree is a leaf, the single reduced value is the value contained in the structure.
@@ -130,9 +130,9 @@ class Leaf(BTree):
         k : callable
             The function used to reduce a BTree into a single value
         """
-        return self.get_value()
+        return acc(self.get_value())
 
-    def uacc(self, k):
+    def uacc(self, k, acc=lambda x: x):
         """Makes an upward accumulation of the values in the current instance using a function k
 
         If the BTree is a leaf, the tree doesn't change.
@@ -142,9 +142,9 @@ class Leaf(BTree):
         k : callable
             The function used to reduce a BTree into a single value
         """
-        return Leaf(self.get_value())
+        return acc(Leaf(self.get_value()))
 
-    def dacc(self, gl, gr, c):
+    def dacc(self, gl, gr, c, acc=lambda x: x):
         """Makes an downward accumulation of the values in a BTree using gl, gr and c
 
         Parameters
@@ -156,9 +156,9 @@ class Leaf(BTree):
         c
             Accumulator for the downward computation
         """
-        return Leaf(c)
+        return acc(Leaf(c))
 
-    def zip(self, t):
+    def zip(self, t, acc=lambda x: x):
         """Zip the values contained in t with the ones in the current instance
 
         Precondition
@@ -171,9 +171,9 @@ class Leaf(BTree):
             The BTree to zip with the current instance
         """
         assert t.is_leaf(), "A leaf can only be zipped with another leaf"
-        return Leaf((self.get_value(), t.get_value()))
+        return acc(Leaf((self.get_value(), t.get_value())))
 
-    def map2(self, f, t):
+    def map2(self, f, t, acc=lambda x: x):
         """Zip the values contained in a tree with the ones in the current instance using a function
 
         Precondition
@@ -188,9 +188,9 @@ class Leaf(BTree):
             A function to zip values
         """
         assert t.is_leaf(), "A leaf can only be zipped with another leaf"
-        return Leaf(f(self.get_value(), t.get_value()))
+        return acc(Leaf(f(self.get_value(), t.get_value())))
 
-    def getchl(self, c):
+    def getchl(self, c, acc=lambda x: x):
         """Shift all the values contained in the current instance by the left
 
         Parameters
@@ -198,9 +198,9 @@ class Leaf(BTree):
         c
             The default value for elements that doesn't have left children
         """
-        return Leaf(c)
+        return acc(Leaf(c))
 
-    def getchr(self, c):
+    def getchr(self, c, acc=lambda x: x):
         """Shift all the values contained in the current instance by the right
 
         Parameters
@@ -208,12 +208,12 @@ class Leaf(BTree):
         c
             The default value for elements that doesn't have right children
         """
-        return Leaf(c)
+        return acc(Leaf(c))
 
-    def size(self):
+    def size(self, acc=lambda x: x):
         """Gives the number of elements in the current instance
         """
-        return 1
+        return acc(1)
 
 
 class Node(BTree):
@@ -308,7 +308,7 @@ class Node(BTree):
         """
         return self.left
 
-    def map(self, kl, kn):
+    def map(self, kl, kn, acc=lambda x: x):
         """Applies functions to every leaf and to every node values
 
         Parameters
@@ -318,12 +318,13 @@ class Node(BTree):
         kn : callable
             A function to apply to every node values of the current instance
         """
-        new_val = kn(self.get_value())
-        left = self.get_left().map(kl, kn)
-        right = self.get_right().map(kl, kn)
-        return Node(new_val, left, right)
+        return self.get_left().map(kl,
+                                   kn,
+                                   lambda lm: self.get_right().map(kl,
+                                                                   kn,
+                                                                   lambda rm: acc(Node(kn(self.get_value()), lm, rm))))
 
-    def mapt(self, kl, kn):
+    def mapt(self, kl, kn, acc=lambda x: x):
         """Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
 
         Parameters
@@ -333,12 +334,15 @@ class Node(BTree):
         kn : callable
             The function to apply to every node subtrees of the current instance
         """
-        new_val = kn(self.get_value(), self.get_left(), self.get_right())
-        left = self.get_left().mapt(kl, kn)
-        right = self.get_right().mapt(kl, kn)
-        return Node(new_val, left, right)
+        return self.get_left().mapt(kl,
+                                    kn,
+                                    lambda lm: self.get_right().mapt(kl,
+                                                                     kn,
+                                                                     lambda rm: acc(Node(kn(self.get_value(),
+                                                                                          self.get_left(),
+                                                                                          self.get_right()), lm, rm))))
 
-    def reduce(self, k):
+    def reduce(self, k, acc=lambda x: x):
         """Reduces a BTree into a single value using a function k
 
         We use recursive calls of sub-reduction to make a total reduction.
@@ -348,11 +352,13 @@ class Node(BTree):
         k : callable
             The function used to reduce a BTree into a single value
         """
-        left = self.get_left().reduce(k)
-        right = self.get_right().reduce(k)
-        return k(left, self.get_value(), right)
+        return self.get_left().reduce(k,
+                                      lambda lm: self.get_right().reduce(k,
+                                                                         lambda rm: acc(k(lm,
+                                                                                          self.get_value(),
+                                                                                          rm))))
 
-    def uacc(self, k):
+    def uacc(self, k, acc=lambda x: x):
         """Makes an upward accumulation of the values in the current instance using a function k
 
         Every values in nodes are replaced by the reduced value of the BTree considering the current node as the root.
@@ -362,10 +368,13 @@ class Node(BTree):
         k : callable
             The function used to reduce a BTree into a single value
         """
-        r = self.reduce(k)
-        return Node(r, self.get_left().uacc(k), self.get_right().uacc(k))
+        return self.get_left().uacc(k,
+                                    lambda lm: self.get_right().uacc(k,
+                                                                     lambda rm: acc(Node(k(lm.get_value(),
+                                                                                           self.get_value(),
+                                                                                           rm.get_value()), lm, rm))))
 
-    def dacc(self, gl, gr, c):
+    def dacc(self, gl, gr, c, acc=lambda x: x):
         """Makes an downward accumulation of the values in a BTree using gl, gr and c
 
         Parameters
@@ -377,12 +386,15 @@ class Node(BTree):
         c
             Accumulator for the downward computation
         """
-        b = self.get_value()
-        left = self.get_left().dacc(gl, gr, gl(c, b))
-        right = self.get_right().dacc(gl, gr, gr(c, b))
-        return Node(c, left, right)
+        return self.get_left().dacc(gl,
+                                    gr,
+                                    gl(c, self.get_value()),
+                                    lambda lm: self.get_right().dacc(gl,
+                                                                     gr,
+                                                                     gr(c, self.get_value()),
+                                                                     lambda rm: acc(Node(c, lm, rm))))
 
-    def zip(self, t):
+    def zip(self, t, acc=lambda x: x):
         """Zip the values contained in t with the ones in the current instance
 
         Precondition
@@ -395,13 +407,15 @@ class Node(BTree):
             The BTree to zip with the current instance
         """
         assert t.is_node(), "A node can only be zipped with another node"
+        return self.get_left().zip(t.get_left(),
+                                   lambda lm: self.get_right().zip(t.get_right(),
+                                                                   lambda rm: acc(Node((self.get_value(),
+                                                                                        t.get_value()),
+                                                                                       lm,
+                                                                                       rm))))
 
-        v = (self.get_value(), t.get_value())
-        left = self.get_left().zip(t.get_left())
-        right = self.get_right().zip(t.get_right())
-        return Node(v, left, right)
 
-    def map2(self, f, t):
+    def map2(self, f, t, acc=lambda x: x):
         """Zip the values contained in a tree with the ones in the current instance using a function
 
         Precondition
@@ -416,12 +430,15 @@ class Node(BTree):
             A function to zip values
         """
         assert t.is_node(), "A node can only be zipped with another node"
-        v = f(self.get_value(), t.get_value())
-        left = self.get_left().map2(f, t.get_left())
-        right = self.get_right().map2(f, t.get_right())
-        return Node(v, left, right)
+        return self.get_left().map2(f, t.get_left(),
+                                   lambda lm: self.get_right().map2(f, t.get_right(),
+                                                                   lambda rm: acc(Node(f(self.get_value(),
+                                                                                         t.get_value()),
+                                                                                       lm,
+                                                                                       rm))))
 
-    def getchl(self, c):
+
+    def getchl(self, c, acc=lambda x: x):
         """Shift all the values contained in the current instance by the left
 
         Parameters
@@ -429,12 +446,12 @@ class Node(BTree):
         c
             The default value for elements that doesn't have left children
         """
-        v = self.get_left().get_value()
-        left = self.get_left().getchl(c)
-        right = self.get_right().getchl(c)
-        return Node(v, left, right)
+        return self.get_left().getchl(c,
+                                      lambda lm: self.get_right().getchl(c,
+                                                                         lambda rm: acc(Node(self.get_left().get_value(), lm, rm))))
 
-    def getchr(self, c):
+
+    def getchr(self, c, acc=lambda x: x):
         """Shift all the values contained in the current instance by the right
 
         Parameters
@@ -442,12 +459,12 @@ class Node(BTree):
         c
             The default value for elements that doesn't have right children
         """
-        v = self.get_right().get_value()
-        left = self.get_left().getchr(c)
-        right = self.get_right().getchr(c)
-        return Node(v, left, right)
+        return self.get_left().getchr(c,
+                                      lambda lm: self.get_right().getchr(c,
+                                                                         lambda rm: acc(Node(self.get_right().get_value(), lm, rm))))
 
-    def size(self):
+
+    def size(self, acc=lambda x: x):
         """Gives the number of elements in the current instance
         """
-        return 1 + self.get_left().size() + self.get_right().size()
+        return self.get_left().size(lambda lm: self.get_right().size(lambda rm: acc(1+lm+rm)))
