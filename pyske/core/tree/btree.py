@@ -10,8 +10,8 @@ class BTree(ABC):
     -------
     is_leaf()
         Indicates if the BTree is a leaf
-    get_value()
-        Get the value contained in the leaf
+    is_node()
+        Indicates if the BTree is a node
     size()
         Gives the number of elements in the current instance
     """
@@ -62,7 +62,7 @@ class Leaf(BTree):
         Makes an downward accumulation of the values in a BTree using gl, gr and c
     zip(t)
         Zip the values contained in a second BTree with the ones in the current instance
-    map2(t, f)
+    map2(f, t)
         Zip the values contained in a tree with the ones in the current instance using a function
     getchl(c)
         Shift all the values contained in the current instance by the left
@@ -245,7 +245,6 @@ class Leaf(BTree):
             return Leaf(c)
 
 
-
 class Node(BTree):
     """A class that overrides BTree used to represent a Node
 
@@ -284,7 +283,7 @@ class Node(BTree):
         Makes an downward accumulation of the values in a BTree using gl, gr and c
     zip(t)
         Zip the values contained in t with the ones in the current instance
-    map2(t, f)
+    map2(f, t)
         Zip the values contained in a tree with the ones in the current instance using a function
     getchl(c)
         Shift all the values contained in the current instance by the left

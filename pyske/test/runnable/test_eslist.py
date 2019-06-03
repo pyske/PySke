@@ -1,5 +1,6 @@
 from pyske.core.support.errors import NotEqualSizeError, EmptyError
 from pyske.core.list.slist import SList
+from pyske.core.runnable.list.eslist import ESList
 import pytest
 
 
@@ -7,8 +8,10 @@ import pytest
 
 def test_head_empty():
     sl = SList()
-    exp = None
-    res = sl.head()
+    sl_run = ESList(sl)
+    sl_run.head()
+    res = sl_run.run()
+    exp = sl.head()
     assert res == exp
 
 
@@ -16,7 +19,9 @@ def test_head_one():
     sl = SList()
     exp = 1
     sl.append(exp)
-    res = sl.head()
+    sl_run = ESList(sl)
+    sl_run.head()
+    res = sl_run.run()
     assert res == exp
 
 
@@ -25,7 +30,9 @@ def test_head_several():
     exp = 1
     sl.append(exp)
     sl.append(exp + 1)
-    res = sl.head()
+    sl_run = ESList(sl)
+    sl_run.head()
+    res = sl_run.run()
     assert res == exp
 
 
@@ -33,22 +40,28 @@ def test_head_several():
 
 def test_tail_empty():
     sl = SList()
-    exp = SList()
-    res = sl.tail()
+    sl_run = ESList(sl)
+    sl_run.tail()
+    res = sl_run.run()
+    exp = sl.tail()
     assert res == exp
 
 
 def test_tail_one():
     sl = SList([1])
-    exp = SList()
-    res = sl.tail()
+    sl_run = ESList(sl)
+    sl_run.tail()
+    res = sl_run.run()
+    exp = sl.tail()
     assert res == exp
 
 
 def test_tail_several():
     sl = SList([1, 2, 3])
-    exp = SList([2, 3])
-    res = sl.tail()
+    sl_run = ESList(sl)
+    sl_run.tail()
+    res = sl_run.run()
+    exp = sl.tail()
     assert res == exp
 
 
@@ -56,15 +69,19 @@ def test_tail_several():
 
 def test_length_nil():
     sl = SList()
-    exp = 0
-    res = sl.length()
+    sl_run = ESList(sl)
+    sl_run.length()
+    res = sl_run.run()
+    exp = sl.length()
     assert res == exp
 
 
 def test_length_cons():
     sl = SList([1, 2, 3])
-    exp = 3
-    res = sl.length()
+    sl_run = ESList(sl)
+    sl_run.length()
+    res = sl_run.run()
+    exp = sl.length()
     assert res == exp
 
 
@@ -72,25 +89,31 @@ def test_length_cons():
 
 def test_filter():
     sl = SList([1, 2, 3, 4, 5, 6, 7, 8])
+    sl_run = ESList(sl)
     p = lambda x: x % 2 == 0
-    res = sl.filter(p)
-    for r in res:
-        assert p(r)
+    sl_run.filter(p)
+    res = sl_run.run()
+    exp = sl.filter(p)
+    assert res == exp
 
 
 # -------------------------- #
 
 def test_empty_true():
     sl = SList()
-    exp = True
-    res = sl.empty()
+    sl_run = ESList(sl)
+    sl_run.empty()
+    res = sl_run.run()
+    exp = sl.empty()
     assert res == exp
 
 
 def test_empty_false():
     sl = SList([1, 2, 3])
-    exp = False
-    res = sl.empty()
+    sl_run = ESList(sl)
+    sl_run.empty()
+    res = sl_run.run()
+    exp = sl.empty()
     assert res == exp
 
 
@@ -98,15 +121,19 @@ def test_empty_false():
 
 def test_reverse_nil():
     sl = SList()
-    exp = SList()
-    res = sl.reverse()
+    sl_run = ESList(sl)
+    sl_run.reverse()
+    res = sl_run.run()
+    exp = sl.reverse()
     assert res == exp
 
 
 def test_reverse_cons():
     sl = SList([1, 2, 3])
-    exp = SList([3, 2, 1])
-    res = sl.reverse()
+    sl_run = ESList(sl)
+    sl_run.reverse()
+    res = sl_run.run()
+    exp = sl.reverse()
     assert res == exp
 
 
@@ -114,25 +141,31 @@ def test_reverse_cons():
 
 def test_map_empty():
     sl = SList()
-    exp = SList()
+    sl_run = ESList(sl)
     f = lambda x: x
-    res = sl.map(f)
+    sl_run.map(f)
+    res = sl_run.run()
+    exp = sl.map(f)
     assert res == exp
 
 
 def test_map_inc():
     sl = SList([1, 2, 3])
-    exp = SList([2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x: x + 1
-    res = sl.map(f)
+    sl_run.map(f)
+    res = sl_run.run()
+    exp = sl.map(f)
     assert res == exp
 
 
 def test_map_id():
     sl = SList([1, 2, 3])
-    exp = SList([1, 2, 3])
+    sl_run = ESList(sl)
     f = lambda x: x
-    res = sl.map(f)
+    exp = sl.map(f)
+    sl_run.map(f)
+    res = sl_run.run()
     assert res == exp
 
 
@@ -140,47 +173,32 @@ def test_map_id():
 
 def test_mapi_empty():
     sl = SList()
-    exp = SList()
+    sl_run = ESList(sl)
     f = lambda i, x: (i, x)
-    res = sl.mapi(f)
+    sl_run.mapi(f)
+    res = sl_run.run()
+    exp = sl.mapi(f)
     assert res == exp
 
 
 def test_mapi_non_empty():
     sl = SList([1, 2, 3])
-    exp = SList([0, 2, 6])
+    sl_run = ESList(sl)
     f = lambda i, x: i * x
-    res = sl.mapi(f)
+    sl_run.mapi(f)
+    res = sl_run.run()
+    exp = sl.mapi(f)
     assert res == exp
 
 
 def test_mapi_id():
     sl = SList([1, 2, 3])
-    exp = SList([1, 2, 3])
+    sl_run = ESList(sl)
     f = lambda i, x: x
-    res = sl.mapi(f)
+    sl_run.mapi(f)
+    res = sl_run.run()
+    exp = sl.mapi(f)
     assert res == exp
-
-# -------------------------- #
-
-def test_map_reduce_nil():
-    e = 1232
-    sl = SList()
-    f = lambda x: x+1
-    op = lambda x, y: x + y
-    res = sl.map_reduce(f, op, e)
-    exp = e
-    assert res == exp
-
-
-def test_map_reduce_cons():
-    sl = SList([1, 2, 3, 4])
-    f = lambda x: x+1
-    op = lambda x, y: x + y
-    res = sl.map_reduce(f, op)
-    exp = sl.map(f).reduce(op)
-    assert res == exp
-
 
 # -------------------------- #
 
@@ -188,33 +206,43 @@ def test_map_reduce_cons():
 def test_reduce_nil():
     e = 1232
     sl = SList()
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.reduce(f, e)
-    exp = e
+    sl_run.reduce(f, e)
+    res = sl_run.run()
+    exp = sl.reduce(f, e)
     assert res == exp
 
 
 def test_reduce_cons():
     sl = SList([1, 2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.reduce(f)
-    exp = 10
+    sl_run.reduce(f)
+    res = sl_run.run()
+    exp = sl.reduce(f)
     assert res == exp
 
 
 def test_reduce_sum_empty():
+    e = 0
     sl = SList()
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    exp = 0
-    res = sl.reduce(f, 0)
+    sl_run.reduce(f, e)
+    res = sl_run.run()
+    exp = sl.reduce(f, e)
     assert res == exp
 
 
 def test_reduce_sum_non_empty():
+    e = 1
     sl = SList([1, 2, 3, 4, 5, 6])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    exp = 22
-    res = sl.reduce(f, 1)
+    sl_run.reduce(f, e)
+    res = sl_run.run()
+    exp = sl.reduce(f, e)
     assert res == exp
 
 
@@ -223,18 +251,22 @@ def test_reduce_sum_non_empty():
 def test_scan_nil():
     c = 0
     sl = SList()
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scan(f, c)
-    exp = SList([0])
+    sl_run.scan(f, c)
+    res = sl_run.run()
+    exp = sl.scan(f, c)
     assert res == exp
 
 
 def test_scan_cons():
     c = 0
     sl = SList([1, 2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scan(f, c)
-    exp = SList([0, 1, 3, 6, 10])
+    sl_run.scan(f, c)
+    res = sl_run.run()
+    exp = sl.scan(f, c)
     assert res == exp
 
 
@@ -243,84 +275,106 @@ def test_scan_cons():
 def test_scanr_empty():
     with pytest.raises(AssertionError):
         sl = SList()
+        sl_run = ESList(sl)
         f = lambda x, y: x + y
-        sl.scanr(f)
+        sl_run.scanr(f)
+        sl_run.run()
 
 
 def test_scanr_singleton():
     sl = SList([1])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanr(f)
-    assert res == sl
+    exp = sl.scanr(f)
+    sl_run.scanr(f)
+    res = sl_run.run()
+    assert res == exp
 
 
 def test_scanr_non_singleton():
     sl = SList([1, 2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanr(f)
-    exp = SList([1, 3, 6, 10])
+    exp = sl.scanr(f)
+    sl_run.scanr(f)
+    res = sl_run.run()
     assert res == exp
 
 
 def test_scanr_full_distribution():
     sl = SList([(0, 1), (1, 3), (0, 3), (0, 3), (0, 3)])
+    sl_run = ESList(sl)
 
     def f(x, y):
         (x1, y1) = x
         (x2, y2) = y
         return x1 + y1, y2
 
-    res = sl.scanr(f)
-    exp = SList([(0, 1), (1, 3), (4, 3), (7, 3), (10, 3)])
+    exp = sl.scanr(f)
+    sl_run.scanr(f)
+    res = sl_run.run()
     assert res == exp
 
 
 def test_scanr_full_distribution2():
-        sl = SList([(0, 1), (1, 3), (4, 3)])
+    sl = SList([(0, 1), (1, 3), (4, 3)])
+    sl_run = ESList(sl)
 
-        def f(x, y):
-            (x1, y1) = x
-            (x2, y2) = y
-            return x1 + y1, y2
+    def f(x, y):
+        (x1, y1) = x
+        (x2, y2) = y
+        return x1 + y1, y2
 
-        res = sl.scanr(f)
-        exp = SList([(0, 1), (1, 3), (4, 3)])
-        assert res == exp
-
-
+    exp = sl.scanr(f)
+    sl_run.scanr(f)
+    res = sl_run.run()
+    assert res == exp
 
 # -------------------------- #
 
+
 def test_scanl_empty():
+    c = 0
     sl = SList([])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanl(f, 0)
-    exp = SList([])
+    exp = sl.scanl(f, c)
+    sl_run.scanl(f, c)
+    res = sl_run.run()
     assert res == exp
 
 
 def test_scanl_non_empty():
+    c = 0
     sl = SList([1, 2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanl(f, 0)
-    exp = SList([0, 1, 3, 6])
+    exp = sl.scanl(f, 0)
+    sl_run.scanl(f, c)
+    res = sl_run.run()
     assert res == exp
 
 # -------------------------- #
 
 def test_scanl_last_empty():
+    c = 0
     sl = SList([])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanl_last(f, 0)
-    exp = ([], 0)
+    exp = sl.scanl_last(f, c)
+    sl_run.scanl_last(f, c)
+    res = sl_run.run()
     assert res == exp
 
 
 def test_scanl_last_non_empty():
+    c = 0
     sl = SList([1, 2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanl_last(f, 0)
-    exp = (SList([0, 1, 3, 6]), 10)
+    exp = sl.scanl_last(f, c)
+    sl_run.scanl_last(f, c)
+    res = sl_run.run()
     assert res == exp
 
 
@@ -329,17 +383,21 @@ def test_scanl_last_non_empty():
 def test_scanp_nil():
     c = 0
     sl = SList()
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanp(f, c)
-    exp = SList([])
+    exp = sl.scanp(f, c)
+    sl_run.scanp(f, c)
+    res = sl_run.run()
     assert res == exp
 
 def test_scanp_cons():
     c = 0
     sl = SList([1, 2, 3, 4])
+    sl_run = ESList(sl)
     f = lambda x, y: x + y
-    res = sl.scanp(f, c)
-    exp = SList([9, 7, 4, 0])
+    exp = sl.scanp(f, c)
+    sl_run.scanp(f, c)
+    res = sl_run.run()
     assert res == exp
 
 
@@ -348,88 +406,90 @@ def test_scanp_cons():
 def test_zip_nil():
     sl1 = SList()
     sl2 = SList()
-    res = sl1.zip(sl2)
-    exp = SList()
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
+    exp = sl1.zip(sl2)
+    sl1_run.zip(sl2_run)
+    res = sl1_run.run()
     assert res == exp
 
 
 def test_zip_cons():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3, 4])
-    res = sl1.zip(sl2)
-    exp = SList([(1, 2), (2, 3), (3, 4)])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
+    exp = sl1.zip(sl2)
+    sl1_run.zip(sl2_run)
+    res = sl1_run.run()
     assert res == exp
 
 
 def test_zip_one_gt():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
     with pytest.raises(AssertionError):
-        sl1.zip(sl2)
+        sl1_run.zip(sl2_run)
+        res = sl1_run.run()
 
 
 def test_zip_one_lt():
     sl1 = SList([2, 3])
     sl2 = SList([2, 3, 4])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
     with pytest.raises(AssertionError):
-        sl1.zip(sl2)
+        sl1_run.zip(sl2_run)
+        res = sl1_run.run()
+
 
 # -------------------------- #
 
 def test_zipwith_nil():
     sl1 = SList()
     sl2 = SList()
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
     f = lambda x, y: x + y
-    res = sl1.map2(f, sl2)
-    exp = SList()
+    exp = sl1.map2(f, sl2)
+    sl1_run.map2(f, sl2_run)
+    res = sl1_run.run()
     assert res == exp
 
 
 def test_zipwith_cons():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3, 4])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
     f = lambda x, y: x + y
-    res = sl1.map2(f, sl2)
-    exp = SList([3, 5, 7])
+    exp = sl1.map2(f, sl2)
+    sl1_run.map2(f, sl2_run)
+    res = sl1_run.run()
     assert res == exp
 
 
 def test_zipwith_one_gt():
     sl1 = SList([1, 2, 3])
     sl2 = SList([2, 3])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
     f = lambda x, y: x + y
     with pytest.raises(AssertionError):
-        sl1.map2(f, sl2)
+        sl1_run.map2(f, sl2_run)
+        res = sl1_run.run()
 
 
 def test_zipwith_one_lt():
     sl1 = SList([2, 3])
     sl2 = SList([2, 3, 4])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
     f = lambda x, y: x + y
     with pytest.raises(AssertionError):
-        sl1.map2(f, sl2)
+        sl1_run.map2(f, sl2_run)
+        res = sl1_run.run()
 
 
-# -------------------------- #
-
-def test_from_str_simple():
-    s = "[1;2;3]"
-    res = SList.from_str(s)
-    exp = SList([1, 2, 3])
-    assert res == exp
-
-
-def parser_tuple(s):
-    s = s.replace("(", "")
-    s = s.replace(")", "")
-    ss = s.split(",")
-    return (int(ss[0]), int(ss[1]))
-
-
-def test_from_str_tuple():
-    s = "[(1,2);(3,4)]"
-    res = SList.from_str(s, parser=parser_tuple)
-    exp = SList([(1, 2), (3, 4)])
-    assert res == exp
-
-# -------------------------- #

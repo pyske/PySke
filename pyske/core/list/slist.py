@@ -30,6 +30,8 @@ class SList(list):
         Reverse a list
     map(f)
         Applies f to every element of the current instance
+    mapi(f)
+        Applies f to every index and element of the current instance
     reduce(f)
         Reduce the current instance using a reduction function
     scan(f, c)
@@ -84,7 +86,6 @@ class SList(list):
             return None
         else:
             return self[0]
-
 
     def tail(self):
         """Gives the the current instance without its first element
