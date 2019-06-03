@@ -327,7 +327,7 @@ def test_composition_leaf():
     bt1_run.uacc(k)
     bt1_run.reduce(k)
     res = bt1_run.run()
-    exp = bt1.map2(f, bt2.uacc(k)).map(kl, kn).uacc(k).reduce(k)
+    exp = bt1.map(kl, kn).map2(f, bt2.uacc(k)).uacc(k).reduce(k)
     assert exp == res
 
 def test_composition_node():
@@ -345,5 +345,5 @@ def test_composition_node():
     bt1_run.uacc(k)
     bt1_run.reduce(k)
     res = bt1_run.run()
-    exp = bt1.map2(f, bt2.uacc(k)).map(kl, kn).uacc(k).reduce(k)
+    exp = bt1.map(kl, kn).map2(f, bt2.uacc(k)).uacc(k).reduce(k)
     assert exp == res

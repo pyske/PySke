@@ -492,4 +492,70 @@ def test_zipwith_one_lt():
         sl1_run.map2(f, sl2_run)
         res = sl1_run.run()
 
+# -------------------------- #
+
+
+def test_composition_empty():
+    sl1 = SList()
+    sl2 = SList()
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
+
+    fm = lambda x: x + 1
+
+
+    c = 0
+    k = lambda x, y: x + y
+
+    f2 = lambda x, y: x + y
+
+    kl = lambda x: x + 1
+    kn = lambda x: x - 1
+    fr = lambda x, y: x - y
+
+    f = lambda x, y: x*y
+    cr = 4
+    sl1_run.map(fm)
+    sl2_run.scanp(k, c)
+    sl1_run.map2(f2, sl2_run)
+    sl1_run.scanl(fr, c)
+    sl1_run.reduce(f, cr)
+
+    res = sl1_run.run()
+
+    exp = sl1.map(fm).map2(f2, sl2.scanp(k, c)).scanl(fr, c).reduce(f, cr)
+    assert exp == res
+
+
+def test_composition_cons():
+    sl1 = SList([1, 2, 3])
+    sl2 = SList([2, 3, 4])
+    sl1_run = ESList(sl1)
+    sl2_run = ESList(sl2)
+
+    fm = lambda x: x + 1
+
+    c = 0
+    k = lambda x, y: x + y
+
+    f2 = lambda x, y: x + y
+
+    kl = lambda x: x + 1
+    kn = lambda x: x - 1
+    fr = lambda x, y: x - y
+
+    f = lambda x, y: x*y
+
+    sl1_run.map(fm)
+    sl2_run.scanp(k, c)
+    sl1_run.map2(f2, sl2_run)
+    sl1_run.scanr(fr)
+    sl1_run.reduce(f)
+
+    res = sl1_run.run()
+
+    exp = sl1.map(fm).map2(f2, sl2.scanp(k, c)).scanr(fr).reduce(f)
+    assert exp == res
+
+
 

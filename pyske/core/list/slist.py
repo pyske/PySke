@@ -209,7 +209,7 @@ class SList(list):
         for i in range(1, len(res)):
             c = f(c, self[i - 1])
             res[i] = c
-        return res
+        return SList(res)
 
     def scanl(self, f, c):
         """Makes a rightward accumulation of the values from an initial one,
@@ -231,7 +231,7 @@ class SList(list):
         for i in range(0, len(res)):
             res[i] = c
             c = f(c, self[i])
-        return res
+        return SList(res)
 
     def scanr(self, f):
         """Makes a rightward accumulation of the values.
@@ -251,7 +251,7 @@ class SList(list):
         for i in range(1, len(res)):
             c = f(c, self[i])
             res[i] = c
-        return res
+        return SList(res)
 
     def scanl_last(self, f, c):
         """Makes a rightward accumulation of the values from an initial one,
