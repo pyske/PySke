@@ -1,4 +1,4 @@
-from abc import ABC  # abstract classes library
+from abc import ABC, abstractmethod  # abstract classes library
 
 
 class BTree(ABC):
@@ -30,6 +30,50 @@ class BTree(ABC):
         """Gives the number of elements in the current instance
         """
         return self.size
+
+    @abstractmethod
+    def get_value(self):
+        pass
+
+    @abstractmethod
+    def set_value(self, v):
+        pass
+
+    @abstractmethod
+    def map(self, kl, kn, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def mapt(self, kl, kn, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def reduce(self, k, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def uacc(self, k, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def dacc(self, gl, gr, c, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def zip(self, t, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def map2(self, f, t, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def getchl(self, c, tail_recursive=False, acc=lambda x: x):
+        pass
+
+    @abstractmethod
+    def getchr(self, c, tail_recursive=False, acc=lambda x: x):
+        pass
 
 
 class Leaf(BTree):
