@@ -10,11 +10,12 @@ class Rule:
     """
     Describe a transformation rule
     """
-    def __init__(self, left, right):
+    def __init__(self, left, right, priority=-1):
         assert isinstance(left, ETree)
         assert isinstance(right, ETree)
         self.left = left
         self.right = right
+        self.priority = priority
 
 
 class Position(Core_SList):
@@ -121,17 +122,37 @@ def get_elem_etree_position(t, position):
             current_ch = pointer.children
     return pointer
 
-#
-# def transformation(t, rules):
-#     # TODO return resulting tree
-#     test = True
-#     while (test):
-#         test = False
-#         for c in t.children:
-#             test = test or transformation(c, rules)
-#         for r in rules:
-#             if matching(t, r.left):
-#                 # TODO Greffer retour rewrite
-#                 rewrite(t, r.right)
-#                 test = True
 
+def tranformation_aux(tree, rules):
+    # not a tree -> no transformation
+    if not isinstance(tree, ETree):
+        return tree, False
+
+    test = True
+    # while the children can be transformed
+    while test:
+        test = False
+        new_child = Core_SList([None] * len(tree.children))
+        for child_index in range(len(tree.children)):
+            child = tree.children[child_index]
+            new_c, test_c = tranformation_aux(child, rules)
+            new_child[child_index] = new_c
+            test = test or test_c
+
+    tree.children = new_child
+
+    test = True
+    while test:
+        test = False
+        for rule in rules:
+            if matching(tree, rule.left):
+                tree = rewrite(tree, rule.right)
+
+    return tree, False
+
+# TODO : find a way to copy the tree, to don't change the content of the initial one
+def transformation(tree, rules):
+    rules = sorted(rules, key=lambda x: x.priority, reverse=True)
+    # tree0 = copy.deepcopy(tree)
+    res, t = tranformation_aux(tree, rules)
+    return res
