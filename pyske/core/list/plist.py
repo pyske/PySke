@@ -2,6 +2,7 @@ from pyske.core.list.slist import SList
 from pyske.core.support.parallel import *
 from pyske.core.support.interval import *
 
+
 class PList:
     """Distributed lists"""
 
@@ -28,6 +29,14 @@ class PList:
                "  distribution: " + str(self.__distribution) + "\n" + \
                "  content: " + str(self.__content) + "\n"
 
+    def invariant(self):
+        prefix = SList(self.__distribution).scan(add, 0)
+        assert len(self.__content) == self.__local_size
+        assert self.__distribution[pid] == self.__local_size
+        assert prefix[pid] == self.__start_index
+        assert prefix[nprocs] == self.__global_size
+
+
     def length(self):
         return self.__global_size
 
@@ -52,6 +61,11 @@ class PList:
     def map2(self, f, pl):
         assert (self.__distribution == pl.__distribution)
         return PList.init(lambda i: f(self.__content[i - self.__start_index], pl.__content[i - self.__start_index]),
+                          self.__global_size)
+
+    def map2i(self, f, pl):
+        assert (self.__distribution == pl.__distribution)
+        return PList.init(lambda i: f(i, self.__content[i - self.__start_index], pl.__content[i - self.__start_index]),
                           self.__global_size)
 
     def zip(self, pl):
@@ -130,7 +144,7 @@ class PList:
         return p, red
 
     def distribute(self, target_distr):
-        assert(is_distribution(target_distr, self.__global_size))
+        assert (is_distribution(target_distr, self.__global_size))
         source_distr = self.__distribution
         source_bounds = bounds(source_distr)
         target_bounds = bounds(target_distr)
@@ -143,13 +157,45 @@ class PList:
         p.__local_size = target_distr[pid]
         p.__global_size = self.__global_size
         p.__start_index = SList(target_distr).scanl(add, 0)[pid]
-        p.__distribution : target_distr
+        p.__distribution = target_distr
         return p
 
-
     def balance(self):
-        return self.distribute([local_size_pid(i, self.__global_size) for i in range(0,nprocs)])
+        return self.distribute(balanced_distribution(self.__global_size))
 
+    def gather(self, pid):
+        assert (pid in procs())
+        distr = [self.length() if i == pid else 0 for i in procs()]
+        return self.distribute(distr)
+
+    def gather_at_root(self):
+        return self.gather(0)
+
+    def scatter(self, pid):
+        assert (pid in procs())
+        def select(i, l):
+            if i == pid:
+                return l
+            else:
+                return []
+        at_pid = self.get_partition().mapi(select).flatten()
+        return at_pid.distribute(balanced_distribution(at_pid.length()))
+
+    def scatter_from_root(self):
+        return self.scatter(0)
+
+    def scatter_range(self, r):
+        assert (r.start in range(0, self.length()))
+        assert (r.stop in range(0, self.length()))
+        def select(i, x):
+            if i in r:
+                return x
+            else:
+                return None
+        def notNone(x):
+            return not (x is None)
+        selected = self.mapi(select).filter(notNone)
+        return selected.distribute(balanced_distribution(selected.length()))
 
     @staticmethod
     def from_seq(l):
@@ -167,4 +213,3 @@ class PList:
 
     def to_seq(self):
         return self.get_partition().reduce(lambda x, y: x + y, [])
-
