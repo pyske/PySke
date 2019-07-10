@@ -1,6 +1,6 @@
 from pyske.core.list.slist import SList
 from pyske.core.support.parallel import *
-
+from pyske.core.support.interval import *
 
 class PList:
     """Distributed lists"""
@@ -11,6 +11,22 @@ class PList:
         self.__local_size = 0
         self.__start_index = 0
         self.__distribution = [0 for i in range(0, nprocs)]
+
+    def __get_shape(self):
+        p = PList()
+        p.__local_size = self.__local_size
+        p.__global_size = self.__global_size
+        p.__distribution = self.__distribution
+        p.__start_index = self.__start_index
+        return p
+
+    def __str__(self):
+        return "pid[" + str(pid) + "]:\n" + \
+               "  global_size: " + str(self.__global_size) + "\n" + \
+               "  local_size: " + str(self.__local_size) + "\n" + \
+               "  start_index: " + str(self.__start_index) + "\n" + \
+               "  distribution: " + str(self.__distribution) + "\n" + \
+               "  content: " + str(self.__content) + "\n"
 
     def length(self):
         return self.__global_size
@@ -81,14 +97,6 @@ class PList:
             partials = SList(comm.allgather(partial))
         return partials.reduce(op, e)
 
-    def __get_shape(self):
-        p = PList()
-        p.__local_size = self.__local_size
-        p.__global_size = self.__global_size
-        p.__distribution = self.__distribution
-        p.__start_index = self.__start_index
-        return p
-
     def scanr(self, op):
         assert (self.__global_size > 0)
         p = self.__get_shape()
@@ -121,6 +129,28 @@ class PList:
         p.__content = partials
         return p, red
 
+    def distribute(self, target_distr):
+        assert(is_distribution(target_distr, self.__global_size))
+        source_distr = self.__distribution
+        source_bounds = bounds(source_distr)
+        target_bounds = bounds(target_distr)
+        local_interval = source_bounds[pid]
+        bounds_to_send = target_bounds.map(lambda i: intersection(i, local_interval))
+        msgs = [slice(self.__content, shift(inter, -self.__start_index)) for inter in bounds_to_send]
+        slices = comm.alltoall(msgs)
+        p = PList()
+        p.__content = SList(slices).flatten()
+        p.__local_size = target_distr[pid]
+        p.__global_size = self.__global_size
+        p.__start_index = SList(target_distr).scanl(add, 0)[pid]
+        p.__distribution : target_distr
+        return p
+
+
+    def balance(self):
+        return self.distribute([local_size_pid(i, self.__global_size) for i in range(0,nprocs)])
+
+
     @staticmethod
     def from_seq(l):
         p = PList()
@@ -138,10 +168,3 @@ class PList:
     def to_seq(self):
         return self.get_partition().reduce(lambda x, y: x + y, [])
 
-    def __str__(self):
-        return "pid[" + str(pid) + "]:\n" + \
-               "  global_size: " + str(self.__global_size) + "\n" + \
-               "  local_size: " + str(self.__local_size) + "\n" + \
-               "  start_index: " + str(self.__start_index) + "\n" + \
-               "  distribution: " + str(self.__distribution) + "\n" + \
-               "  content: " + str(self.__content) + "\n"
