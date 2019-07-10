@@ -78,6 +78,9 @@ class PList:
     def zip(self, pl):
         return self.map2(lambda x, y: (x, y), pl)
 
+    def filter(self, p):
+        return self.get_partition().map(lambda l: l.filter(p)).flatten()
+
     def get_partition(self):
         p = PList()
         p.__content = SList([self.__content])
@@ -192,8 +195,6 @@ class PList:
         return self.scatter(0)
 
     def scatter_range(self, r):
-        assert (r.start in range(0, self.length()))
-        assert (r.stop in range(0, self.length()))
         def select(i, x):
             if i in r:
                 return x
