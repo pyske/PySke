@@ -1,6 +1,4 @@
-from pyske.core.runnable.list.slist import SList
-from pyske.core.runnable.transformation import *
-from pyske.core.support.functional import *
+from pyske.core.runnable.rule.rule_slist import *
 
 # -----------------------------
 
@@ -21,37 +19,11 @@ class ETree_concrete(ETree):
 precision_float = 0.00000001
 # -----------------------------
 
-left0 = SList(SList.__name__, [SList(SList.__name__, [tag_VAR_pattern, Core_SList.map.__name__, tag_VAR_pattern]),
-                               Core_SList.reduce.__name__,
-                               tag_VAR_pattern,
-                               tag_VAR_pattern]
-              )
-right0 = SList(SList.__name__, [Position([0, 0, 0]), Core_SList.map_reduce.__name__, Position([0, 0, 2]), Position([0, 2]), Position([0, 3])])
-
-map_reduce_rule = Rule(left0, right0)
-
-# -----------------------------
-
-left1 = SList(SList.__name__,   [SList(SList.__name__, [tag_VAR_pattern,  Core_SList.map.__name__, tag_VAR_pattern]),
-                                 Core_SList.map.__name__, tag_VAR_pattern]
-             )
-
-right1 = SList(SList.__name__, [Position([0, 0, 0]), Core_SList.map.__name__, Composition(Position([0, 2]),
-                                                                                          Position([0, 0, 2]))
-                                ])
-
-map_composition = Rule(left1, right1)
-
-# -----------------------------
-
-rules = [map_reduce_rule]
-
-# -----------------------------
 
 def test_matching_correct_simpl():
     f = lambda x: x
     op = lambda x, y: x+y
-    cs = SList([1,2,3])
+    cs = SList([1, 2, 3])
     tree = cs.map(f).reduce(op)
     assert matching(tree, left0)
 
@@ -60,7 +32,7 @@ def test_matching_correct_elaborate():
     f = lambda x: x
     op = lambda x, y: x+y
     ops = lambda x, y: x-y
-    cs = SList([1,2,3])
+    cs = SList([1, 2, 3])
     tree = cs.scan(ops, 0).map(f).reduce(op)
     assert matching(tree, left0)
 
@@ -74,14 +46,14 @@ def test_matching_incomplete_red():
 
 def test_matching_incomplete_map():
     f = lambda x: x
-    cs = SList([1,2,3])
+    cs = SList([1, 2, 3])
     tree = cs.map(f)
     assert not matching(tree, left0)
 
 
 def test_matching_incorrect():
     ops = lambda x, y: x-y
-    cs = SList([1,2,3])
+    cs = SList([1, 2, 3])
     tree = cs.scan(ops, 0)
     assert not matching(tree, left0)
 

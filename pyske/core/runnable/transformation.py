@@ -1,30 +1,10 @@
 from pyske.core.runnable.etree import ETree
-from pyske.core.list.slist import SList as Core_SList
 from pyske.core.support.functional import *
-
+from pyske.core.runnable.rule.rule import *
 
 import copy
 
 tag_VAR_pattern = "XxXxXxXxXx"
-
-
-class Rule:
-    """
-    Describe a transformation rule
-    """
-    def __init__(self, left, right, priority=-1):
-        assert isinstance(left, ETree)
-        assert isinstance(right, ETree)
-        self.left = left
-        self.right = right
-        self.priority = priority
-
-
-class Position(Core_SList):
-    """
-    SList used to describe a position in a tree
-    """
-    pass
 
 
 def matching(tree, pattern):
@@ -158,7 +138,7 @@ def tranformation_aux(tree, rules):
 
     return tree, False
 
-# TODO : find a way to copy the tree, to don't change the content of the initial one
+
 def transformation(tree, rules):
     rules = sorted(rules, key=lambda x: x.priority, reverse=True)
     # tree0 = copy.deepcopy(tree)
