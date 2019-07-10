@@ -330,3 +330,9 @@ class SList(list):
         """
         assert (len(self) == len(l))
         return SList([f(x, y) for (x, y) in zip(self, l)])
+
+    def get_partition(self):
+        return [self]
+
+    def flatten(self):
+        return self.reduce(lambda x, y: x + y, [])

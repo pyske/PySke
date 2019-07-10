@@ -1,5 +1,7 @@
 from pyske.core.list.slist import SList
 from pyske.core.list.plist import PList
+from pyske.core.support.parallel import nprocs
+import random
 
 
 def app(l1, l2):
@@ -162,4 +164,23 @@ def test_scanl_last_non_empty():
     res_pl, res_scalar = input.scanl_last(f, 0)
     res = (res_pl.to_seq(), res_scalar)
     exp = SList(range(0, size)).scanl_last(f, 0)
+    assert res == exp
+
+
+def test_distribute_data():
+    size = random.randint(0, 111)
+    input = PList.init(lambda i: i, size)
+    d = [0 for _ in range(0,nprocs)]
+    d[random.randint(0,nprocs)] = size
+    res = input.distribute(d).to_seq()
+    exp = SList(range(0,size))
+    assert res == exp
+
+
+def test_distribute_distr():
+    size = random.randint(0, 111)
+    input = PList.init(lambda i: i, size)
+    exp = [0 for _ in range(0,nprocs)]
+    exp[random.randint(0,nprocs)] = size
+    res = input.distribute(exp).get_partition().map(len).to_seq()
     assert res == exp
