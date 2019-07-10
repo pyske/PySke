@@ -18,6 +18,8 @@ class ETree_concrete(ETree):
 
 
 # -----------------------------
+precision_float = 0.00000001
+# -----------------------------
 
 left0 = SList(SList.__name__, [SList(SList.__name__, [tag_VAR_pattern, Core_SList.map.__name__, tag_VAR_pattern]),
                                Core_SList.reduce.__name__,
@@ -30,17 +32,15 @@ map_reduce_rule = Rule(left0, right0)
 
 # -----------------------------
 
-# TODO : fix the call of composition..
+left1 = SList(SList.__name__,   [SList(SList.__name__, [tag_VAR_pattern,  Core_SList.map.__name__, tag_VAR_pattern]),
+                                 Core_SList.map.__name__, tag_VAR_pattern]
+             )
 
-# left1 = SList(SList.__name__,   [SList(SList.__name__, [tag_VAR_pattern,  Core_SList.map.__name__, tag_VAR_pattern]),
-#                                 Core_SList.map.__name__, tag_VAR_pattern]
-#              )
-#
-# right1 = SList(SList.__name__, [Position([0, 0, 0]), Core_SList.map.__name__, compose(Position([0, 2]),
-#                                                                                       Position([0, 0, 2]))
-#                                 ])
-#
-# map_composition = Rule(left1, right1)
+right1 = SList(SList.__name__, [Position([0, 0, 0]), Core_SList.map.__name__, Composition(Position([0, 2]),
+                                                                                          Position([0, 0, 2]))
+                                ])
+
+map_composition = Rule(left1, right1)
 
 # -----------------------------
 
@@ -117,21 +117,6 @@ def test_get_elem_etree_position_ko():
 
 # -----------------------------
 
-def print_etree(et):
-    if isinstance(et, ETree):
-        if isinstance(et.value, Position):
-            print("POS{"+str(et.value)+"}")
-        else:
-            print("VAL{"+str(et.value)+"}")
-        for c in et.children:
-                print_etree(c)
-    else:
-        if isinstance(et, Position):
-            print("POS{"+str(et)+"}")
-        else:
-            print("VAL{"+str(et)+"}")
-
-
 def test_rewrite_map_reduce():
     f = lambda x: x
     op = lambda x, y: x+y
@@ -155,19 +140,17 @@ def test_rewrite_map_reduce_adv():
     res = rewrite(tree, right0)
     assert exp == res
 
-#  TODO : fix composition
-# def test_map_compo():
-#     f = lambda x: x * 0.9
-#     g = lambda x: x * 1.1
-#     cs = SList([1, 2, 3])
-#     tree = cs.map(f).map(g)
-#     exp = cs.map(compose(f, g)).run()
-#     res = rewrite(tree, right1)
-#
-#     print_etree(exp)
-#     print_etree(res.run())
-#
-#     # assert exp == res
+
+
+def test_map_compo():
+    f = lambda x: x * 0.9
+    g = lambda x: x * 1.1
+    cs = SList([1, 2, 3])
+    tree = cs.map(f).map(g)
+    exp = cs.map(Composition(f, g)).run()
+    res = rewrite(tree, right1).run()
+    for i in range(len(exp)):
+        assert (exp[i] - res[i]) <= precision_float
 
 # -----------------------------
 
@@ -176,10 +159,7 @@ def test_one_transformation():
     op = lambda x, y: x+y
     e = 0
     cs = SList([1, 2, 3])
-
     tree = cs.map(f).reduce(op, e)
-    # tree0 = copy.deepcopy(tree)
-
     exp = cs.map_reduce(f, op, e)
     rules = [map_reduce_rule]
     res = transformation(tree, rules)

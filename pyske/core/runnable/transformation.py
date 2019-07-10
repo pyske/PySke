@@ -1,5 +1,7 @@
 from pyske.core.runnable.etree import ETree
 from pyske.core.list.slist import SList as Core_SList
+from pyske.core.support.functional import *
+
 
 import copy
 
@@ -94,6 +96,12 @@ def rewrite(tree, pattern):
         # The function to apply to every element
         if isinstance(x, Position):
             return get_elem_etree_position(tree, x)
+        if isinstance(x, Composition):
+            f_args = []
+            for pos_f in x.fcts:
+                f = get_elem_etree_position(tree, pos_f)
+                f_args.append(f)
+            return Composition(*f_args)
         else:
             return x
     return aux_rew(pattern, f)

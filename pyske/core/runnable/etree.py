@@ -5,7 +5,6 @@ import hashlib
 
 ID_var = hashlib.md5(b'var')
 
-
 class ETree (ABC, RNode):
 
     @abstractmethod

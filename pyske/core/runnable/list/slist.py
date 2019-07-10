@@ -1,6 +1,8 @@
 from pyske.core.runnable.etree import ETree, ID_var
+from pyske.core.runnable.transformation import *
 from pyske.core.list.slist import SList as SList_core
 
+#
 
 class SList(ETree):
     """ Class to construct the expression of the computation on a SList_core
@@ -121,8 +123,8 @@ class SList(ETree):
         else:
             return self.children[0].get_instance()
 
+
     def run(self):
-        # TODO apply optimization
         ch = self.children
         if self.value == ID_var:
             return ch[0]
