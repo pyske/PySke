@@ -1,6 +1,6 @@
 from pyske.core.runnable.etree import ETree
 from pyske.core.support.functional import *
-from pyske.core.runnable.rule.rule import *
+#from pyske.core.runnable.rule.rule import *
 
 import copy
 

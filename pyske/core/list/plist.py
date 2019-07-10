@@ -30,10 +30,11 @@ class PList:
                "  content: " + str(self.__content) + "\n"
 
     def invariant(self):
+        type(self.__content) is SList
         prefix = SList(self.__distribution).scan(add, 0)
         assert len(self.__content) == self.__local_size
         assert self.__distribution[pid] == self.__local_size
-        assert prefix[pid] == self.__start_index
+        assert self.__start_index ==  prefix[pid]
         assert prefix[nprocs] == self.__global_size
 
 
@@ -53,27 +54,33 @@ class PList:
         return p
 
     def map(self, f):
-        return PList.init(lambda i: f(self.__content[i - self.__start_index]), self.__global_size)
+        p = self.__get_shape()
+        p.__content = self.__content.map(f)
+        return p
 
     def mapi(self, f):
-        return PList.init(lambda i: f(i, self.__content[i - self.__start_index]), self.__global_size)
+        p = self.__get_shape()
+        p.__content = self.__content.mapi(lambda i, x: f(i+self.__start_index, x))
+        return p
 
     def map2(self, f, pl):
         assert (self.__distribution == pl.__distribution)
-        return PList.init(lambda i: f(self.__content[i - self.__start_index], pl.__content[i - self.__start_index]),
-                          self.__global_size)
+        p = self.__get_shape()
+        p.__content = self.__content.map2(f, pl.__content)
+        return p
 
     def map2i(self, f, pl):
         assert (self.__distribution == pl.__distribution)
-        return PList.init(lambda i: f(i, self.__content[i - self.__start_index], pl.__content[i - self.__start_index]),
-                          self.__global_size)
+        p = self.__get_shape()
+        p.__content = self.__content.map2i(lambda i, x, y: f(i+self.__start_index, x, y), pl.__content)
+        return p
 
     def zip(self, pl):
         return self.map2(lambda x, y: (x, y), pl)
 
     def get_partition(self):
         p = PList()
-        p.__content = [self.__content]
+        p.__content = SList([self.__content])
         p.__global_size = nprocs
         p.__local_size = 1
         p.__start_index = pid
@@ -203,13 +210,12 @@ class PList:
         if pid == 0:
             p.__content = SList(l)
             p.__distribution = [len(l)] + [0 for i in range(1, nprocs)]
-        else:
-            p.__content = []
-        p.__distribution = comm.bcast(p.__distribution, 0)
+        from_root = comm.bcast(p.__distribution, 0)
+        p.__distribution = from_root
         p.__local_size = p.__distribution[pid]
         p.__global_size = p.__distribution[0]
-        p.__start_index = 0
+        p.__start_index = SList(p.__distribution).scanl(add, 0)[pid]
         return p
 
     def to_seq(self):
-        return self.get_partition().reduce(lambda x, y: x + y, [])
+        return SList(self.get_partition().reduce(lambda x, y: x + y, []))

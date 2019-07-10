@@ -6,9 +6,41 @@ from pyske.core.list.plist import PList
 from pyske.core.support.parallel import nprocs, balanced_distribution
 import random
 
+msg = "Hello World!"
 
-msg = "hello world!"
+def id(x): return x
 
+def alphabet(i):
+    return chr(65+(i%26))
+
+def generate_int_plist():
+    choice = PList.from_seq([random.randint(0,2)]).to_seq()[0]
+    size = PList.from_seq([random.randint(0,111)]).to_seq()[0]
+    if choice == 0:
+        return PList()
+    elif choice == 1:
+        return PList.init(id, size)
+    else:
+        return PList.from_seq(range(0,size))
+
+def generate_str_plist():
+    choice = PList.from_seq([random.randint(0, 2)]).to_seq()[0]
+    size = PList.from_seq([random.randint(0, 111)]).to_seq()[0]
+    if choice == 0:
+        return PList()
+    elif choice == 1:
+        return PList.init(alphabet, size)
+    else:
+        return PList.from_seq([alphabet(i) for i in range(0, size)])
+
+def upper(s):
+    return s.upper()
+
+def incr(x):
+    return x+1
+
+def get_distribution(pl: PList):
+    return pl.get_partition().map(len).to_seq()
 
 def test_init_to_seq_empty():
     pl = PList()
@@ -18,23 +50,29 @@ def test_init_to_seq_empty():
 
 
 def test_init_to_seq_non_empty():
-    pl = PList.init(lambda i: msg[i], len(msg))
+    pl = PList.init(alphabet, 17)
     res = pl.to_seq()
-    exp = list(msg)
+    exp = [alphabet(i) for i in range(0,17)]
     assert res == exp
 
 
 def test_map_empty():
-    f = lambda x: x.upper()
     input = PList()
-    res = input.map(f).to_seq()
+    res = input.map(upper).to_seq()
     exp = []
     assert res == exp
 
 
 def test_map_non_empty():
+    input = generate_int_plist()
+    res = input.map(incr).to_seq()
+    exp = input.to_seq().map(incr)
+    assert res == exp
+
+def test_map_from_seq():
     f = lambda x: x.upper()
-    input = PList.init(lambda i: msg[i], len(msg))
+    input = PList.from_seq(msg)
+    input.invariant()
     res = input.map(f).to_seq()
     exp = list(f(msg))
     assert res == exp
@@ -105,9 +143,10 @@ def test_map_reduce_cons():
     sl = SList([1, 2, 3, 4])
     pl = PList.from_seq(sl)
     f = lambda x: x + 1
-    op = lambda x, y: x + y
+    op = lambda x, y: x + 1
+    exp = pl.map(f)
+    exp = exp.reduce(op)
     res = pl.map_reduce(f, op)
-    exp = pl.map(f).reduce(op)
     assert res == exp
 
 
@@ -169,9 +208,9 @@ def test_scanl_last_non_empty():
 
 
 def test_distribute_data():
-    size = PList.from_seq([random.randint(17, 111)]).to_seq()[0]
     dst = PList.from_seq([random.randint(0, nprocs-1)]).to_seq()[0]
-    input = PList.init(lambda i: i, size)
+    input = generate_int_plist()
+    size = input.length()
     d = [0 for _ in range(0, nprocs)]
     d[dst] = size
     res = input.distribute(d).to_seq()
@@ -180,47 +219,47 @@ def test_distribute_data():
 
 
 def test_distribute_distr():
-    size = PList.from_seq([random.randint(17, 111)]).to_seq()[0]
+    input = generate_str_plist()
+    size = input.length()
     dst = PList.from_seq([random.randint(0, nprocs - 1)]).to_seq()[0]
-    input = PList.init(lambda i: i, size)
     exp = [0 for _ in range(0, nprocs)]
     exp[dst] = size
-    res = input.distribute(exp).get_partition().map(len).to_seq()
+    res = get_distribution(input.distribute(exp))
     assert res == exp
 
 
 def test_balance_data():
-    size = PList.from_seq([random.randint(17, 111)]).to_seq()[0]
-    input = PList.from_seq(list(range(0,size)))
+    input = generate_int_plist()
+    size = input.length()
     res = input.balance().to_seq()
     exp = SList(range(0, size))
     assert res == exp
 
 
 def test_balance_distr():
-    size = PList.from_seq([random.randint(17, 37)]).to_seq()[0]
+    input = generate_str_plist()
+    size = input.length()
     dst = PList.from_seq([random.randint(0, nprocs - 1)]).to_seq()[0]
-    input = PList.init(lambda i: i, size)
     d = [0 for _ in range(0, nprocs)]
     d[dst] = size
-    res = input.distribute(d).balance().get_partition().map(len).to_seq()
+    res = get_distribution(input.distribute(d).balance())
     exp = balanced_distribution(size)
     assert res == exp
 
 
 def test_gather_data():
-    size = PList.from_seq([random.randint(17, 37)]).to_seq()[0]
+    input = generate_str_plist()
     dst = PList.from_seq([random.randint(0, nprocs - 1)]).to_seq()[0]
-    input = PList.init(lambda i: i, size)
     res = input.gather(dst).to_seq()
     exp = input.to_seq()
     assert res == exp
 
 
 def test_gather_distr():
-    size = PList.from_seq([random.randint(17, 37)]).to_seq()[0]
+    input = generate_str_plist()
+    size = input.length()
     dst = PList.from_seq([random.randint(0, nprocs - 1)]).to_seq()[0]
-    input = PList.init(lambda i: i, size)
-    res = input.gather(dst).get_partition().map(len).to_seq()
+    res = get_distribution(input.gather(dst))
     exp = [size if i == dst else 0 for i in range(0, nprocs)]
     assert res == exp
+

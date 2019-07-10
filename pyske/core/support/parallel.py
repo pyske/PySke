@@ -23,6 +23,8 @@ def local_size(size):
 def procs():
     return range(0, nprocs)
 
+def barrier():
+    comm.barrier()
 
 def balanced_distribution(size):
     return [local_size_pid(i, size) for i in procs()]
