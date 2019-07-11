@@ -25,6 +25,13 @@ scatter_range                               X
 from_seq                                    X
 to_seq                                      X
 reverse             X
+permute
+shift
+bh
+bh_spe
+forwardExceptions
+sort
+groupBy
 scanp               ?
 head                R
 tail                R
