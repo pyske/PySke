@@ -22,7 +22,7 @@ class SArray(array.array):
         assert 0 <= size
         return SArray(code_of_type(f(0)), [f(i) for i in range(0, size)])
 
-    def is_empty(self):
+    def empty(self):
         """Indicates if a array is empty
         """
         return self.length() == 0

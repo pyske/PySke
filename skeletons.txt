@@ -1,0 +1,38 @@
+Skeletons           SList       SArray      PList       PArray
+init                            X           X
+length              X           X           X
+empty               X           X           X
+map                 X           X           X
+mapi                X           X           X
+map2                X           X           X
+map2i               X           X           X
+zip                 X           +           X
+scan                X           X           X
+scanl               X           X           X
+scanl_last          X           X           X
+scanr               X                       X
+map_reduce          X                       X
+filter              X                       X
+get_partition       X                       X
+flatten             X                       X
+distribute          *                       X
+balance             X                       X
+gather                                      X
+gather_at_root                              X
+scatter                                     X
+scatter_from_root                           X
+scatter_range                               X
+from_seq                                    X
+to_seq                                      X
+reverse             X
+scanp               ?
+head                R
+tail                R
+
+
+
+X implemented
++ implemented but with a slightly different semantics than other modules
+* assertion to check
+R implemented but to be removed
+? implemented but should it be kept or moved to support?

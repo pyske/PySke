@@ -42,13 +42,13 @@ def test_init_non_empty():
 # -------------------------- #
 
 def test_is_empty_empty():
-    res = SArray.init(id, 0).is_empty()
+    res = SArray.init(id, 0).empty()
     assert res
 
 
 def test_is_empty_non_empty():
     size = 11
-    res = SArray.init(incr, size).is_empty()
+    res = SArray.init(incr, size).empty()
     assert not res
 
 # -------------------------- #
