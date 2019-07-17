@@ -1,6 +1,5 @@
 import functools
 
-
 LEFT_LIST = "["
 RIGHT_LIST = "]"
 SEPARATOR_LIST = ";"
@@ -170,7 +169,6 @@ class SList(list):
                 res = op(res, f(self[i]))
             return res
 
-
     def reduce(self, f, e=None):
         """Reduce the current instance using a reduction function
 
@@ -331,8 +329,32 @@ class SList(list):
         assert (len(self) == len(l))
         return SList([f(x, y) for (x, y) in zip(self, l)])
 
+    def map2i(self, f, l):
+        """Creates a list of new elements using a function applied to the elements of the current
+        instance and another list as well as their index (first argument)
+
+        Precondition
+        -------------
+        The lengths of self and l should be equal.
+
+        Parameters
+        ----------
+        f : callable
+             A function that takes 3 arguments, the first one being an index
+        l : list
+            The second list to map with the current instance
+        """
+        assert (len(self) == len(l))
+        return SList([f(i, self[i], l[i]) for i in range(0, len(self))])
+
     def get_partition(self):
         return [self]
 
     def flatten(self):
         return self.reduce(lambda x, y: x + y, [])
+
+    def distribute(self, distr):
+        return self.copy()
+
+    def balance(self):
+        return self.copy()
