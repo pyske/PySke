@@ -121,6 +121,7 @@ class PList:
             partials = SList(comm.allgather(partial))
         return partials.reduce(op, e)
 
+
     def scanr(self, op):
         assert (self.__global_size > 0)
         p = self.__get_shape()

@@ -60,6 +60,10 @@ class SList(list):
         return res + RIGHT_LIST
 
     @staticmethod
+    def init(f, size):
+        return SList([f(i) for i in range(0, size)])
+
+    @staticmethod
     def from_str(s, parser=int):
         """
         Creates a SList from a string

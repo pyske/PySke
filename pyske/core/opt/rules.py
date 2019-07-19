@@ -1,42 +1,31 @@
-from pyske.core.opt.term import Var, Term, subst
+from pyske.core.opt.term import Term, subst
 from collections import namedtuple
 import functools
 from pyske.core.opt.util import merge
 
-Rule = namedtuple('Rule', 'left right name')
+Rule = namedtuple('Rule', 'left right name type')
 
 
 def apply_rule(t: Term, r: Rule):
-    substitution = t.match(r.left)
-    if substitution is None:
-        return t
-    else:
-        return subst(r.right, substitution)
+    if isinstance(t, r.type):
+        substitution = t.match(r.left)
+        if not(substitution is None):
+            new_t = subst(r.right, substitution)
+            new_t = t.__class__(new_t.function, new_t.arguments, new_t.static)
+            return new_t
+    return t
+
 
 def apply_rules(t: Term, rules):
     return functools.reduce(apply_rule, rules, t)
 
-def compose(f, g):
-    return lambda x: f(g(x))
 
-map_map_rule = \
-    Rule(left=Term('map', [Term('map', [Var('PL'), Var('f')]), Var('g')]),
-         right=Term('map', [Var('PL'), Term(compose, [Var('f'), Var('g')])]),
-         name="map map")
+rules = []
 
-map_reduce_rule = \
-    Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('op')]),
-         right=Term('map_reduce', [Var('PL'), Var('f'), Var('op')]),
-         name = "map reduce")
-
-map_map_reduce_rule = \
-    Rule(left=Term('map_reduce', [Term('map', [Var('PL'), Var('f')]), Var('g'), Var('op')]),
-         right=Term('map_reduce', [Var('PL'), Term(compose, [Var('f'), Var('g')]), Var('op')]),
-         name = "map map_reduce")
-
-rules = [map_map_rule, map_reduce_rule, map_map_reduce_rule]
 
 def inner_most_strategy(t: Term):
+    if t.function == "__raw__":
+        return t
     condition = True
     prev_args = t.arguments
     while condition:
@@ -46,5 +35,6 @@ def inner_most_strategy(t: Term):
         changes = functools.reduce(merge, matches, {})
         condition = changes != {}
         prev_args = new_args
-    new_t = apply_rules(Term(t.function, new_args, t.static), rules)
+    new_t = t.__class__(t.function, new_args, t.static)
+    new_t = apply_rules(new_t, rules)
     return new_t

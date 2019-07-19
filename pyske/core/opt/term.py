@@ -21,6 +21,8 @@ class Term:
         vargs = [e.eval() if issubclass(type(e), Term) else e for e in self.arguments]
         if isinstance(self.function, (types.FunctionType, types.BuiltinFunctionType, functools.partial)):
             return self.function(*vargs)
+        if self.function == "__raw__":
+            return self.arguments[0]
         # arguments is assumed to be non-empty: it is either the class or object
         # to which the function/method is applied
         cn = vargs.pop(0)
@@ -55,8 +57,10 @@ class Term:
     def match(self, pattern):
         if type(pattern) is Var:
             subst = {pattern: self}
-        elif isinstance(pattern, Term) and self.function == pattern.function:
-            ss = [Term.__match(self.arguments[i], pattern.arguments[i]) for i in range(0, len(self.arguments))]
+        elif isinstance(pattern, Term) and self.function == pattern.function \
+                and len(self.arguments) == len(pattern.arguments):
+            ss = [Term.__match(self.arguments[i], pattern.arguments[i])
+                  for i in range(0, len(self.arguments))]
             subst = reduce(merge, ss)
         else:
             subst = None
@@ -64,8 +68,11 @@ class Term:
             
 
     def __str__(self):
-        return str(self.function)+("[static]" if self.static else "")+\
-               "("+reduce(lambda x, y: x+", "+y, map(str, self.arguments))+")"
+        if self.function == "__raw__":
+            return "RAW("+str(type(self.arguments[0]))+")"
+        else:
+            return ("[static]" if self.static else "")+str(self.function) +\
+                   "(" + reduce(lambda x, y: x + ", " + y, map(str, self.arguments)) + ")"
         # return str(self.arguments[0])+"."+self.function+"("+\
         #        reduce(lambda x, y: x+", "+y, map(str, self.arguments[1:]))+")"
 
