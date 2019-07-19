@@ -7,7 +7,7 @@ mapi                X           X           X
 map2                X           X           X
 map2i               X           X           X
 zip                 X           +           X
-scan                X           X           X
+scan                X           X
 scanl               X           X           X
 scanl_last          X           X           X
 scanr               X                       X
