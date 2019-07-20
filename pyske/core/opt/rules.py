@@ -1,4 +1,4 @@
-from pyske.core.opt.term import Term, subst
+from pyske.core.opt.terms import Term, subst
 from collections import namedtuple
 import functools
 from pyske.core.opt.util import merge

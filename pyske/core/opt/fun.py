@@ -1,4 +1,4 @@
-from pyske.core.opt.term import Var, Term
+from pyske.core.opt.terms import Var, Term
 from pyske.core.opt.rules import inner_most_strategy, Rule, rules
 import pyske.core.opt.util as util
 
