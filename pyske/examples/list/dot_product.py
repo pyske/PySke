@@ -11,6 +11,7 @@ import gc
 # Command-line arguments parsing
 parser = argparse.ArgumentParser()
 parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
+parser.add_argument("--iter", help="number of iterations", type=int, default=30)
 parser.add_argument("--test", help="choice of the test",
                     choices=['direct', 'wrapper', 'optimized', 'hand_optimized'],
                     default='direct')
@@ -60,19 +61,21 @@ def compute():
 
 def main():
     at_root(lambda: print("Test:\t", test))
-    gc.collect()
-    barrier()
-    t = PL.init(lambda _: wtime(), nprocs)
-    result = compute()
-    elapsed = t.map(lambda x: wtime() - x)
-    max_elapsed = elapsed.reduce(max)
-    avg_elapsed = elapsed.reduce(add) / nprocs
-    all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
-    at_root(lambda:
-            print(f'Result:\t{result}\n'
-                  f'Time (max):\t{max_elapsed}\n'
-                  f'Time (avg):\t{avg_elapsed}\n'
-                  f'Time (all):\t{all_elapsed}'))
+    for i in range(0, args.iter):
+        gc.collect()
+        barrier()
+        t = PL.init(lambda _: wtime(), nprocs)
+        result = compute()
+        elapsed = t.map(lambda x: wtime() - x)
+        max_elapsed = elapsed.reduce(max)
+        avg_elapsed = elapsed.reduce(add) / nprocs
+        all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
+        at_root(lambda:
+                print(f'Iteration:\t{i}\n'
+                      f'Result:\t{result}\n'
+                      f'Time (max):\t{max_elapsed}\n'
+                      f'Time (avg):\t{avg_elapsed}\n'
+                      f'Time (all):\t{all_elapsed}'))
 
 
 main()
