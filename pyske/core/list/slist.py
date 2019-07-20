@@ -164,14 +164,11 @@ class SList(list):
         """
         if self.empty():
             return e
+        elif e is None:
+            return functools.reduce(op, map(f, self))
         else:
-            if e is None:
-                res = f(self[0])
-            else:
-                res = op(e, f(self[0]))
-            for i in range(1, self.length()):
-                res = op(res, f(self[i]))
-            return res
+            return functools.reduce(op, map(f, self), e)
+
 
     def reduce(self, f, e=None):
         """Reduce the current instance using a reduction function

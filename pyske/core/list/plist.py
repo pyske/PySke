@@ -1,7 +1,7 @@
 from pyske.core.list.slist import SList
 from pyske.core.support.parallel import *
 from pyske.core.support.interval import *
-
+import functools
 
 class PList:
     """Distributed lists"""
@@ -113,13 +113,14 @@ class PList:
     def map_reduce(self, f, op, e=None):
         if e is None:
             assert (self.__global_size >= 1)
-            partial = None if self.__local_size == 0 else SList(self.__content).map_reduce(f, op)
-            partials = SList(comm.allgather(partial)).filter(lambda x: x is not None)
+            partial = None if self.__local_size == 0 else self.__content.map_reduce(f, op)
+            partials = SList(comm.allgather(partial)).filter(lambda x: not(x is None))
+            return functools.reduce(op, partials)
         else:
             # assert: (op, e) form a monoid
-            partial = SList(self.__content).map_reduce(f, op, e)
-            partials = SList(comm.allgather(partial))
-        return partials.reduce(op, e)
+            partial = self.__content.map_reduce(f, op, e)
+            partials = comm.allgather(partial)
+            return functools.reduce(op, partials, e)
 
 
     def scanr(self, op):

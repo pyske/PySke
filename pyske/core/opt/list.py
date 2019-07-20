@@ -1,5 +1,6 @@
 from pyske.core.opt.term import modules, Var, Term
 from pyske.core.opt.rules import inner_most_strategy, Rule, rules
+from pyske.core.opt.fun import *
 import importlib
 import operator
 
@@ -63,15 +64,12 @@ class SList(Term, __List):
         return f
 
 
-def compose(f, g):
-    return lambda x: f(g(x))
-
-
 map_map_rule = \
     Rule(left=Term('map', [Term('map', [Var('PL'), Var('f')]), Var('g')], False),
-         right=Term('map', [Var('PL'), Term(compose, [Var('f'), Var('g')])], False),
+         right=Term('map', [Var('PL'), compose(Var('f'), Var('g'))], False),
          name="map map",
          type=__List)
+
 
 map_reduce_rule = \
     Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('op')], False),
@@ -79,11 +77,19 @@ map_reduce_rule = \
          name="map reduce",
          type=__List)
 
+zip_map_rule = \
+    Rule(left=Term('map', [Term('zip', [Var('PL1'), Var('PL2')]), Var('f')], False),
+         right=Term('map2', [Var('PL1'), curry(Var('f')), Var('PL2')], False),
+         name="zip_map",
+         type=__List)
+
+
 map_reduce_e_rule = \
     Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('op'), Var('e')], False),
          right=Term('map_reduce', [Var('PL'), Var('f'), Var('op'), Var('e')], False),
          name="map reduce",
          type=__List)
+
 
 and_not_not_or_rule = \
     Rule(left=Term('reduce', [Term('map', [Var('list'), operator.not_,]), operator.and_, True]),
@@ -92,4 +98,4 @@ and_not_not_or_rule = \
          type=__List)
 
 #
-rules.extend([ and_not_not_or_rule, map_reduce_e_rule, map_reduce_rule, map_map_rule])
+rules.extend([ and_not_not_or_rule, map_reduce_e_rule, map_reduce_rule, zip_map_rule, map_map_rule])

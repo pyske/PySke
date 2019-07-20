@@ -1,7 +1,7 @@
 import functools
 import types
 from functools import reduce
-from pyske.core.opt.util import merge
+from pyske.core.opt.util import merge, compose
 
 modules = {}
 
@@ -82,7 +82,7 @@ def subst(t, s):
     if isinstance(t, Var) and t in s:
         return s[t]
     elif isinstance(t, Term):
-        return Term(t.function,
+        return t.__class__(t.function,
                     [subst(e, s) for e in t.arguments],
                     t.static)
     return t

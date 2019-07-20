@@ -11,7 +11,8 @@ def apply_rule(t: Term, r: Rule):
         substitution = t.match(r.left)
         if not(substitution is None):
             new_t = subst(r.right, substitution)
-            new_t = t.__class__(new_t.function, new_t.arguments, new_t.static)
+            if isinstance(new_t, Term):
+                new_t = t.__class__(new_t.function, new_t.arguments, new_t.static)
             return new_t
     return t
 
@@ -31,10 +32,16 @@ def inner_most_strategy(t: Term):
     while condition:
         new_args = [inner_most_strategy(e) if isinstance(e, Term) else e for e in prev_args]
         matches = [new_args[i].match(prev_args[i])
-                   if isinstance(prev_args[i],  Term) else {} for i in range(0, len(new_args))]
+                   if isinstance(new_args[i],  Term) else {} for i in range(0, len(new_args))]
         changes = functools.reduce(merge, matches, {})
         condition = changes != {}
         prev_args = new_args
     new_t = t.__class__(t.function, new_args, t.static)
     new_t = apply_rules(new_t, rules)
-    return new_t
+    if isinstance(new_t, Term):
+        if new_t.match(t) == {}:
+            return new_t
+        else:
+            return inner_most_strategy(new_t)
+    else:
+        return new_t
