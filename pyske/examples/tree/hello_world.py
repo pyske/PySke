@@ -1,18 +1,27 @@
+import random
 from pyske.core.support.generate import *
 from pyske.core.tree.ltree import LTree
 from pyske.core.tree.ptree import PTree
 from pyske.core.util import par
-from pyske.examples.tree.ancestors import ancestors
 from pyske.examples.tree.prefix import prefix
 from pyske.examples.tree.size import size
 from pyske.examples.tree.size_by_node import size_by_node
 from pyske.core.support import parallel
+from pyske.core.util import fun
 
 comm = parallel.comm
 pid = parallel.pid
 nprocs = parallel.nprocs
 
 msg = "hello world!"
+
+
+def plus1(x, y):
+    return x + y + 1
+
+
+def ancestors(tree):
+    return tree.map(fun.zero, fun.zero).dacc(plus1, plus1, 0, fun.idt, fun.idt, plus1, plus1)
 
 
 def frdm(_):
@@ -47,9 +56,9 @@ def test(bt):
 
 data = {}
 if pid == 0:
-    bal = generate_balanced_btree(frdm, 15)
-    ill = generate_illbalanced_btree(frdm, 15)
-    rdm = generate_random_btree(frdm, 15)
+    bal = balanced_btree(frdm, 15)
+    ill = ill_balanced_btree(frdm, 15)
+    rdm = random_btree(frdm, 15)
     for i in range(1, nprocs):
         comm.send({'b': bal, 'i': ill, 'r': rdm}, dest=i, tag=1)
 else:

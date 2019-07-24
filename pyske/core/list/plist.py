@@ -1,10 +1,13 @@
-__all__ = ['PList']
-
+"""
+A module of parallel lists and associated skeletons
+"""
+from operator import add
+import functools
 from pyske.core.support import parallel as parimpl, interval
 from pyske.core.util import par
 from pyske.core.list.slist import SList
-from operator import add
-import functools
+
+__all__ = ['PList']
 
 _pid: int = parimpl.pid
 _nprocs: int = parimpl.nprocs

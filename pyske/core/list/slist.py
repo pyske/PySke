@@ -1,6 +1,9 @@
-__all__ = ['SList']
-
+"""
+A module of sequential lists and associated primitives
+"""
 import functools
+
+__all__ = ['SList']
 
 LEFT_LIST = "["
 RIGHT_LIST = "]"
