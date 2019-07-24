@@ -1,3 +1,5 @@
+__all__ = ['SList']
+
 import functools
 
 LEFT_LIST = "["
@@ -115,14 +117,6 @@ class SList(list):
         """
         return self.length() == 0
 
-    def reverse(self):
-        """Reverse a list
-        """
-        rev = SList()
-        for i in range(self.length() - 1, -1, -1):
-            rev.append(self[i])
-        return rev
-
     def map(self, f):
         """Applies f to every element of the current instance
 
@@ -150,7 +144,8 @@ class SList(list):
         return SList([f(i, self[i]) for i in range(0, len(self))])
 
     def map_reduce(self, f, op, e=None):
-        """Reduce the current instance using a reduction function
+        """Applies f to every index and element of the current instance and then
+           reduce the current instance using a reduction operator
 
         Definition:
         map_reduce f op [x1, x2, ..., xn] e = op(op(op(e, f x1), ...), f xn)
@@ -158,6 +153,8 @@ class SList(list):
         Parameters
         ----------
         f : callable
+            The function to apply to every values of the current instance
+        op: callable
             The used function to reduce the current instance
         e : optional
             Default value for reduction
@@ -168,7 +165,6 @@ class SList(list):
             return functools.reduce(op, map(f, self))
         else:
             return functools.reduce(op, map(f, self), e)
-
 
     def reduce(self, f, e=None):
         """Reduce the current instance using a reduction function
@@ -354,7 +350,7 @@ class SList(list):
     def flatten(self):
         return self.reduce(lambda x, y: x + y, [])
 
-    def distribute(self, distr):
+    def distribute(self, _):
         return self.copy()
 
     def balance(self):

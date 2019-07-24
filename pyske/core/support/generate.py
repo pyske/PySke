@@ -1,4 +1,4 @@
-from pyske.core.tree.btree import BTree, Leaf, Node
+from pyske.core.tree.btree import Leaf, Node
 from pyske.core.list.slist import SList
 
 import random

@@ -155,6 +155,10 @@ class Leaf(BTree):
             A function to apply to every leaf values of the current instance
         kn : callable
             A function to apply to every node values of the current instance
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(Leaf(kl(self.get_value())))
@@ -162,7 +166,8 @@ class Leaf(BTree):
             return Leaf(kl(self.get_value()))
 
     def mapt(self, kl, kn, tail_recursive=False, acc=lambda x: x):
-        """Applies a function to every leaf values the current instance, and another one to every subtrees that are nodes
+        """Applies a function to every leaf values the current instance,
+        and another one to every subtrees that are nodes
 
         Parameters
         ----------
@@ -170,6 +175,10 @@ class Leaf(BTree):
             The function to apply to every leaf values of the current instance
         kn : callable
             The function to apply to every node subtrees of the current instance
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(Leaf(kl(self.get_value())))
@@ -185,6 +194,10 @@ class Leaf(BTree):
         ----------
         k : callable
             The function used to reduce a BTree into a single value
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(self.get_value())
@@ -200,6 +213,10 @@ class Leaf(BTree):
         ----------
         k : callable
             The function used to reduce a BTree into a single value
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(Leaf(self.get_value()))
@@ -215,14 +232,17 @@ class Leaf(BTree):
             Function to make an accumulation to the left part of a node
         gr : callable
             Function to make an accumulation to the right part of a node
-        c
+        c :
             Accumulator for the downward computation
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(Leaf(c))
         else:
             return Leaf(c)
-
 
     def zip(self, t, tail_recursive=False, acc=lambda x: x):
         """Zip the values contained in t with the ones in the current instance
@@ -235,6 +255,10 @@ class Leaf(BTree):
         ----------
         t : :obj:`BTree`
             The BTree to zip with the current instance
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         assert t.is_leaf(), "A leaf can only be zipped with another leaf"
         if tail_recursive:
@@ -255,6 +279,10 @@ class Leaf(BTree):
             The BTree to zip with the current instance
         f : callable
             A function to zip values
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         assert t.is_leaf(), "A leaf can only be zipped with another leaf"
         if tail_recursive:
@@ -269,6 +297,10 @@ class Leaf(BTree):
         ----------
         c
             The default value for elements that doesn't have left children
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(Leaf(c))
@@ -282,6 +314,10 @@ class Leaf(BTree):
         ----------
         c
             The default value for elements that doesn't have right children
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return acc(Leaf(c))
@@ -389,6 +425,10 @@ class Node(BTree):
             A function to apply to every leaf values of the current instance
         kn : callable
             A function to apply to every node values of the current instance
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().map(kl,
@@ -412,6 +452,10 @@ class Node(BTree):
             The function to apply to every leaf values of the current instance
         kn : callable
             The function to apply to every node subtrees of the current instance
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().mapt(kl,
@@ -437,6 +481,10 @@ class Node(BTree):
         ----------
         k : callable
             The function used to reduce a BTree into a single value
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().reduce(k,
@@ -458,6 +506,10 @@ class Node(BTree):
         ----------
         k : callable
             The function used to reduce a BTree into a single value
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().uacc(k,
@@ -481,6 +533,10 @@ class Node(BTree):
             Function to make an accumulation to the right part of a node
         c
             Accumulator for the downward computation
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().dacc(gl,
@@ -492,10 +548,6 @@ class Node(BTree):
                                                                          lambda rm: acc(Node(c, lm, rm))))
         else:
             b = self.get_value()
-            l = self.get_left()
-            r = self.get_right()
-            left = l.dacc(gl, gr, gl(c, b))
-            right = r.dacc(gl, gr, gr(c, b))
             left = self.get_left().dacc(gl, gr, gl(c, b))
             right = self.get_right().dacc(gl, gr, gr(c, b))
             return Node(c, left, right)
@@ -511,6 +563,10 @@ class Node(BTree):
         ----------
         t : :obj:`BTree`
             The BTree to zip with the current instance
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         assert t.is_node(), "A node can only be zipped with another node"
         if tail_recursive:
@@ -539,6 +595,10 @@ class Node(BTree):
             The BTree to zip with the current instance
         f : callable
             A function to zip values
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         assert t.is_node(), "A node can only be zipped with another node"
         if tail_recursive:
@@ -561,6 +621,10 @@ class Node(BTree):
         ----------
         c
             The default value for elements that doesn't have left children
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().getchl(c,
@@ -581,6 +645,10 @@ class Node(BTree):
         ----------
         c
             The default value for elements that doesn't have right children
+        tail_recursive: bool
+            Indicates if the call should be tail recursive
+        acc: callable
+            Continuation
         """
         if tail_recursive:
             return self.get_left().getchr(c,

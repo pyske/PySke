@@ -2,35 +2,37 @@ from pyske.core.list.plist import PList as DPList
 from pyske.core.opt.list import PList as OPList
 from pyske.core.list.slist import SList as DSList
 from pyske.core.opt.list import SList as OSList
-from pyske.core.support.parallel import *
+from pyske.core.util import par
 from operator import add
 import operator
 import random
 import math
-from gc import *
+import gc
 import argparse
 
 
-def test(f, input, name, preprocessing=lambda f, x: lambda: f(x), run=lambda f: f()):
-    at_root(lambda: print(f'Test: {name}'))
-    skel = preprocessing(f, input)
-    at_root(lambda: print("Term: ", skel))
-    collect()
-    barrier()
-    t = DPList.init(lambda _: wtime(), nprocs)
+def test(f, data, name, preprocessing=lambda f, x: lambda: f(x), execute=lambda f: f()):
+    assert(iterations > 0)
+    par.at_root(lambda: print(f'Test: {name}'))
+    skel = preprocessing(f, data)
+    par.at_root(lambda: print("Term: ", skel))
+    gc.collect()
+    par.barrier()
+    t: DPList = DPList.init(lambda _: par.wtime())
+    output = data
     for i in range(0, iterations):
-        at_root(lambda: print(f'  Iteration: {i}', end='\r'))
-        output = run(skel)
-    elapsed = t.map(lambda x: wtime() - x).map(lambda x: x/iterations)
+        par.at_root(lambda: print(f'  Iteration: {i}', end='\r'))
+        output = execute(skel)
+    elapsed = t.map(lambda x: par.wtime() - x).map(lambda x: x/iterations)
 
-    at_root(lambda: print(30 * ' ', end='\r'))
+    par.at_root(lambda: print(30 * ' ', end='\r'))
     max_elapsed = elapsed.reduce(max)
-    avg_elapsed = elapsed.reduce(add) / nprocs
-    all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
-    at_root(lambda:
-            print(f'Time (max):\t{max_elapsed}\n'
-                  f'Time (avg):\t{avg_elapsed}\n'
-                  f'Time (all):\t{all_elapsed}'))
+    avg_elapsed = elapsed.reduce(add) / elapsed.length()
+    all_elapsed = elapsed.mapi(lambda k, x: "[" + str(k) + "]:" + str(x)).to_seq()
+    par.at_root(lambda:
+                print(f'Time (max):\t{max_elapsed}\n'
+                      f'Time (avg):\t{avg_elapsed}\n'
+                      f'Time (all):\t{all_elapsed}'))
     return output
 
 
@@ -63,8 +65,8 @@ def normalize(v):
     return smul(1/n, v)
 
 
-def opt(f, input):
-    return f(input).opt()
+def opt(f, data):
+    return f(data).opt()
 
 
 def run(t):
@@ -85,12 +87,13 @@ tst = args.test
 vrb = args.v
 
 if vrb:
-    at_root(lambda:
-            print("Iterations:\t",iterations,
-                  "\nSize:\t", size,
-                  "\nSeq: \t", seq,
-                  "\nTest:\t", tst,
-                  "\nNprocs:\t", nprocs))
+    par.at_root(lambda:
+                print("Iterations:\t", iterations,
+                      "\nSize:\t", size,
+                      "\nSeq: \t", seq,
+                      "\nTest:\t", tst,
+                      "\nNprocs:\t", len(par.procs())))
+
 
 def test_mmr_direct(l):
     l1 = l.map(f_map)
@@ -98,10 +101,11 @@ def test_mmr_direct(l):
     r = l2.reduce(f_reduce, 0)
     return r
 
+
 def test_mr_direct(l):
     def f(x): return f_map(f_map(x))
     l1 = l.map(f)
-    r = l2.reduce(f_reduce, 0)
+    r = l1.reduce(f_reduce, 0)
     return r
 
 
@@ -131,12 +135,12 @@ def test_bool_direct(l):
     return l.map(operator.not_).reduce(operator.and_, True)
 
 
-def test_bool_optimized(l):
+def test_bool_optimized(lst):
     if seq:
-        l = OSList.raw(l)
+        lst = OSList.raw(lst)
     else:
-        l = OPList.raw(l)
-    return test_bool_direct(l)
+        lst = OPList.raw(lst)
+    return test_bool_direct(lst)
 
 
 def test_bool_mr(l):
@@ -148,7 +152,7 @@ def test1():
         input1 = DSList.init(lambda x: random.randint(0, 1000), size)
     else:
         input1 = DPList.init(lambda x: random.randint(0, 1000), size)
-    r0   = test(test_mmr_direct, input1, "map/map/reduce")
+    r0 = test(test_mmr_direct, input1, "map/map/reduce")
     r1 = test(test_mmr_direct, input1, "map/reduce[hc]")
     r1_1 = test(test_mmr_run, input1, "map/map/reduce[opt]")
     r1_2 = test(test_mmr_optimized, input1, "map/map/reduce[opt/run]", opt, run)
@@ -173,11 +177,11 @@ dim = 10
 vzero = DSList.init(lambda i: 0.0, dim)
 
 
-def f_rand(x):
+def f_rand(_):
     return random.randint(0, 1000)
 
 
-def vrand(i):
+def vrand(_):
     return DSList.init(f_rand, dim)
 
 
@@ -190,25 +194,27 @@ def vavg(l):
     return smul(d, vnsum(l))
 
 
-def wrapped_vavg(l):
-    d = 1 / l.length()
-    l = OSList.raw(l) if seq else OPList.raw(l)
-    t = vnsum(l).opt()
+def wrapped_vavg(lst):
+    d = 1 / lst.length()
+    lst = OSList.raw(lst) if seq else OPList.raw(lst)
+    t = vnsum(lst).opt()
     r = smul(d, t.eval())
-    at_root(lambda: print(r))
     return r
 
 
 def test3():
     if seq:
-        input = DSList.init(lambda i: vrand(i), size)
+        data = DSList.init(lambda i: vrand(i), size)
     else:
-        input = DPList.init(lambda i: vrand(i), size)
-    r1 = test(vavg, input, "vector average")
-    r2 = test(wrapped_vavg, input, "vector average [run]")
+        data = DPList.init(lambda i: vrand(i), size)
+    r1 = test(vavg, data, "vector average")
+    r2 = test(wrapped_vavg, data, "vector average [run]")
     assert r1 == r2
 
 
-if tst == 1: test1()
-if tst == 2: test2()
-if tst == 3: test3()
+if tst == 1:
+    test1()
+if tst == 2:
+    test2()
+if tst == 3:
+    test3()

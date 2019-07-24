@@ -1,26 +1,21 @@
+from pyske.core.util import fun
 from pyske.core.list.slist import SList
 
 
 def distribute_tree(lt, n):
-	def sum3(x, y, z): return x+y+z
-	total_size = lt.map(lambda x: 1, lambda x: 1).reduce(sum3, lambda x: x, sum3, sum3, sum3)
+	total_size = lt.map(fun.one, fun.one).reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
 	avg_elements = int(total_size / n)
-
-	# Definition of global_index and distribution 
-
+	# Definition of global_index and distribution
 	global_index = SList([])
 	distribution = SList([])
-
 	for i in range(n):
 		distribution.append(0)
-
 	current_pid = 0
 	nb_segs = 1
 	seg = lt[0]
 	seg_length = seg.length()
 	acc_size = seg_length
 	global_index.append((0, seg_length))
-
 	for seg_i in range(1, lt.length()):
 		seg = lt[seg_i]
 		curr_seg_length = seg.length()
@@ -50,5 +45,4 @@ def distribute_tree(lt, n):
 					nb_segs += 1
 					global_index.append((acc_size, curr_seg_length))
 					acc_size = acc_size + curr_seg_length
-
 	return distribution, global_index

@@ -1,6 +1,9 @@
+from pyske.core.util import fun
+
+
+def plus1(x, y):
+	return x + y + 1
+
+
 def ancestors(tree):
-	c = 0
-	plus1 = lambda c,b : c + b + 1
-	id = lambda x : x
-	id = lambda x : x
-	return tree.map(lambda x:0,lambda x:0).dacc(plus1, plus1, 0, id, id, plus1, plus1)
+	return tree.map(fun.zero, fun.zero).dacc(plus1, plus1, 0, fun.idt, fun.idt, plus1, plus1)

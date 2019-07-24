@@ -3,6 +3,7 @@ import logging
 from pyske.core.tree.ltree import TaggedValue, Segment, LTree
 from pyske.core.support.parallel import *
 from pyske.core.support.separate import *
+from pyske.core.util import par
 
 
 TAG_BASE = "270995"
@@ -24,6 +25,7 @@ ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
+
 
 class PTree:
     """A class used to represent a distributed tree
@@ -154,9 +156,9 @@ class PTree:
         logger.debug(
             '[START] pid[' + str(pid) + '] map skeleton')
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            logger.debug('[START] pid['+str(pid)+'] map_local from ' + str(start) + ' to '+ str(start + offset))
+            logger.debug('[START] pid['+str(pid)+'] map_local from ' + str(start) + ' to ' + str(start + offset))
             content[start:start + offset] = Segment(self.__content[start:start + offset]).map_local(kl, kn)
-            logger.debug('[END] pid['+str(pid)+'] map_local from ' + str(start) + ' to '+ str(start + offset))
+            logger.debug('[END] pid['+str(pid)+'] map_local from ' + str(start) + ' to ' + str(start + offset))
         res = PTree.init(self, content)
         logger.debug(
             '[END] pid[' + str(pid) + '] map skeleton')
@@ -189,9 +191,9 @@ class PTree:
         gt = Segment([None] * self.__nb_segs)
         i = 0
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            logger.debug('[START] pid['+str(pid)+'] reduce_local from ' + str(start) + ' to '+ str(start + offset))
+            logger.debug('[START] pid['+str(pid)+'] reduce_local from ' + str(start) + ' to ' + str(start + offset))
             gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
-            logger.debug('[END] pid['+str(pid)+'] reduce_local from ' + str(start) + ' to '+ str(start + offset))
+            logger.debug('[END] pid['+str(pid)+'] reduce_local from ' + str(start) + ' to ' + str(start + offset))
             i = i+1
         # Step 2 : Gather local Results
         if pid == 0:
@@ -208,9 +210,9 @@ class PTree:
             logger.debug(
                     '[END] pid[' + str(pid) + '] emission to ' + str(0))
         # Step 3 : Global Reduction
-        at_root(lambda: logger.debug('[START] pid[' + str(pid) + '] reduce_global'))
+        par.at_root(lambda: logger.debug('[START] pid[' + str(pid) + '] reduce_global'))
         res = gt.reduce_global(psi_n) if pid == 0 else None
-        at_root(lambda: logger.debug('[END] pid[' + str(pid) + '] reduce_global'))
+        par.at_root(lambda: logger.debug('[END] pid[' + str(pid) + '] reduce_global'))
         logger.debug(
             '[END] pid[' + str(pid) + '] reduce skeleton')
         return res
@@ -271,12 +273,12 @@ class PTree:
         # Step 3 : Global Upward Accumulation
         gt2 = None
         if pid == 0:
-            at_root(lambda: logger.debug('[START] pid[' + str(pid) + '] uacc_global'))
+            par.at_root(lambda: logger.debug('[START] pid[' + str(pid) + '] uacc_global'))
             gt2 = gt.uacc_global(psi_n)
             for i in range(len(gt2)):
                 if gt2[i].is_node():
                     gt2[i] = TaggedValue((gt2.get_left(i).get_value(), gt2.get_right(i).get_value()), gt2[i].get_tag())
-            at_root(lambda: logger.debug('[END] pid[' + str(pid) + '] uacc_global'))
+            par.at_root(lambda: logger.debug('[END] pid[' + str(pid) + '] uacc_global'))
 
         # Step 4 : Distributing Global Result
         start = 0
@@ -301,13 +303,13 @@ class PTree:
         content = SList([None] * self.__content.length())
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            logger.debug('[START] pid['+str(pid)+'] uacc_update from ' + str(start) + ' to '+ str(start + offset))
+            logger.debug('[START] pid['+str(pid)+'] uacc_update from ' + str(start) + ' to ' + str(start + offset))
             if gt[i].is_node():
                 (lc, rc) = gt2[i].get_value()
                 val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
             else:
                 val = lt2[i]
-            logger.debug('[END] pid['+str(pid)+'] uacc_update from ' + str(start) + ' to '+ str(start + offset))
+            logger.debug('[END] pid['+str(pid)+'] uacc_update from ' + str(start) + ' to ' + str(start + offset))
             content[start:start + offset] = val
         res = PTree.init(self, content)
         logger.debug(
@@ -370,9 +372,9 @@ class PTree:
             logger.debug(
                 '[END] pid[' + str(pid) + '] emission update to ' + str(0))
         # Step 3 : Global Downward Accumulation
-        at_root(lambda: logger.debug('[START] pid[' + str(pid) + '] dacc_global'))
+        par.at_root(lambda: logger.debug('[START] pid[' + str(pid) + '] dacc_global'))
         gt2 = (gt.dacc_global(psi_d, c) if pid == 0 else None)
-        at_root(lambda: logger.debug('[END] pid[' + str(pid) + '] dacc_global'))
+        par.at_root(lambda: logger.debug('[END] pid[' + str(pid) + '] dacc_global'))
         # Step 4 : Distributing Global Result
         if pid == 0:
             start = 0
@@ -397,7 +399,8 @@ class PTree:
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
             logger.debug(
                 '[START] pid[' + str(pid) + '] dacc_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = Segment(self.__content[start:start + offset]).dacc_local(gl, gr, gt2[i].get_value())
+            content[start:start + offset] = \
+                Segment(self.__content[start:start + offset]).dacc_local(gl, gr, gt2[i].get_value())
             logger.debug(
                 '[END] pid[' + str(pid) + '] dacc_local from ' + str(start) + ' to ' + str(start + offset))
         res = PTree.init(self, content)
@@ -424,8 +427,9 @@ class PTree:
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
             logger.debug('[START] pid[' + str(pid) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = Segment(self.__content[start:start+offset]).zip(Segment(pt.__content[start:start+offset]))
-            logger.debug('[END] pid['+ str(pid) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
+            content[start:start + offset] = Segment(self.__content[start:start+offset]).\
+                zip(Segment(pt.__content[start:start+offset]))
+            logger.debug('[END] pid[' + str(pid) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
         res = PTree.init(self, content)
         logger.debug(
             '[END] pid[' + str(pid) + '] zip skeleton')

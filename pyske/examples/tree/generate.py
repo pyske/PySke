@@ -1,6 +1,7 @@
 from pyske.core.support.generate import generate_balanced_btree, generate_random_btree, generate_illbalanced_btree
 from pyske.core.tree.ltree import LTree
-import random, argparse, math
+import random
+import argparse
 
 # --------------------- #
 
@@ -18,28 +19,29 @@ if filename[-3:] != ".lt":
 	filename = filename + ".lt"
 
 type_bt = args.t
-if type_bt != "rdm" and type_bt != "bal" and type_bt != "ill" :
+if not(type_bt in ["rdm", "bal", "ill"]):
 	raise Exception("Not a valid type of tree") 
 
 size = args.s
 
 # --------------------- #
 
-frdm = lambda : random.randint(1,101)
 
-if type_bt == "rdm" :
+def frdm(_):
+	return random.randint(1, 101)
+
+
+if type_bt == "rdm":
 	bt = generate_random_btree(frdm, size)
-
-if type_bt == "bal" :
+if type_bt == "bal":
 	bt = generate_balanced_btree(frdm, size)
-
-if type_bt == "ill" :
+if type_bt == "ill":
 	bt = generate_illbalanced_btree(frdm, size)
+else:
+	bt = None
 
 # --------------------- #
 
 m = args.m
 lt = LTree.init_from_bt(bt, m)
 lt.write_file(filename)
-
-

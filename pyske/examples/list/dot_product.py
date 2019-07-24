@@ -1,8 +1,8 @@
-import pyske.core.opt.fun as fun
-import pyske.core.opt.util as util
-from pyske.core.list.plist import PList as PL
+import pyske.core.util.fun
+from pyske.core.opt import fun
+from pyske.core.list.plist import PList as DPList
 from pyske.core.opt.list import PList
-from pyske.core.support.parallel import at_root, barrier, wtime, nprocs
+from pyske.core.util.par import at_root, barrier, wtime
 from operator import add, mul
 import random
 import argparse
@@ -21,19 +21,21 @@ test = args.test
 
 random.seed(42)
 
+
 # Creation of input lists
-def rand(i):
+def rand(_):
     return random.randint(0, 100)
 
 
-pl1 = PL.init(rand, size)
+pl1 = DPList.init(rand, size)
 
-pl2 = PL.init(rand, size)
+pl2 = DPList.init(rand, size)
 
 # ------ Example: dot product --------
 
 # wrapped or direct uncurry
-uncurry = util.uncurry if test in ['direct', 'hand_optimized'] else fun.uncurry
+uncurry = pyske.core.util.fun.uncurry if test in ['direct', 'hand_optimized'] else fun.uncurry
+
 
 # If using the automatic optimization, the parallel lists of type PL
 # should be wrapped.
@@ -64,12 +66,12 @@ def main():
     for i in range(0, args.iter):
         gc.collect()
         barrier()
-        t = PL.init(lambda _: wtime(), nprocs)
+        t = DPList.init(lambda _: wtime())
         result = compute()
         elapsed = t.map(lambda x: wtime() - x)
         max_elapsed = elapsed.reduce(max)
-        avg_elapsed = elapsed.reduce(add) / nprocs
-        all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
+        avg_elapsed = elapsed.reduce(add) / elapsed.length()
+        all_elapsed = elapsed.mapi(lambda j, x: "[" + str(j) + "]:" + str(x)).to_seq()
         at_root(lambda:
                 print(f'Iteration:\t{i}\n'
                       f'Result:\t{result}\n'
@@ -79,4 +81,3 @@ def main():
 
 
 main()
-

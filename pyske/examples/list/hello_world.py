@@ -1,6 +1,6 @@
-from pyske.core.list.slist import SList
 from pyske.core.list.plist import PList
-from pyske.core.support.parallel import *
+from pyske.core.list.slist import SList
+from pyske.core.util import par
 
 
 def app(l1, l2):
@@ -25,8 +25,8 @@ filtered = pl10.get_partition().reduce(app, []).reduce(lambda x, y: x + y)
 s1 = pl9.reduce(app).reduce(lambda x, y: x + y)
 s2 = pl11.to_seq()[0]
 
-at_root(lambda:
-        print(f'Capitalized: \t{s1}\n'
-              f'Identity:\t{s2}\n'
-              f'Length:\t\t{n}\n'
-              f'Filtered:\t{filtered}'))
+par.at_root(lambda:
+            print(f'Capitalized: \t{s1}\n'
+                  f'Identity:\t{s2}\n'
+                  f'Length:\t\t{n}\n'
+                  f'Filtered:\t{filtered}'))

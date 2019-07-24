@@ -17,8 +17,8 @@ def apply_rule(t: Term, r: Rule):
     return t
 
 
-def apply_rules(t: Term, rules):
-    return functools.reduce(apply_rule, rules, t)
+def apply_rules(t: Term, rs):
+    return functools.reduce(apply_rule, rs, t)
 
 
 rules = []
@@ -29,6 +29,7 @@ def inner_most_strategy(t: Term):
         return t
     condition = True
     prev_args = t.arguments
+    new_args = []
     while condition:
         new_args = [inner_most_strategy(e) if isinstance(e, Term) else e for e in prev_args]
         matches = [new_args[i].match(prev_args[i])

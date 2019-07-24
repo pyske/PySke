@@ -1,7 +1,7 @@
 import functools
 import types
 from functools import reduce
-from pyske.core.opt.util import merge, compose
+from pyske.core.opt.util import merge
 
 modules = {}
 
@@ -16,7 +16,7 @@ class Term:
         self.static = s
         self.function = f
         self.arguments = a
-        
+
     def eval(self):
         vargs = [e.eval() if issubclass(type(e), Term) else e for e in self.arguments]
         if isinstance(self.function, (types.FunctionType, types.BuiltinFunctionType, functools.partial)):
@@ -38,44 +38,39 @@ class Term:
 
     def graft(self, pos, t):
         i = pos.pop(0)
-        if pos == []:
+        if not pos:
             self.arguments[i] = t
         else:
             self.arguments[i].graft(pos, t)
 
-
+    @staticmethod
     def __match(obj, pattern):
         if type(pattern) is Var:
-            return { pattern: obj }
+            return {pattern: obj}
         if isinstance(obj, Term):
             return obj.match(pattern)
         if obj == pattern:
             return {}
         return None
-            
 
     def match(self, pattern):
         if type(pattern) is Var:
-            subst = {pattern: self}
+            substitution = {pattern: self}
         elif isinstance(pattern, Term) and self.function == pattern.function \
                 and len(self.arguments) == len(pattern.arguments):
             ss = [Term.__match(self.arguments[i], pattern.arguments[i])
                   for i in range(0, len(self.arguments))]
-            subst = reduce(merge, ss)
+            substitution = reduce(merge, ss)
         else:
-            subst = None
-        return subst
-            
+            substitution = None
+        return substitution
 
     def __str__(self):
         if self.function == "__raw__":
-            return "RAW("+str(type(self.arguments[0]))+")"
+            return "RAW(" + str(type(self.arguments[0])) + ")"
         else:
-            return ("[static]" if self.static else "")+str(self.function) +\
+            return ("[static]" if self.static else "") + str(self.function) + \
                    "(" + reduce(lambda x, y: x + ", " + y, map(str, self.arguments)) + ")"
-        # return str(self.arguments[0])+"."+self.function+"("+\
-        #        reduce(lambda x, y: x+", "+y, map(str, self.arguments[1:]))+")"
-
 
 
 def subst(t, s):
@@ -83,6 +78,6 @@ def subst(t, s):
         return s[t]
     elif isinstance(t, Term):
         return t.__class__(t.function,
-                    [subst(e, s) for e in t.arguments],
-                    t.static)
+                           [subst(e, s) for e in t.arguments],
+                           t.static)
     return t

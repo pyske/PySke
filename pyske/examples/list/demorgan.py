@@ -2,7 +2,7 @@ import random
 import argparse
 
 from pyske.core.list.plist import PList
-from pyske.core.support.parallel import *
+import pyske.core.util.par as par
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", help="size of the list to generate", type=int, default=1000)
@@ -21,7 +21,7 @@ random.seed(seed)
 
 X = PList.init(lambda _: bool(random.getrandbits(1)), size)
 
-comm.barrier()
+par.barrier()
 
 # computing the variance
 # Solution 1
@@ -30,10 +30,8 @@ if algorithm == 1:
 # Solution 2
 if algorithm == 2:
     res = X.map_reduce(lambda x: not x, lambda x, y: x and y, True)
-if algorithm == 3:
 # Solution 3
+if algorithm == 3:
     res = not (X.reduce(lambda x, y: x or y, False))
 
-at_root(lambda : print(res))
-
-
+par.at_root(lambda: print(res))

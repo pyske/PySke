@@ -1,8 +1,8 @@
 import pytest
 
-from pyske.core.tree.ptree import *
-from pyske.core.support.parallel import *
 from pyske.core.tree.ltree import *
+from pyske.core.tree.ptree import *
+
 
 def illformed_ltree():
     seg1 = Segment([TaggedValue(13, "C")])
@@ -25,9 +25,8 @@ def test_to_seq():
 
 def test_map_empty():
     pt = PTree()
-    id_f = lambda x: x
     exp = PTree()
-    res = pt.map(id_f, id_f)
+    res = pt.map(fun.idt, fun.idt)
     assert exp == res
 
 
@@ -52,10 +51,8 @@ def test_map_not_empty():
 
 def test_reduce_empty():
     pt = PTree()
-    id_f = lambda x: x
-    sum3 = lambda x, y, z: x + y + z
     with pytest.raises(AssertionError):
-        pt.reduce(sum3, id_f, sum3, sum3, sum3)
+        pt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
 
 def test_reduce():
@@ -64,10 +61,8 @@ def test_reduce():
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
     lt = LTree([seg1, seg2, seg3])
     pt = PTree(lt)
-    id_f = lambda x: x
-    sum3 = lambda x, y, z: x + y + z
-    res = pt.reduce(sum3, id_f, sum3, sum3, sum3)
-    exp = lt.reduce(sum3, id_f, sum3, sum3, sum3) if pid == 0 else None
+    res = pt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
+    exp = lt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add) if pid == 0 else None
     assert res == exp
 
 
@@ -75,10 +70,8 @@ def test_reduce():
 
 def test_uacc_empty():
     pt = PTree()
-    id_f = lambda x: x
-    sum3 = lambda x, y, z: x + y + z
     with pytest.raises(AssertionError):
-        pt.uacc(sum3, id_f, sum3, sum3, sum3)
+        pt.uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
 
 def test_uacc():
@@ -87,9 +80,7 @@ def test_uacc():
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
     lt = LTree([seg1, seg2, seg3])
     pt = PTree(lt)
-    id_f = lambda x: x
-    sum3 = lambda x, y, z: x + y + z
-    res = pt.uacc(sum3, id_f, sum3, sum3, sum3).to_seq()
+    res = pt.uacc(fun.add, fun.idt, fun.add, fun.add, fun.add).to_seq()
 
     seg1_exp = Segment([TaggedValue(13 + 31 + 47 + 32 + 72 + 92 + 42, "C")])
     seg2_exp = Segment([TaggedValue(31 + 47 + 32, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
@@ -97,17 +88,16 @@ def test_uacc():
     exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if pid == 0 else None
     assert exp == res
 
+
 # -------------------------- #
 
 def test_dacc():
-    sum2 = lambda x, y: x + y
     c = 0
-    id_f = lambda x: x
     seg1 = Segment([TaggedValue(13, "C")])
     seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
     lt = LTree([seg1, seg2, seg3])
-    res = PTree(lt).dacc(sum2, sum2, c, id_f, id_f, sum2, sum2).to_seq()
+    res = PTree(lt).dacc(fun.add, fun.add, c, fun.idt, fun.idt, fun.add, fun.add).to_seq()
 
     seg1_exp = Segment([TaggedValue(0, "C")])
     seg2_exp = Segment([TaggedValue(13, "N"), TaggedValue(13 + 31, "L"), TaggedValue(13 + 31, "L")])
@@ -154,7 +144,6 @@ def test_zip():
 # -------------------------- #
 
 def test_map2_not_same_size():
-    sum2 = lambda x, y: x + y
     seg11 = Segment([TaggedValue(13, "C")])
     seg21 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg31 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -168,7 +157,6 @@ def test_map2_not_same_size():
 
 
 def test_map2():
-    sum2 = lambda x, y: x + y
     seg11 = Segment([TaggedValue(1, "C")])
     seg21 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
     seg31 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
@@ -179,7 +167,7 @@ def test_map2():
     lt2 = LTree([seg12, seg22, seg32])
     pt1 = PTree(lt1)
     pt2 = PTree(lt2)
-    res = pt1.map2(sum2, pt2).to_seq()
+    res = pt1.map2(fun.add, pt2).to_seq()
     seg1_exp = Segment([TaggedValue(3, "C")])
     seg2_exp = Segment([TaggedValue(3, "N"), TaggedValue(3, "L"), TaggedValue(3, "L")])
     seg3_exp = Segment([TaggedValue(3, "N"), TaggedValue(3, "L"), TaggedValue(3, "L")])

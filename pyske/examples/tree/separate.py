@@ -2,16 +2,17 @@ from pyske.core.tree.ltree import LTree
 from pyske.core.support.separate import *
 import argparse
 
-def create_pt_files(lt, n, filename):
-	(distribution, global_index) = distribute_tree(lt, n)
+
+def create_pt_files(linear_tree, size, filename):
+	(distribution, global_index) = distribute_tree(linear_tree, size)
 	passed_seg = 0
-	for pid in range(n):
+	for pid in range(size):
 		nb_segs = distribution[pid]
 		filename_pid = filename + "." + str(pid)
 		content_pid = ""
-		for i_seg in range(passed_seg, passed_seg+ nb_segs):
-			content_pid = content_pid + str(lt[i_seg]) + "\n"
-		with open(filename_pid,"w+") as f: 
+		for i_seg in range(passed_seg, passed_seg + nb_segs):
+			content_pid = content_pid + str(linear_tree[i_seg]) + "\n"
+		with open(filename_pid, "w+") as f:
 			f.write(str(distribution) + "\n" + str(global_index) + "\n" + content_pid)
 		f.close()
 		passed_seg += nb_segs

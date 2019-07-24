@@ -1,5 +1,5 @@
 from pyske.core.list.plist import PList
-from pyske.core.support.parallel import *
+from pyske.core.util.par import *
 import sys
 import random
 from operator import add
@@ -11,20 +11,23 @@ else:
     size = 1000
 X = PList.init(lambda _: 50+random.randint(0, 100), size)
 
-comm.barrier()
+barrier()
 
 # start timing
-t = PList.init(lambda _: wtime(), nprocs)
+t = PList.init(lambda _: wtime())
+
 
 # filter out odd values and get the distribution after balancing
 def p(x): return x % 2 == 0
-d = X.get_partition().map(lambda l: l.filter(p)).flatten().balance().get_partition().map(len).to_seq()
 
+
+d = X.get_partition().map(lambda l: l.filter(p)).flatten().\
+    balance().get_partition().map(len).to_seq()
 # stop timing
 elapsed = t.map(lambda x: wtime() - x)
 
 max_elapsed = elapsed.reduce(max)
-avg_elapsed = elapsed.reduce(add) / nprocs
+avg_elapsed = elapsed.reduce(add) / elapsed.length()
 all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
 
 # output at processor 0

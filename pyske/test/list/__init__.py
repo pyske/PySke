@@ -1,1 +1,1 @@
-__all__ = ["test_list.py", "slist"]
+__all__ = ["test_plist", "test_slist"]

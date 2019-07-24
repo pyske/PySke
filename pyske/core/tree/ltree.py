@@ -1,9 +1,8 @@
 import sys
 
-from pyske.core.support.errors import EmptyError, UnknownTypeError, IllFormedError, ApplicationError, NotSameTagError
 from pyske.core.list.slist import SList
+from pyske.core.support.errors import EmptyError, UnknownTypeError, IllFormedError, ApplicationError, NotSameTagError
 from pyske.core.tree.btree import Leaf, Node
-
 
 MINUS_INFINITY = int((-sys.maxsize - 1) / 2)
 TAG_LEAF = 1
@@ -17,6 +16,12 @@ LEFT_SEG = "["
 RIGHT_SEG = "]"
 SEPARATOR_SEG = ";"
 EXT_FILE_LT = "lt"
+
+
+class __List(list):
+
+    def length(self):
+        return len(self)
 
 
 def parse_tag(vt):
@@ -122,7 +127,7 @@ class TaggedValue:
         return self.tag == TAG_NODE
 
 
-class Segment(SList):
+class Segment(__List):
     """A list of TaggedValue
 
     ...
@@ -170,6 +175,9 @@ class Segment(SList):
                     return False
             return True
         return False
+
+    def empty(self):
+        return self == []
 
     def has_critical(self):
         """Indicates if the current instance contains a value tagged by the Critical tag
@@ -225,11 +233,11 @@ class Segment(SList):
             If the current instance does not represent a correct linearized subtree
             That is there is a node that does not have two children which can be either a leaf value or a critical value
         """
-        assert not self.empty(), "reduce_local cannot be applied to an empty Segment"
+        assert self != [], "reduce_local cannot be applied to an empty Segment"
         stack = []
         d = MINUS_INFINITY
         has_critical = False
-        for v in self.reverse():
+        for v in reversed(self):
             # Starts by the end, that is the most deep leaves
             # We stack every elements we already reduced
             if v.is_leaf():
@@ -291,9 +299,9 @@ class Segment(SList):
             That is for each node, there is not exist two children, of there is a critical value in the current instance
         """
         assert not self.has_critical(), "reduce_global cannot be applied to a Segments which contains a critical"
-        assert not self.empty(), "reduce_global cannot be applied to an empty Segment"
+        assert self != [], "reduce_global cannot be applied to an empty Segment"
         stack = []
-        for g in self.reverse():
+        for g in reversed(self):
             # We stack every value we already reduced
             if g.is_leaf():
                 # Nothing to calculate, we only stack the value
@@ -335,7 +343,7 @@ class Segment(SList):
             If the current instance does not represent a correct linearized subtree
             That is there is a node that doesn't have two children which can be either a leaf value or a critical value
         """
-        assert not self.empty(), "uacc_local cannot be applied to an empty Segment"
+        assert self != [], "uacc_local cannot be applied to an empty Segment"
         stack = []
         d = MINUS_INFINITY
         res = Segment([None] * self.length())
@@ -529,14 +537,14 @@ class Segment(SList):
         ApplicationError
             If the current instance does not contain a critical value
         """
-        assert not self.empty(), "dacc_path cannot be applied to an empty Segment"
+        assert self != [], "dacc_path cannot be applied to an empty Segment"
         d = MINUS_INFINITY
         # The value to pass to the left children for a total downward accumulation
         to_l = None
         # The value to pass to the right children for a total downward accumulation
         to_r = None
         has_critical = False
-        for v in self.reverse():
+        for v in reversed(self):
             if v.is_leaf():
                 d = d + 1
             elif v.is_node():
@@ -779,7 +787,7 @@ class Segment(SList):
 # ------------------------------- #
 
 
-class LTree(SList):
+class LTree(__List):
     """A list of Segment
 
     Methods
@@ -824,6 +832,9 @@ class LTree(SList):
                 res = res + "\n"
         return res
 
+    def length(self):
+        return len(self)
+
     @staticmethod
     def init_from_bt(bt, m):
         """Create a LTree from a BTree
@@ -835,6 +846,7 @@ class LTree(SList):
         m : int
             Variable to define the critical nodes of bt
         """
+
         def __tv2lv(bt_value):
             val = bt_value.get_value()
             res = Segment()
@@ -860,7 +872,9 @@ class LTree(SList):
             return res
 
         # Get a LTree from a BTree
-        def up_div(n, m_val): return int(n / m_val) + (0 if n % m_val == 0 else 1)
+        def up_div(n, m_val):
+            return int(n / m_val) + (0 if n % m_val == 0 else 1)
+
         bt_one = bt.map(lambda x: 1, lambda x: 1)
         bt_size = bt_one.uacc(lambda x, y, z: x + y + z)
         bt_tags = bt_size.mapt(lambda x: TAG_LEAF,
@@ -920,7 +934,7 @@ class LTree(SList):
         kn : callable
             Function to apply to every node value of the current instance
         """
-        assert not self.empty(), "map cannot be applied to an empty linearized tree"
+        assert self != [], "map cannot be applied to an empty linearized tree"
         res = LTree([None] * self.length())
         for i in range(self.length()):
             res[i] = self[i].map_local(kl, kn)
@@ -951,7 +965,7 @@ class LTree(SList):
         psi_r : callable
             A function used to respect the closure property to make partial computation on the right
         """
-        assert not self.empty(), "reduce cannot be applied to an empty linearized tree"
+        assert self != [], "reduce cannot be applied to an empty linearized tree"
         tops = Segment([None] * self.length())
         # We start by doing local reductions on each Segment, representing a sub part of the tree
         for i in range(self.length()):
@@ -984,9 +998,9 @@ class LTree(SList):
         psi_r : callable
             A function used to respect the closure property to make partial computation on the right
         """
-        assert not self.empty(), "uacc cannot be applied to an empty linearized tree"
-        gt = Segment([None]*self.length())
-        lt2 = LTree([None]*self.length())
+        assert self != [], "uacc cannot be applied to an empty linearized tree"
+        gt = Segment([None] * self.length())
+        lt2 = LTree([None] * self.length())
         # We first make a local accumulation to get
         # * Locally non complete accumulated segments
         # * The top value of accumulations, to later pass them for a complete accumulation
@@ -998,7 +1012,7 @@ class LTree(SList):
         # We get real top values of accumulation considering a full linearized tree
         gt2 = gt.uacc_global(psi_n)
 
-        res = LTree([None]*gt.length())
+        res = LTree([None] * gt.length())
         # We update each segment using the real top values calculated previously,
         # the non complete accumulated segments and the initial segments
         # print(gt2)
@@ -1041,7 +1055,7 @@ class LTree(SList):
         psi_u : callable
             A function used to respect the closure property to make partial computation
         """
-        assert not self.empty(), "dacc cannot be applied to an empty linearized tree"
+        assert self != [], "dacc cannot be applied to an empty linearized tree"
         gt = Segment([None] * self.length())
         res = LTree([None] * self.length())
         # We first find the values to pass to sub trees for each segment that contains critical values
@@ -1102,6 +1116,7 @@ class LTree(SList):
     def deserialization(self):
         """Get a binary tree from its linear representation
         """
+
         def __graft(bt, lbt, rbt):
             val = bt.get_value()
             if bt.is_node():
