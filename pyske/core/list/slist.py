@@ -11,6 +11,7 @@ SEPARATOR_LIST = ";"
 
 
 class SList(list):
+    # pylint: disable=too-many-public-methods
     """
     An extended definition of lists, including Bird-Meertens Formalism primitives
 
@@ -39,21 +40,24 @@ class SList(list):
     reduce(f)
         Reduce the current instance using a reduction function
     scan(f, c)
-        Makes an total rightward accumulation of the element on the current instance from an initial value
+        Makes an total rightward accumulation of the element on the current instance
+        from an initial value
     scanl(f, c)
         Makes a rightward accumulation of the values from an initial one,
         without considering the last value of the instance
     scanr(f)
         Makes a total leftward accumulation of the values
     scanp(f, c)
-         Makes an total lefttward accumulation of the element on the current instance from an initial value
+         Makes an total leftward accumulation of the element on the current instance
+         from an initial value
     scanl_last(f, c)
         Makes a rightward accumulation of the values from an initial one,
         considering the last accumulation as an external value
     zip(l)
         Creates a list of pairs from the element of the current instance and another one
     map2(f, l)
-        Creates a list of new elements using a function from the element of the current instance and another one
+        Creates a list of new elements using a function from the element of the current
+        instance and another one
     """
 
     def __str__(self):
@@ -65,26 +69,36 @@ class SList(list):
         return res + RIGHT_LIST
 
     @staticmethod
-    def init(f, size):
-        return SList([f(i) for i in range(0, size)])
+    def init(value_at: callable, size: int):
+        """
+        Creates a list of length ``size``. At index ``idx``,
+        the element is ``value_at(idx)``.
+
+        :param value_at: callable
+        :param size: int
+            size should be positive
+        :return: SList
+        """
+        assert size >= 0
+        return SList([value_at(i) for i in range(0, size)])
 
     @staticmethod
-    def from_str(s, parser=int):
+    def from_str(string, parser=int):
         """
         Creates a SList from a string
 
         Parameters
         ----------
-        s : str
+        string : str
             A string representation of the SList
         parser : callable, optional
             A function that transforms a string into a specific type
             By default, string to int
         """
         res = SList([])
-        values = s.replace(LEFT_LIST, "").replace(RIGHT_LIST, "").split(SEPARATOR_LIST)
-        for v in values:
-            res.append(parser(v))
+        values = string.replace(LEFT_LIST, "").replace(RIGHT_LIST, "").split(SEPARATOR_LIST)
+        for val in values:
+            res.append(parser(val))
         return res
 
     def head(self):
@@ -92,8 +106,7 @@ class SList(list):
         """
         if self.empty():
             return None
-        else:
-            return self[0]
+        return self[0]
 
     def tail(self):
         """Gives the the current instance without its first element
@@ -105,22 +118,22 @@ class SList(list):
         """
         return len(self)
 
-    def filter(self, p):
+    def filter(self, predicate):
         """Removes all the elements that don't verify a predicate
 
         Parameters
         ----------
-        p : callable
+        predicate: callable
             A predicate that all elements in the result must verify
         """
-        return SList(filter(p, self))
+        return SList(filter(predicate, self))
 
     def empty(self):
         """Indicates if a list is empty
         """
         return self.length() == 0
 
-    def map(self, f):
+    def map(self, unop):
         """Applies f to every element of the current instance
 
         Definition:
@@ -128,12 +141,12 @@ class SList(list):
 
         Parameters
         ----------
-        f : callable
+        unop : callable
             The function to apply to every values of the current instance
         """
-        return SList(map(f, self))
+        return SList(map(unop, self))
 
-    def mapi(self, f):
+    def mapi(self, unop):
         """Applies f to every index and element of the current instance
 
         Definition:
@@ -141,12 +154,12 @@ class SList(list):
 
         Parameters
         ----------
-        f: callable
+        unop: callable
         The function to apply to every index and element of the current instance
         """
-        return SList([f(i, self[i]) for i in range(0, len(self))])
+        return SList([unop(i, self[i]) for i in range(0, len(self))])
 
-    def map_reduce(self, f, op, e=None):
+    def map_reduce(self, unop, binop, initial=None):
         """Applies f to every index and element of the current instance and then
            reduce the current instance using a reduction operator
 
@@ -155,21 +168,20 @@ class SList(list):
 
         Parameters
         ----------
-        f : callable
+        unop : callable
             The function to apply to every values of the current instance
-        op: callable
+        binop: callable
             The used function to reduce the current instance
-        e : optional
+        initial : optional
             Default value for reduction
         """
         if self.empty():
-            return e
-        elif e is None:
-            return functools.reduce(op, map(f, self))
-        else:
-            return functools.reduce(op, map(f, self), e)
+            return initial
+        if initial is None:
+            return functools.reduce(binop, map(unop, self))
+        return functools.reduce(binop, map(unop, self), initial)
 
-    def reduce(self, f, e=None):
+    def reduce(self, binop, initial=None):
         """Reduce the current instance using a reduction function
 
         Definition:
@@ -177,61 +189,62 @@ class SList(list):
 
         Parameters
         ----------
-        f : callable
+        binop: callable
             The used function to reduce the current instance
-        e : optional
+        initial : optional
             Default value for reduction
         """
-        if e is None:
-            return functools.reduce(f, self)
-        else:
-            return functools.reduce(f, self, e)
+        if initial is None:
+            return functools.reduce(binop, self)
+        return functools.reduce(binop, self, initial)
 
-    def scan(self, f, c):
+    def scan(self, binop, initial):
         """Makes total a rightward accumulation of the values from an initial one
         The result of scan is a list of size n+1 where n is the size of self.
 
         Definition:
-            scan f c [x_1, x_2, ..., x_n] = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n)]
+            scan f c [x_1, x_2, ..., x_n] =
+              [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n)]
 
         Parameters
         ----------
-        f : callable
+        binop: callable
             A function to make a new accumulation from the previous accumulation and a current value
-        c
+        initial:
             Initial value for the accumulator
         """
         res = self.copy()
-        res.append(c)
-        res[0] = c
+        res.append(initial)
+        res[0] = initial
         for i in range(1, len(res)):
-            c = f(c, self[i - 1])
-            res[i] = c
+            initial = binop(initial, self[i - 1])
+            res[i] = initial
         return SList(res)
 
-    def scanl(self, f, c):
+    def scanl(self, binop, initial):
         """Makes a rightward accumulation of the values from an initial one,
         without considering the last value of the instance
         The result of scanl is a list of size n where n is the size of self.
 
         Definition:
             scanl f c [] = []
-            scanl f c [x_1, x_2, ..., x_n] = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
+            scanl f c [x_1, x_2, ..., x_n] =
+              [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
 
         Parameters
         ----------
-        f : callable
+        binop: callable
             A function to make a new accumulation from the previous accumulation and a current value
-        c
+        initial:
             Initial value for the accumulator
         """
         res = self.copy()
-        for i in range(0, len(res)):
-            res[i] = c
-            c = f(c, self[i])
+        for (idx, value) in enumerate(res):
+            res[idx] = initial
+            initial = binop(initial, value)
         return SList(res)
 
-    def scanr(self, f):
+    def scanr(self, binop):
         """Makes a rightward accumulation of the values.
 
         Definition:
@@ -240,18 +253,18 @@ class SList(list):
 
         Parameters
         ----------
-        f : callable
+        binop: callable
             A function to make a new accumulation from the previous accumulation and a current value
         """
-        assert (len(self) > 0)
+        assert self != []
         res = self.copy()
-        c = res[0]
-        for i in range(1, len(res)):
-            c = f(c, self[i])
-            res[i] = c
+        acc = res[0]
+        for idx in range(1, len(res)):
+            acc = binop(acc, self[idx])
+            res[idx] = acc
         return SList(res)
 
-    def scanl_last(self, f, c):
+    def scanl_last(self, binop, initial):
         """Makes a rightward accumulation of the values from an initial one,
         considering the last accumulation as an external value.
         The result of scanl_last is a list of size n where n is the size of self
@@ -264,16 +277,16 @@ class SList(list):
 
         Parameters
         ----------
-        f : callable
+        binop : callable
             A function to make a new accumulation from the previous accumulation and a current value
-        c
+        initial
             Initial value for the accumulator
         """
-        res = self.scan(f, c)
+        res = self.scan(binop, initial)
         last = res.pop()
         return res, last
 
-    def scanp(self, f, c):
+    def scanp(self, binop, initial):
         """Makes a leftward accumulation of the values from an initial one.
         The result of scanp is a list of size n where n is the size of self
         and one additional value corresponding to the total accumulation.
@@ -283,78 +296,107 @@ class SList(list):
 
         Parameters
         ----------
-        f : callable
+        binop : callable
             A function to make a new accumulation from the previous accumulation and a current value
             Usually, f is associative.
-        c
+        initial
             Initial value for the accumulator.
             Usually, c is the unit of f, i.e. f(x, c) = f(c, x) = x
         """
         res = self.copy()
-        for i in range(len(self), 0, -1):
-            res[i - 1] = c
-            c = f(self[i - 1], c)
+        for idx in range(len(self), 0, -1):
+            res[idx - 1] = initial
+            initial = binop(self[idx - 1], initial)
         return res
 
-    def zip(self, l):
-        """Creates a list of pairs from the element of the current instance and another sequential list
+    def zip(self, lst):
+        """Creates a list of pairs from the element of the current instance
+        and another sequential list
 
         Precondition
         -------------
-        The lengths of self and l should be equal.
+        The lengths of self and lst should be equal.
 
         Parameters
         ----------
-        l : list
+        lst : list
             A list to merge the values of the current instance with
         """
-        assert (len(self) == len(l))
-        return SList([(x, y) for (x, y) in zip(self, l)])
+        assert len(self) == len(lst)
+        return SList([(left, right) for (left, right) in zip(self, lst)])
 
-    def map2(self, f, l):
+    def map2(self, binop, lst):
         """Creates a list of new elements using a function applied to the elements of the current
         instance and another sequential list
 
         Precondition
         -------------
-        The lengths of self and l should be equal.
+        The lengths of self and lst should be equal.
 
         Parameters
         ----------
-        f : callable
+        binop : callable
              A function to zip values
-        l : list
+        lst : list
             The second list to zip with the current instance
         """
-        assert (len(self) == len(l))
-        return SList([f(x, y) for (x, y) in zip(self, l)])
+        assert len(self) == len(lst)
+        return SList([binop(left, right) for (left, right) in zip(self, lst)])
 
-    def map2i(self, f, l):
+    def map2i(self, binop, lst):
         """Creates a list of new elements using a function applied to the elements of the current
         instance and another list as well as their index (first argument)
 
         Precondition
         -------------
-        The lengths of self and l should be equal.
+        The lengths of ``self`` and ``lst`` should be equal.
 
         Parameters
         ----------
-        f : callable
+        binop : callable
              A function that takes 3 arguments, the first one being an index
-        l : list
+        lst : list
             The second list to map with the current instance
         """
-        assert (len(self) == len(l))
-        return SList([f(i, self[i], l[i]) for i in range(0, len(self))])
+        assert len(self) == len(lst)
+        return SList([binop(i, self[i], lst[i]) for i in range(0, len(self))])
 
     def get_partition(self):
+        """Returns a list containing the local lists.
+
+        For example if the list is ``[1, 2, 3, 4, 5]`` and it is evenly
+        distributed on 2 processors, ```get_partition`` returns
+        ``[[1, 2, 3], [4, 5]]``.
+
+        :return: list
+        """
         return [self]
 
     def flatten(self):
+        """Returns a flattened version of ``self``: ``self``
+        is supposed to be a list of lists, and ``flatten`` returns
+        a list.
+
+        Example: SList([[1, 2], [3, 4]]).flatten() == [1, 2, 3, 4]
+
+        :return: list
+        """
         return self.reduce(lambda x, y: x + y, [])
 
     def distribute(self, _):
-        return self.copy()
+        """
+        Returns the same list, but with the new distribution given in argument.
+        In sequential, it just returns ``self``.
+        :param _: a distribution
+        :return: SList
+        """
+        return self
 
     def balance(self):
-        return self.copy()
+        """
+        Returns the same list, but the distribution changes to a
+        balanced distribution.
+        In sequential, it just returns ``self``.
+        :return: SList
+        """
+        return self

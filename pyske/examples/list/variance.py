@@ -1,38 +1,38 @@
-from pyske.core.list.plist import PList
-from pyske.core.util import par
+"""
+Variance Example
+"""
 import sys
 import random
 from operator import add
+from pyske.core.list.plist import PList
+from pyske.core.util import par
+from pyske.core import timing
 
-# Generating a parallel list of the size specified on the command line or 1000
-if len(sys.argv) > 1:
-    size = int(sys.argv[1])
-else:
+def _variance():
+    time = timing.Timing()
+    # Generating a parallel list of the size specified on the command line or 1000
     size = 1000
-X = PList.init(lambda _: 50+random.randint(0, 10), size)
+    if len(sys.argv) > 1:
+        size = int(sys.argv[1])
+    data = PList.init(lambda _: 50+random.randint(0, 10), size)
+    par.barrier()
+    # start timing
+    time.start()
+    # computing the variance
+    size = data.length()
+    avg = data.reduce(add) / size
 
-par.barrier()
+    def unop(num):
+        return (num-avg) ** 2
 
-# start timing
-t = PList.init(lambda _: par.wtime())
+    var = data.map(unop).reduce(add) / size
+    # stop timing
+    time.stop()
+    # output at processor 0
+    max_elapsed, avg_elapsed, all_elapsed = time.get()
+    par.at_root(lambda:
+                print(f'Variance:\t{var}\nTime (max):\t{max_elapsed}\n'
+                      f'Time (avg):\t{avg_elapsed}\nTime (all):\t{all_elapsed}'))
 
-# computing the variance
-n = X.length()
-avg = X.reduce(add) / n
 
-
-def f(x): return (x-avg) ** 2
-
-
-var = X.map(f).reduce(add) / n
-
-# stop timing
-elapsed = t.map(lambda x: par.wtime() - x)
-max_elapsed = elapsed.reduce(max)
-avg_elapsed = elapsed.reduce(add) / elapsed.length()
-all_elapsed = elapsed.mapi(lambda i, x: "[" + str(i) + "]:" + str(x)).to_seq()
-
-# output at processor 0
-par.at_root(lambda:
-            print(f'Variance:\t{var}\nTime (max):\t{max_elapsed}\n'
-                  f'Time (avg):\t{avg_elapsed}\nTime (all):\t{all_elapsed}'))
+_variance()

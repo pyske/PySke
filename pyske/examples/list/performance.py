@@ -1,34 +1,39 @@
-from pyske.core.list.plist import PList as DPList
-from pyske.core.opt.list import PList as OPList
-from pyske.core.list.slist import SList as DSList
-from pyske.core.opt.list import SList as OSList
-from pyske.core.util import par
+"""
+Examples of skeleton programs on lists
+"""
 from operator import add
 import operator
 import random
 import math
 import gc
 import argparse
+from pyske.core.list.plist import PList as DPList
+from pyske.core.opt.list import PList as OPList
+from pyske.core.list.slist import SList as DSList
+from pyske.core.opt.list import SList as OSList
+from pyske.core.util import par
 
 
-def test(f, data, name, preprocessing=lambda f, x: lambda: f(x), execute=lambda f: f()):
-    assert(iterations > 0)
+def _test(test_f, data, name, preprocessing=lambda f, num: lambda: f(num), execute=lambda f: f()):
+    assert ITERATIONS > 0
     par.at_root(lambda: print(f'Test: {name}'))
-    skel = preprocessing(f, data)
+    skel = preprocessing(test_f, data)
     par.at_root(lambda: print("Term: ", skel))
     gc.collect()
     par.barrier()
-    t: DPList = DPList.init(lambda _: par.wtime())
+    time: DPList = DPList.init(lambda _: par.wtime())
     output = data
-    for i in range(0, iterations):
-        par.at_root(lambda: print(f'  Iteration: {i}', end='\r'))
+    for idx in range(0, ITERATIONS):
+        def printer(val):
+            return lambda: print(f'  Iteration: {val}', end='\r')
+        par.at_root(printer(idx))
         output = execute(skel)
-    elapsed = t.map(lambda x: par.wtime() - x).map(lambda x: x/iterations)
+    elapsed = time.map(lambda num: par.wtime() - num).map(lambda num: num / ITERATIONS)
 
     par.at_root(lambda: print(30 * ' ', end='\r'))
     max_elapsed = elapsed.reduce(max)
     avg_elapsed = elapsed.reduce(add) / elapsed.length()
-    all_elapsed = elapsed.mapi(lambda k, x: "[" + str(k) + "]:" + str(x)).to_seq()
+    all_elapsed = elapsed.mapi(lambda k, num: "[" + str(k) + "]:" + str(num)).to_seq()
     par.at_root(lambda:
                 print(f'Time (max):\t{max_elapsed}\n'
                       f'Time (avg):\t{avg_elapsed}\n'
@@ -36,185 +41,213 @@ def test(f, data, name, preprocessing=lambda f, x: lambda: f(x), execute=lambda 
     return output
 
 
-def f_map(x):
-    return 2 * x + 1
+def _f_map(num):
+    return 2 * num + 1
 
 
-def f_reduce(x, y):
-    return x + y * y
+def _f_reduce(num1, num2):
+    return num1 + num2 * num2
 
 
-def sqr(x):
-    return x*x
+def sqr(num):
+    """
+    Computes the square of its argument.
+    :param num: number
+    :return: number
+    """
+    return num*num
 
 
-def smul(s: float, v):
-    return v.map(lambda x: s*x)
+def smul(scalar: float, vec: DSList):
+    """
+    Compute the product of a scalar and a vector
+    :param scalar: float
+    :param vec: DSList
+    :return: DSList
+    """
+    return vec.map(lambda num: scalar*num)
 
 
-def vadd(v1, v2):
-    return v1.map2(add, v2)
+def vadd(vec1: DSList, vec2: DSList):
+    """
+    Computes the sum of two vectors.
+    :param vec1: DSList
+    :param vec2: DSList
+    :return: DSList
+    """
+    return vec1.map2(add, vec2)
 
 
-def norm(v):
-    return math.sqrt(v.map(sqr).reduce(add, 0))
+def norm(vec: DSList):
+    """
+    Computes the norm of the argument vector.
+    :param vec: DSList
+    :return: float
+    """
+    return math.sqrt(vec.map(sqr).reduce(add, 0))
 
 
-def normalize(v):
-    n = norm(v)
-    return smul(1/n, v)
+def normalize(vec: DSList):
+    """
+    Normalize the input vector.
+    :param vec: DSList
+    :return: DSList
+    """
+    norm_ = norm(vec)
+    return smul(1/norm_, vec)
 
 
-def opt(f, data):
-    return f(data).opt()
+def _opt(fct, data):
+    return fct(data).opt()
 
 
-def run(t):
-    return t.eval()
+def _run(term):
+    return term.eval()
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--iter", help="number of iterations", type=int, default=5)
-parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
-parser.add_argument("--seq", help="choice of the data structure", action='store_true')
-parser.add_argument("--test", help="choice of the test", type=int, default=2)
-parser.add_argument("-v", help="verbose mode", action='store_true')
-args = parser.parse_args()
-iterations = args.iter
-size = args.size
-seq = args.seq
-tst = args.test
-vrb = args.v
+PARSER = argparse.ArgumentParser()
+PARSER.add_argument("--iter", help="number of iterations", type=int, default=5)
+PARSER.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
+PARSER.add_argument("--seq", help="choice of the data structure", action='store_true')
+PARSER.add_argument("--test", help="choice of the test", type=int, default=2)
+PARSER.add_argument("-v", help="verbose mode", action='store_true')
+ARGS = PARSER.parse_args()
+ITERATIONS = ARGS.iter
+SIZE = ARGS.size
+SEQ = ARGS.seq
+TST = ARGS.test
+VRB = ARGS.v
 
-if vrb:
+if VRB:
     par.at_root(lambda:
-                print("Iterations:\t", iterations,
-                      "\nSize:\t", size,
-                      "\nSeq: \t", seq,
-                      "\nTest:\t", tst,
+                print("Iterations:\t", ITERATIONS,
+                      "\nSize:\t", SIZE,
+                      "\nSeq: \t", SEQ,
+                      "\nTest:\t", TST,
                       "\nNprocs:\t", len(par.procs())))
 
 
-def test_mmr_direct(l):
-    l1 = l.map(f_map)
-    l2 = l1.map(f_map)
-    r = l2.reduce(f_reduce, 0)
-    return r
+def _test_mmr_direct(lst):
+    lst1 = lst.map(_f_map)
+    lst2 = lst1.map(_f_map)
+    res = lst2.reduce(_f_reduce, 0)
+    return res
 
 
-def test_mr_direct(l):
-    def f(x): return f_map(f_map(x))
-    l1 = l.map(f)
-    r = l1.reduce(f_reduce, 0)
-    return r
+def _test_mr_direct(lst):
+    def fct(num):
+        return _f_map(_f_map(num))
+    lst1 = lst.map(fct)
+    res = lst1.reduce(_f_reduce, 0)
+    return res
 
 
-def test_mmr_run(l):
-    if seq:
-        l1 = OSList.raw(l)
+def _test_mmr_run(lst):
+    if SEQ:
+        lst1 = OSList.raw(lst)
     else:
-        l1 = OPList.raw(l)
-    l2 = l1.map(f_map)
-    l3 = l2.map(f_map)
-    r = l3.reduce(f_reduce, 0)
-    return r.run()
+        lst1 = OPList.raw(lst)
+    lst2 = lst1.map(_f_map)
+    lst3 = lst2.map(_f_map)
+    res = lst3.reduce(_f_reduce, 0)
+    return res.run()
 
 
-def test_mmr_optimized(l):
-    if seq:
-        l1 = OSList.raw(l)
+def _test_mmr_optimized(lst):
+    if SEQ:
+        lst1 = OSList.raw(lst)
     else:
-        l1 = OPList.raw(l)
-    l2 = l1.map(f_map)
-    l3 = l2.map(f_map)
-    r = l3.reduce(f_reduce, 0)
-    return r
+        lst1 = OPList.raw(lst)
+    lst2 = lst1.map(_f_map)
+    lst3 = lst2.map(_f_map)
+    res = lst3.reduce(_f_reduce, 0)
+    return res
 
 
-def test_bool_direct(l):
-    return l.map(operator.not_).reduce(operator.and_, True)
+def _test_bool_direct(lst):
+    return lst.map(operator.not_).reduce(operator.and_, True)
 
 
-def test_bool_optimized(lst):
-    if seq:
+def _test_bool_optimized(lst):
+    if SEQ:
         lst = OSList.raw(lst)
     else:
         lst = OPList.raw(lst)
-    return test_bool_direct(lst)
+    return _test_bool_direct(lst)
 
 
-def test_bool_mr(l):
-    return l.map_reduce(operator.not_, operator.and_, True)
+def _test_bool_mr(lst):
+    return lst.map_reduce(operator.not_, operator.and_, True)
 
 
-def test1():
-    if seq:
-        input1 = DSList.init(lambda x: random.randint(0, 1000), size)
+def _test1():
+    if SEQ:
+        input1 = DSList.init(lambda num: random.randint(0, 1000), SIZE)
     else:
-        input1 = DPList.init(lambda x: random.randint(0, 1000), size)
-    r0 = test(test_mmr_direct, input1, "map/map/reduce")
-    r1 = test(test_mmr_direct, input1, "map/reduce[hc]")
-    r1_1 = test(test_mmr_run, input1, "map/map/reduce[opt]")
-    r1_2 = test(test_mmr_optimized, input1, "map/map/reduce[opt/run]", opt, run)
-    assert r0 == r1_1 and r0 == r1_2 and r0 == r1
+        input1 = DPList.init(lambda num: random.randint(0, 1000), SIZE)
+    res1 = _test(_test_mmr_direct, input1, "map/map/reduce")
+    res2 = _test(_test_mmr_direct, input1, "map/reduce[hc]")
+    res3 = _test(_test_mmr_run, input1, "map/map/reduce[_opt]")
+    res4 = _test(_test_mmr_optimized, input1, "map/map/reduce[_opt/_run]", _opt, _run)
+    assert res1 == res2 and res1 == res3 and res1 == res4
 
 
-def test2():
-    if seq:
-        input2 = DSList.init(lambda i: random.randint(0, 9) <= 4, size)
+def _test2():
+    if SEQ:
+        input2 = DSList.init(lambda i: random.randint(0, 9) <= 4, SIZE)
     else:
-        input2 = DPList.init(lambda i: random.randint(0, 9) <= 4, size)
-    r1 = test(test_bool_direct, input2, "map/reduce bool")
-    r2 = test(test_bool_mr, input2, "map_reduce bool")
-    r3 = test(test_bool_optimized, input2, "map/reduce bool[opt]", opt, run)
-    assert r1 == r3
-    assert r1 == r2
+        input2 = DPList.init(lambda i: random.randint(0, 9) <= 4, SIZE)
+    res1 = _test(_test_bool_direct, input2, "map/reduce bool")
+    res2 = _test(_test_bool_mr, input2, "map_reduce bool")
+    res3 = _test(_test_bool_optimized, input2, "map/reduce bool[_opt]", _opt, _run)
+    assert res1 == res3
+    assert res1 == res2
 
 
-dim = 10
+DIM = 10
 
 
-vzero = DSList.init(lambda i: 0.0, dim)
+VZERO = DSList.init(lambda i: 0.0, DIM)
 
 
-def f_rand(_):
+def _f_rand(_):
     return random.randint(0, 1000)
 
 
-def vrand(_):
-    return DSList.init(f_rand, dim)
+def _vrand(_):
+    return DSList.init(_f_rand, DIM)
 
 
-def vnsum(l):
-    return l.map(normalize).reduce(vadd, vzero)
+def _vnsum(lst):
+    return lst.map(normalize).reduce(vadd, VZERO)
 
 
-def vavg(l):
-    d = 1 / l.length()
-    return smul(d, vnsum(l))
+def _vavg(lst):
+    scalar = 1 / lst.length()
+    return smul(scalar, _vnsum(lst))
 
 
-def wrapped_vavg(lst):
-    d = 1 / lst.length()
-    lst = OSList.raw(lst) if seq else OPList.raw(lst)
-    t = vnsum(lst).opt()
-    r = smul(d, t.eval())
-    return r
+def _wrapped_vavg(lst):
+    scalar = 1 / lst.length()
+    lst = OSList.raw(lst) if SEQ else OPList.raw(lst)
+    skel = _vnsum(lst).opt()
+    res = smul(scalar, skel.eval())
+    return res
 
 
-def test3():
-    if seq:
-        data = DSList.init(lambda i: vrand(i), size)
+def _test3():
+    if SEQ:
+        data = DSList.init(_vrand, SIZE)
     else:
-        data = DPList.init(lambda i: vrand(i), size)
-    r1 = test(vavg, data, "vector average")
-    r2 = test(wrapped_vavg, data, "vector average [run]")
-    assert r1 == r2
+        data = DPList.init(_vrand, SIZE)
+    res1 = _test(_vavg, data, "vector average")
+    res2 = _test(_wrapped_vavg, data, "vector average [_run]")
+    assert res1 == res2
 
 
-if tst == 1:
-    test1()
-if tst == 2:
-    test2()
-if tst == 3:
-    test3()
+if TST == 1:
+    _test1()
+if TST == 2:
+    _test2()
+if TST == 3:
+    _test3()

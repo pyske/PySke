@@ -9,12 +9,14 @@ from pyske.core.list.slist import SList
 
 __all__ = ['PList']
 
-_pid: int = parimpl.pid
-_nprocs: int = parimpl.nprocs
-_comm = parimpl.comm
+_PID: int = parimpl.pid
+_NPROCS: int = parimpl.nprocs
+_COMM = parimpl.comm
 
 
 class PList:
+    # pylint: disable=too-many-public-methods
+    # pylint: disable=protected-access
     """Distributed lists"""
 
     def __init__(self):
@@ -22,18 +24,18 @@ class PList:
         self.__global_size = 0
         self.__local_size = 0
         self.__start_index = 0
-        self.__distribution = [0 for _ in range(0, _nprocs)]
+        self.__distribution = [0 for _ in range(0, _NPROCS)]
 
     def __get_shape(self):
-        p = PList()
-        p.__local_size = self.__local_size
-        p.__global_size = self.__global_size
-        p.__distribution = self.__distribution
-        p.__start_index = self.__start_index
-        return p
+        plst = PList()
+        plst.__local_size = self.__local_size
+        plst.__global_size = self.__global_size
+        plst.__distribution = self.__distribution
+        plst.__start_index = self.__start_index
+        return plst
 
     def __str__(self):
-        return "pid[" + str(_pid) + "]:\n" + \
+        return "pid[" + str(_PID) + "]:\n" + \
                "  global_size: " + str(self.__global_size) + "\n" + \
                "  local_size: " + str(self.__local_size) + "\n" + \
                "  start_index: " + str(self.__start_index) + "\n" + \
@@ -41,152 +43,153 @@ class PList:
                "  content: " + str(self.__content) + "\n"
 
     def invariant(self):
-        assert type(self.__content) is SList
+        assert isinstance(self.__content, SList)
         prefix = SList(self.__distribution).scan(add, 0)
         assert len(self.__content) == self.__local_size
-        assert self.__distribution[_pid] == self.__local_size
-        assert self.__start_index == prefix[_pid]
-        assert prefix[_nprocs] == self.__global_size
+        assert self.__distribution[_PID] == self.__local_size
+        assert self.__start_index == prefix[_PID]
+        assert prefix[_NPROCS] == self.__global_size
 
     def length(self):
         return self.__global_size
 
     @staticmethod
-    def init(f, size=_nprocs):
-        assert (size >= 0)
-        p = PList()
-        p.__global_size = size
-        p.__local_size = parimpl.local_size(_pid, size)
-        p.__distribution = [parimpl.local_size(i, size) for i in range(0, _nprocs)]
-        p.__start_index = SList(p.__distribution).scanl(lambda x, y: x + y, 0)[_pid]
-        p.__content = SList([f(i) for i in range(p.__start_index, p.__start_index + p.__local_size)])
-        p.__distribution = [parimpl.local_size(i, size) for i in range(0, _nprocs)]
-        return p
+    def init(fct, size=_NPROCS):
+        assert size >= 0
+        plst = PList()
+        plst.__global_size = size
+        plst.__local_size = parimpl.local_size(_PID, size)
+        plst.__distribution = [parimpl.local_size(i, size) for i in range(0, _NPROCS)]
+        plst.__start_index = SList(plst.__distribution).scanl(lambda x, y: x + y, 0)[_PID]
+        plst.__content = SList([fct(i) for i in
+                                range(plst.__start_index, plst.__start_index + plst.__local_size)])
+        plst.__distribution = [parimpl.local_size(i, size) for i in range(0, _NPROCS)]
+        return plst
 
-    def map(self, f):
-        p = self.__get_shape()
-        p.__content = self.__content.map(f)
-        return p
+    def map(self, fct):
+        plst = self.__get_shape()
+        plst.__content = self.__content.map(fct)
+        return plst
 
-    def mapi(self, f):
-        p = self.__get_shape()
-        p.__content = self.__content.mapi(lambda i, x: f(i + self.__start_index, x))
-        return p
+    def mapi(self, fct):
+        plst = self.__get_shape()
+        plst.__content = self.__content.mapi(lambda i, x: fct(i + self.__start_index, x))
+        return plst
 
-    def map2(self, f, pl):
-        assert (self.__distribution == pl.__distribution)
-        p = self.__get_shape()
-        p.__content = self.__content.map2(f, pl.__content)
-        return p
+    def map2(self, fct, plst):
+        assert self.__distribution == plst.__distribution
+        plst = self.__get_shape()
+        plst.__content = self.__content.map2(fct, plst.__content)
+        return plst
 
-    def map2i(self, f, pl):
-        assert (self.__distribution == pl.__distribution)
-        p = self.__get_shape()
-        p.__content = self.__content.map2i(lambda i, x, y: f(i + self.__start_index, x, y), pl.__content)
-        return p
+    def map2i(self, fct, plst):
+        assert self.__distribution == plst.__distribution
+        plst = self.__get_shape()
+        plst.__content = self.__content.map2i(lambda i, x, y:
+                                              fct(i + self.__start_index, x, y), plst.__content)
+        return plst
 
-    def zip(self, pl):
-        return self.map2(lambda x, y: (x, y), pl)
+    def zip(self, plst):
+        return self.map2(lambda x, y: (x, y), plst)
 
-    def filter(self, p):
-        return self.get_partition().map(lambda l: l.filter(p)).flatten()
+    def filter(self, plst):
+        return self.get_partition().map(lambda l: l.filter(plst)).flatten()
 
     def get_partition(self):
-        p = PList()
-        p.__content = SList([self.__content])
-        p.__global_size = _nprocs
-        p.__local_size = 1
-        p.__start_index = _pid
-        p.__distribution = [1 for _ in par.procs()]
-        return p
+        plst = PList()
+        plst.__content = SList([self.__content])
+        plst.__global_size = _NPROCS
+        plst.__local_size = 1
+        plst.__start_index = _PID
+        plst.__distribution = [1 for _ in par.procs()]
+        return plst
 
     def flatten(self):
-        p = PList()
-        p.__content = self.__content.reduce(lambda x, y: x + y, [])
-        p.__local_size = len(p.__content)
-        p.__distribution = _comm.allgather(p.__local_size)
-        p.__start_index = SList(p.__distribution).scanl(lambda x, y: x + y, 0)[_pid]
-        p.__global_size = SList(p.__distribution).reduce(lambda x, y: x + y)
-        return p
+        plst = PList()
+        plst.__content = self.__content.reduce(lambda x, y: x + y, [])
+        plst.__local_size = len(plst.__content)
+        plst.__distribution = _COMM.allgather(plst.__local_size)
+        plst.__start_index = SList(plst.__distribution).scanl(lambda x, y: x + y, 0)[_PID]
+        plst.__global_size = SList(plst.__distribution).reduce(lambda x, y: x + y)
+        return plst
 
-    def reduce(self, op, e=None):
-        if e is None:
-            assert (self.__global_size >= 1)
-            partial = None if self.__local_size == 0 else SList(self.__content).reduce(op)
-            partials = SList(_comm.allgather(partial)).filter(lambda x: x is not None)
+    def reduce(self, operation, neutral=None):
+        if neutral is None:
+            assert self.__global_size >= 1
+            partial = None if self.__local_size == 0 else SList(self.__content).reduce(operation)
+            partials = SList(_COMM.allgather(partial)).filter(lambda x: x is not None)
         else:
-            # assert: (op, e) form a monoid
-            partial = SList(self.__content).reduce(op, e)
-            partials = SList(_comm.allgather(partial))
-        return partials.reduce(op, e)
+            # assert: (operation, neutral) form a monoid
+            partial = SList(self.__content).reduce(operation, neutral)
+            partials = SList(_COMM.allgather(partial))
+        return partials.reduce(operation, neutral)
 
-    def map_reduce(self, f, op, e=None):
-        if e is None:
-            assert (self.__global_size >= 1)
-            partial = None if self.__local_size == 0 else self.__content.map_reduce(f, op)
-            partials = SList(_comm.allgather(partial)).filter(lambda x: not (x is None))
-            return functools.reduce(op, partials)
-        else:
-            # assert: (op, e) form a monoid
-            partial = self.__content.map_reduce(f, op, e)
-            partials = _comm.allgather(partial)
-            return functools.reduce(op, partials, e)
+    def map_reduce(self, fct, operation, neutral=None):
+        if neutral is None:
+            assert self.__global_size >= 1
+            partial = None if self.__local_size == 0 else self.__content.map_reduce(fct, operation)
+            partials = SList(_COMM.allgather(partial)).filter(lambda x: x is not None)
+            return functools.reduce(operation, partials)
+        # assert: (operation, neutral) form a monoid
+        partial = self.__content.map_reduce(fct, operation, neutral)
+        partials = _COMM.allgather(partial)
+        return functools.reduce(operation, partials, neutral)
 
-    def scanr(self, op):
-        assert (self.__global_size > 0)
-        p = self.__get_shape()
-        partials = self.__content.scanr(op)
+    def scanr(self, operation):
+        assert self.__global_size > 0
+        plst = self.__get_shape()
+        partials = self.__content.scanr(operation)
         last = partials[self.__local_size - 1]
-        acc, _ = parimpl.scan(op, last)
-        if _pid != 0:
-            for i in range(0, len(partials)):
-                partials[i] = op(acc, partials[i])
-        p.__content = partials
-        return p
+        acc, _ = parimpl.scan(operation, last)
+        if _PID != 0:
+            for (idx, value) in enumerate(partials):
+                partials[idx] = operation(acc, value)
+        plst.__content = partials
+        return plst
 
-    def scanl(self, op, e):
-        p = self.__get_shape()
-        partials, last = self.__content.scanl_last(op, e)
-        acc, _ = parimpl.scan(op, last)
-        if _pid != 0:
-            for i in range(0, len(partials)):
-                partials[i] = op(acc, partials[i])
-        p.__content = partials
-        return p
+    def scanl(self, operation, neutral):
+        plst = self.__get_shape()
+        partials, last = self.__content.scanl_last(operation, neutral)
+        acc, _ = parimpl.scan(operation, last)
+        if _PID != 0:
+            for (idx, value) in enumerate(partials):
+                partials[idx] = operation(acc, value)
+        plst.__content = partials
+        return plst
 
-    def scanl_last(self, op, e):
-        p = self.__get_shape()
-        partials, last = self.__content.scanl_last(op, e)
-        acc, red = parimpl.scan(op, last)
-        if _pid != 0:
-            for i in range(0, len(partials)):
-                partials[i] = op(acc, partials[i])
-        p.__content = partials
-        return p, red
+    def scanl_last(self, operation, neutral):
+        plst = self.__get_shape()
+        partials, last = self.__content.scanl_last(operation, neutral)
+        acc, red = parimpl.scan(operation, last)
+        if _PID != 0:
+            for (idx, value) in enumerate(partials):
+                partials[idx] = operation(acc, value)
+        plst.__content = partials
+        return plst, red
 
     def distribute(self, target_distr):
-        assert (par.Distribution.is_valid(target_distr, self.__global_size))
+        assert par.Distribution.is_valid(target_distr, self.__global_size)
         source_distr = self.__distribution
         source_bounds = interval.bounds(source_distr)
         target_bounds = interval.bounds(target_distr)
-        local_interval = source_bounds[_pid]
+        local_interval = source_bounds[_PID]
         bounds_to_send = target_bounds.map(lambda i: interval.intersection(i, local_interval))
         msgs = [interval.to_slice(self.__content, interval.shift(inter, -self.__start_index))
                 for inter in bounds_to_send]
-        slices = _comm.alltoall(msgs)
-        p = PList()
-        p.__content = SList(slices).flatten()
-        p.__local_size = target_distr[_pid]
-        p.__global_size = self.__global_size
-        p.__start_index = SList(target_distr).scanl(add, 0)[_pid]
-        p.__distribution = target_distr
-        return p
+        slices = _COMM.alltoall(msgs)
+        plst = PList()
+        plst.__content = SList(slices).flatten()
+        plst.__local_size = target_distr[_PID]
+        plst.__global_size = self.__global_size
+        plst.__start_index = SList(target_distr).scanl(add, 0)[_PID]
+        plst.__distribution = target_distr
+        return plst
 
     def balance(self):
         return self.distribute(par.Distribution.balanced(self.__global_size))
 
     def gather(self, pid):
-        assert (pid in par.procs())
+        assert pid in par.procs()
         distr = [self.length() if i == pid else 0 for i in par.procs()]
         return self.distribute(distr)
 
@@ -194,13 +197,12 @@ class PList:
         return self.gather(0)
 
     def scatter(self, pid):
-        assert (pid in par.procs())
+        assert pid in par.procs()
 
-        def select(i, l):
-            if i == pid:
-                return l
-            else:
-                return []
+        def select(idx, lst):
+            if idx == pid:
+                return lst
+            return []
 
         at_pid = self.get_partition().mapi(select).flatten()
         return at_pid.distribute(par.Distribution.balanced(at_pid.length()))
@@ -208,31 +210,30 @@ class PList:
     def scatter_from_root(self):
         return self.scatter(0)
 
-    def scatter_range(self, r):
-        def select(i, x):
-            if i in r:
-                return x
-            else:
-                return None
+    def scatter_range(self, rng):
+        def select(idx, value):
+            if idx in rng:
+                return value
+            return None
 
-        def not_none(x):
-            return not (x is None)
+        def not_none(value):
+            return value is not None
 
         selected = self.mapi(select).filter(not_none)
         return selected.distribute(par.Distribution.balanced(selected.length()))
 
     @staticmethod
-    def from_seq(l):
-        p = PList()
-        if _pid == 0:
-            p.__content = SList(l)
-            p.__distribution = [len(l) if i == 0 else 0 for i in par.procs()]
-        from_root = _comm.bcast(p.__distribution, 0)
-        p.__distribution = from_root
-        p.__local_size = p.__distribution[_pid]
-        p.__global_size = p.__distribution[0]
-        p.__start_index = SList(p.__distribution).scanl(add, 0)[_pid]
-        return p
+    def from_seq(lst):
+        plst = PList()
+        if _PID == 0:
+            plst.__content = SList(lst)
+            plst.__distribution = [len(lst) if i == 0 else 0 for i in par.procs()]
+        from_root = _COMM.bcast(plst.__distribution, 0)
+        plst.__distribution = from_root
+        plst.__local_size = plst.__distribution[_PID]
+        plst.__global_size = plst.__distribution[0]
+        plst.__start_index = SList(plst.__distribution).scanl(add, 0)[_PID]
+        return plst
 
     def to_seq(self):
         return SList(self.get_partition().reduce(lambda x, y: x + y, []))
