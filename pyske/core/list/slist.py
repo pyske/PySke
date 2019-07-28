@@ -3,6 +3,7 @@ A module of sequential lists and associated primitives
 """
 import functools
 from operator import concat
+from typing import TypeVar, Callable, Generic, Sequence, Tuple
 
 __all__ = ['SList']
 
@@ -10,8 +11,12 @@ LEFT_LIST = "["
 RIGHT_LIST = "]"
 SEPARATOR_LIST = ";"
 
+T = TypeVar('T')  # pylint: disable=invalid-name
+R = TypeVar('R')  # pylint: disable=invalid-name
+U = TypeVar('U')  # pylint: disable=invalid-name
 
-class SList(list):
+
+class SList(list, Generic[T]):
     # pylint: disable=too-many-public-methods
     """
     An extended definition of lists, including Bird-Meertens Formalism primitives
@@ -70,7 +75,7 @@ class SList(list):
         return res + RIGHT_LIST
 
     @staticmethod
-    def init(value_at: callable, size: int):
+    def init(value_at: Callable[[int], T], size: int):
         """
         Creates a list of length ``size``. At index ``idx``,
         the element is ``value_at(idx)``.
@@ -84,7 +89,7 @@ class SList(list):
         return SList([value_at(i) for i in range(0, size)])
 
     @staticmethod
-    def from_str(string, parser=int):
+    def from_str(string: str, parser: Callable[[str], U] = int):
         """
         Creates a SList from a string
 
@@ -114,12 +119,13 @@ class SList(list):
         """
         return SList(self[1:])
 
-    def length(self):
-        """Gives the number of element in the current instance
+    def length(self) -> int:
+        """
+        :return: the number of element in the current instance
         """
         return len(self)
 
-    def filter(self, predicate):
+    def filter(self, predicate: Callable[[T], bool]):
         """Removes all the elements that don't verify a predicate
 
         Parameters
@@ -134,33 +140,33 @@ class SList(list):
         """
         return self.length() == 0
 
-    def map(self, unop):
-        """Applies f to every element of the current instance
+    def map(self, unop: Callable[[T], R]):
+        """
+        Example:
 
-        Definition:
-        map f [x1, x2, ..., xn] = [f(x1), f(x2), ..., f(xn)]
+            SList([1, 2, 3]).map(lambda x: x % 2 == 0) == [False, True, False]
 
-        Parameters
-        ----------
-        unop : callable
+        :param unop:
             The function to apply to every values of the current instance
+        :return:
+            a list obtained by applying the unary function to every element of the current instance
+
         """
         return SList(map(unop, self))
 
-    def mapi(self, unop):
-        """Applies f to every index and element of the current instance
+    def mapi(self, binop: Callable[[int, T], R]):
+        """
+        Applies f to every index and element of the current instance
 
         Definition:
         mapi f [x0, x1, ..., xn] = [f(0,x0), f(1,x1), ..., f(n,xn)]
 
-        Parameters
-        ----------
-        unop: callable
-        The function to apply to every index and element of the current instance
+        :param binop
+            The function to apply to every index and element of the current instance
         """
-        return SList([unop(i, self[i]) for i in range(0, len(self))])
+        return SList([binop(i, self[i]) for i in range(0, len(self))])
 
-    def map_reduce(self, unop, binop, initial=None):
+    def map_reduce(self, unop: Callable[[T], R], binop: Callable[[R, R], R], initial=None):
         """Applies f to every index and element of the current instance and then
            reduce the current instance using a reduction operator
 
@@ -182,7 +188,7 @@ class SList(list):
             return functools.reduce(binop, map(unop, self))
         return functools.reduce(binop, map(unop, self), initial)
 
-    def reduce(self, binop, initial=None):
+    def reduce(self, binop: Callable[[T, T], T], initial=None):
         """Reduce the current instance using a reduction function
 
         Definition:
@@ -199,7 +205,7 @@ class SList(list):
             return functools.reduce(binop, self)
         return functools.reduce(binop, self, initial)
 
-    def scan(self, binop, initial):
+    def scan(self, binop: Callable[[R, T], R], initial: R):
         """Makes total a rightward accumulation of the values from an initial one
         The result of scan is a list of size n+1 where n is the size of self.
 
@@ -214,7 +220,7 @@ class SList(list):
         initial:
             Initial value for the accumulator
         """
-        res = self.copy()
+        res: SList[R] = self.copy()
         res.append(initial)
         res[0] = initial
         for i in range(1, len(res)):
@@ -222,7 +228,7 @@ class SList(list):
             res[i] = initial
         return SList(res)
 
-    def scanl(self, binop, initial):
+    def scanl(self, binop: Callable[[R, T], R], initial: R):
         """Makes a rightward accumulation of the values from an initial one,
         without considering the last value of the instance
         The result of scanl is a list of size n where n is the size of self.
@@ -239,7 +245,7 @@ class SList(list):
         initial:
             Initial value for the accumulator
         """
-        res = self.copy()
+        res: SList[R] = self.copy()
         for (idx, value) in enumerate(res):
             res[idx] = initial
             initial = binop(initial, value)
@@ -265,7 +271,7 @@ class SList(list):
             res[idx] = acc
         return SList(res)
 
-    def scanl_last(self, binop, initial):
+    def scanl_last(self, binop: Callable[[R, T], R], initial: R):
         """Makes a rightward accumulation of the values from an initial one,
         considering the last accumulation as an external value.
         The result of scanl_last is a list of size n where n is the size of self
@@ -283,8 +289,8 @@ class SList(list):
         initial
             Initial value for the accumulator
         """
-        res = self.scan(binop, initial)
-        last = res.pop()
+        res: SList[R] = self.scan(binop, initial)
+        last: R = res.pop()
         return res, last
 
     def scanp(self, binop, initial):
@@ -310,7 +316,7 @@ class SList(list):
             initial = binop(self[idx - 1], initial)
         return res
 
-    def zip(self, lst):
+    def zip(self, lst: Sequence[U]):
         """Creates a list of pairs from the element of the current instance
         and another sequential list
 
@@ -324,9 +330,10 @@ class SList(list):
             A list to merge the values of the current instance with
         """
         assert len(self) == len(lst)
-        return SList([(left, right) for (left, right) in zip(self, lst)])
+        lst: Sequence[Tuple[T, U]] = [(left, right) for (left, right) in zip(self, lst)]
+        return SList(lst)
 
-    def map2(self, binop, lst):
+    def map2(self, binop: Callable[[T, U], R], lst: Sequence[U]):
         """Creates a list of new elements using a function applied to the elements of the current
         instance and another sequential list
 
@@ -344,7 +351,7 @@ class SList(list):
         assert len(self) == len(lst)
         return SList([binop(left, right) for (left, right) in zip(self, lst)])
 
-    def map2i(self, binop, lst):
+    def map2i(self, terop: Callable[[int, T, U], R], lst: Sequence[U]):
         """Creates a list of new elements using a function applied to the elements of the current
         instance and another list as well as their index (first argument)
 
@@ -354,13 +361,13 @@ class SList(list):
 
         Parameters
         ----------
-        binop : callable
+        terop : callable
              A function that takes 3 arguments, the first one being an index
         lst : list
             The second list to map with the current instance
         """
         assert len(self) == len(lst)
-        return SList([binop(i, self[i], lst[i]) for i in range(0, len(self))])
+        return SList([terop(i, self[i], lst[i]) for i in range(0, len(self))])
 
     def get_partition(self):
         """Returns a list containing the local lists.
@@ -371,7 +378,8 @@ class SList(list):
 
         :return: list
         """
-        return [self]
+        lst: SList[SList[T]] = SList(self)
+        return lst
 
     def flatten(self):
         """Returns a flattened version of ``self``: ``self``
@@ -382,9 +390,10 @@ class SList(list):
 
         :return: list
         """
-        return SList(self.reduce(concat, []))
+        lst: SList[T] = SList(self.reduce(concat, []))
+        return lst
 
-    def distribute(self, _):
+    def distribute(self, _: Sequence[int]):
         """
         Returns the same list, but with the new distribution given in argument.
         In sequential, it just returns ``self``.

@@ -71,8 +71,6 @@ def __main():
     # Creation of input lists
     pl1 = DPList.init(__rand, size)
     pl2 = DPList.init(__rand, size)
-    print("pl1:", pl1.length())
-    print("pl2:", pl2.length())
     at_root(lambda: print("Test:\t", test))
     for iteration in range(0, args.iter):
         gc.collect()

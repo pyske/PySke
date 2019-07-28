@@ -3,6 +3,8 @@ Non-skeletal Parallel Functions
 """
 __all__ = ['procs', 'wtime', 'barrier', 'Distribution', 'at_root']
 
+
+from typing import Sequence, Callable
 from operator import add
 import functools
 import random
@@ -10,34 +12,30 @@ from mpi4py import MPI
 from pyske.core.support import parallel
 
 
-def randpid():
+def randpid() -> int:
     """
-    Returns a random processor identifier.
+    If called by different processors, the result may be different on each calling processor.
 
-    :return: number
+    :return: a random processor identifier.
     """
     return random.randint(0, parallel.nprocs - 1)
 
 
-def procs():
+def procs() -> Sequence[int]:
     """
-    Returns the list of available processor identifiers.
-
-    :return: list
+    :return: the list of available processor identifiers.
     """
     return range(0, parallel.nprocs)
 
 
-def wtime():
+def wtime() -> float:
     """
-    Returns the current time as a floating point number.
-
-    :return: float
+    :return:  the current time as a floating point number.
     """
     return MPI.Wtime()
 
 
-def barrier():
+def barrier() -> None:
     """
     Synchronizes all the processors of the parallel machine.
 
@@ -50,7 +48,7 @@ class Distribution(list):
     """
     A class to represent the distribution of parallel linear data structure.
     """
-    def is_valid(self, size):
+    def is_valid(self, size: int) -> bool:
         """
         Checks if the current distribution really represent the distribution
         a of linear structure of the given size. Each element of the distribution
@@ -58,7 +56,7 @@ class Distribution(list):
         available processors, and the sum of all its elements should be
         equal to the given size.
 
-        :param size: int
+        :param size: should be >= 0
         :return: bool
         """
         if len(self) != parallel.nprocs:
@@ -69,25 +67,22 @@ class Distribution(list):
         return size == functools.reduce(add, self, 0)
 
     @staticmethod
-    def balanced(size):
+    def balanced(size: int):
         """
-        Returns a balanced distribution, i.e. a distribution
+        :param size: should be >= 0
+        :return: Returns a balanced distribution, i.e. a distribution
         such that for any two elements, their differ by at most 1.
-        The sum of all the elements is ``size``.
-
-        :param size: int
-        :return: Distribution
+        The sum of all the elements is size.
         """
         distr = [parallel.local_size(pid, size) for pid in procs()]
         return Distribution(distr)
 
 
-def at_root(execute):
+def at_root(execute: Callable[[], None]) -> None:
     """
     Executes the given function only at processor 0.
-    ``execute`` is not supposed to take any argument.
 
-    :param execute: callable
+    :param execute: the function to execute.
     """
     if parallel.pid == 0:
         execute()

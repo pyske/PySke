@@ -3,6 +3,7 @@ A module of parallel lists and associated skeletons
 """
 from operator import add
 import functools
+from typing import TypeVar, Callable, Generic
 from pyske.core.support import parallel as parimpl, interval
 from pyske.core.util import par
 from pyske.core.list.slist import SList
@@ -13,14 +14,17 @@ _PID: int = parimpl.pid
 _NPROCS: int = parimpl.nprocs
 _COMM = parimpl.comm
 
+T = TypeVar('T')  # pylint: disable=invalid-name
+R = TypeVar("R")  # pylint: disable=invalid-name
 
-class PList:
+
+class PList(Generic[T]):
     # pylint: disable=too-many-public-methods
     # pylint: disable=protected-access
     """Distributed lists"""
 
     def __init__(self):
-        self.__content = SList([])
+        self.__content: SList[T] = SList([])
         self.__global_size = 0
         self.__local_size = 0
         self.__start_index = 0
@@ -50,25 +54,30 @@ class PList:
         assert self.__start_index == prefix[_PID]
         assert prefix[_NPROCS] == self.__global_size
 
-    def length(self):
+    def length(self) -> int:
         return self.__global_size
 
     @staticmethod
-    def init(fct, size=_NPROCS):
+    def init(value_at: Callable[[int], T], size: int = _NPROCS):
         assert size >= 0
-        plst = PList()
+        plst: PList[T] = PList()
         plst.__global_size = size
         plst.__local_size = parimpl.local_size(_PID, size)
         plst.__distribution = [parimpl.local_size(i, size) for i in range(0, _NPROCS)]
         plst.__start_index = SList(plst.__distribution).scanl(lambda x, y: x + y, 0)[_PID]
-        plst.__content = SList([fct(i) for i in
+        plst.__content = SList([value_at(i) for i in
                                 range(plst.__start_index, plst.__start_index + plst.__local_size)])
         plst.__distribution = [parimpl.local_size(i, size) for i in range(0, _NPROCS)]
         return plst
 
-    def map(self, fct):
-        plst = self.__get_shape()
-        plst.__content = self.__content.map(fct)
+    def map(self, unop: Callable[[T], R]):
+        """
+        :param unop: a unary function.
+        :return: a new parallel list obtained by applying the unary operation to all
+        the elements of self.
+        """
+        plst: PList[R] = self.__get_shape()
+        plst.__content = self.__content.map(unop)
         return plst
 
     def mapi(self, fct):
@@ -86,7 +95,7 @@ class PList:
         assert self.__distribution == plst.__distribution
         res = self.__get_shape()
         res.__content = self.__content.map2i(lambda i, x, y:
-                                              fct(i + self.__start_index, x, y), plst.__content)
+                                             fct(i + self.__start_index, x, y), plst.__content)
         return res
 
     def zip(self, plst):

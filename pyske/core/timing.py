@@ -18,7 +18,7 @@ class Timing:
         Starts the timing.
         :return: None
         """
-        self.__elapsed = PList.init(lambda _: par.wtime())
+        self.__elapsed: PList[float] = PList.init(lambda _: par.wtime())
 
     def stop(self):
         """
@@ -27,7 +27,7 @@ class Timing:
         """
         if self.__elapsed is None:
             raise Exception("timing: stop() called before start()")
-        self.__elapsed = self.__elapsed.map(lambda time: par.wtime() - time)
+        self.__elapsed: PList[float] = self.__elapsed.map(lambda time: par.wtime() - time)
 
     def get(self):
         """
