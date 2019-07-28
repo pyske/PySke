@@ -28,7 +28,7 @@ def _main():
     # start timing
     time.start()
     # filter out odd values and get the distribution after balancing
-    distr = data.filter(_is_even).flatten().balance().get_partition().map(len).to_seq()
+    distr = data.filter(_is_even).balance().get_partition().map(len).to_seq()
     # stop timing
     time.stop()
     max_elapsed, avg_elapsed, all_elapsed = time.get()

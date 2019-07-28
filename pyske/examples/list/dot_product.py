@@ -10,8 +10,8 @@ from pyske.core.util import fun
 from pyske.core.opt import fun as opt
 from pyske.core.list.plist import PList as DPList
 from pyske.core.opt.list import PList
-from pyske.core.util.par import at_root, barrier, wtime
-
+from pyske.core.util.par import at_root, barrier
+from pyske.core import timing
 
 __all__ = []
 
@@ -27,7 +27,9 @@ def __wrap(test):
 
 
 def __dot_product(wrapper, uncurry, pl1: DPList, pl2: DPList):
-    return wrapper(pl2).zip(wrapper(pl1)).map(uncurry(mul)).reduce(add, 0)
+    new_pl1 = wrapper(pl1)
+    new_pl2 = wrapper(pl2)
+    return new_pl2.zip(new_pl1).map(uncurry(mul)).reduce(add, 0)
 
 
 def __print_info(iteration, result, max_value, avg_value, all_values):
@@ -54,6 +56,7 @@ def __compute(test, pl1, pl2):
 
 
 def __main():
+    time = timing.Timing()
     random.seed(42)
     # Command-line arguments parsing
     parser = argparse.ArgumentParser()
@@ -68,16 +71,16 @@ def __main():
     # Creation of input lists
     pl1 = DPList.init(__rand, size)
     pl2 = DPList.init(__rand, size)
+    print("pl1:", pl1.length())
+    print("pl2:", pl2.length())
     at_root(lambda: print("Test:\t", test))
     for iteration in range(0, args.iter):
         gc.collect()
         barrier()
-        start_time = DPList.init(lambda _: wtime())
+        time.start()
         result = __compute(test, pl1, pl2)
-        elapsed = start_time.map(lambda start: wtime() - start)
-        max_elapsed = elapsed.reduce(max)
-        avg_elapsed = elapsed.reduce(add) / elapsed.length()
-        all_elapsed = elapsed.mapi(lambda j, x: "[" + str(j) + "]:" + str(x)).to_seq()
+        time.stop()
+        max_elapsed, avg_elapsed, all_elapsed = time.get()
         at_root(__print_info(iteration, result, max_elapsed, avg_elapsed, all_elapsed))
 
 

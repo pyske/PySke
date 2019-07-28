@@ -23,8 +23,8 @@ def __main():
     pl9 = pl7.get_partition()
     pl10 = pl9.map(lambda l: SList(l).filter(lambda c: c != 'O')).flatten()
     pl11 = PList.from_seq(["Hello World!"])
-    filtered = pl10.get_partition().reduce(operator.add, []).reduce(operator.add)
-    str1 = pl9.reduce(operator.add).reduce(operator.add)
+    filtered = SList(pl10.get_partition().reduce(operator.concat, [])).reduce(operator.add)
+    str1 = SList(pl9.reduce(operator.add)).reduce(operator.add)
     str2 = pl11.to_seq()[0]
     par.at_root(lambda:
                 print(f'Capitalized: \t{str1}\n'

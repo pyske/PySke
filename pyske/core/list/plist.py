@@ -78,22 +78,22 @@ class PList:
 
     def map2(self, fct, plst):
         assert self.__distribution == plst.__distribution
-        plst = self.__get_shape()
-        plst.__content = self.__content.map2(fct, plst.__content)
-        return plst
+        res = self.__get_shape()
+        res.__content = self.__content.map2(fct, plst.__content)
+        return res
 
     def map2i(self, fct, plst):
         assert self.__distribution == plst.__distribution
-        plst = self.__get_shape()
-        plst.__content = self.__content.map2i(lambda i, x, y:
+        res = self.__get_shape()
+        res.__content = self.__content.map2i(lambda i, x, y:
                                               fct(i + self.__start_index, x, y), plst.__content)
-        return plst
+        return res
 
     def zip(self, plst):
         return self.map2(lambda x, y: (x, y), plst)
 
-    def filter(self, plst):
-        return self.get_partition().map(lambda l: l.filter(plst)).flatten()
+    def filter(self, predicate):
+        return self.get_partition().map(lambda l: l.filter(predicate)).flatten()
 
     def get_partition(self):
         plst = PList()
@@ -106,11 +106,11 @@ class PList:
 
     def flatten(self):
         plst = PList()
-        plst.__content = self.__content.reduce(lambda x, y: x + y, [])
+        plst.__content = self.__content.flatten()
         plst.__local_size = len(plst.__content)
         plst.__distribution = _COMM.allgather(plst.__local_size)
-        plst.__start_index = SList(plst.__distribution).scanl(lambda x, y: x + y, 0)[_PID]
-        plst.__global_size = SList(plst.__distribution).reduce(lambda x, y: x + y)
+        plst.__start_index = SList(plst.__distribution).scanl(add, 0)[_PID]
+        plst.__global_size = SList(plst.__distribution).reduce(add)
         return plst
 
     def reduce(self, operation, neutral=None):

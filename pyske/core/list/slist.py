@@ -2,6 +2,7 @@
 A module of sequential lists and associated primitives
 """
 import functools
+from operator import concat
 
 __all__ = ['SList']
 
@@ -381,7 +382,7 @@ class SList(list):
 
         :return: list
         """
-        return self.reduce(lambda x, y: x + y, [])
+        return SList(self.reduce(concat, []))
 
     def distribute(self, _):
         """
