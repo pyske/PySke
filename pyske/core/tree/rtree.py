@@ -205,7 +205,7 @@ class RNode:
         f : callable
             A function to accumulate the value of the current instance with the current accumulator
         unit_f
-            A value such as, forall x, f(x, unit_f) = x
+            A value such as, forall value, f(value, unit_f) = value
         """
 
         def dacc2(t, fct, c):
@@ -272,7 +272,7 @@ class RNode:
         f : callable
             A function to accumulate the value of the current instance with the current accumulator
         unit_f
-            A value such as, forall x, f(x, unit_f) = x
+            A value such as, forall value, f(value, unit_f) = value
         """
 
         rv = self.get_children().map(lambda x: x.get_value())
@@ -298,7 +298,7 @@ class RNode:
         f : callable
             A function to accumulate the value of the current instance with the current accumulator
         unit_f
-            A value such as, forall x, f(x, unit_f) = x
+            A value such as, forall value, f(value, unit_f) = value
         """
         rv = self.get_children().map(lambda x: x.get_value())
         rs = rv.scanp(f, unit_f)

@@ -74,8 +74,8 @@ map_map_rule = \
          type=__List)
 
 map_reduce_rule = \
-    Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('op')], False),
-         right=Term('map_reduce', [Var('PL'), Var('f'), Var('op')], False),
+    Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('binary_op')], False),
+         right=Term('map_reduce', [Var('PL'), Var('f'), Var('binary_op')], False),
          name="map reduce",
          type=__List)
 
@@ -86,8 +86,8 @@ zip_map_rule = \
          type=__List)
 
 map_reduce_e_rule = \
-    Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('op'), Var('e')], False),
-         right=Term('map_reduce', [Var('PL'), Var('f'), Var('op'), Var('e')], False),
+    Rule(left=Term('reduce', [Term('map', [Var('PL'), Var('f')]), Var('binary_op'), Var('e')], False),
+         right=Term('map_reduce', [Var('PL'), Var('f'), Var('binary_op'), Var('e')], False),
          name="map reduce",
          type=__List)
 

@@ -19,7 +19,7 @@ def test_to_seq():
     lt = LTree([seg1, seg2, seg3])
     pt = PTree(lt)
     res = pt.to_seq()
-    exp = lt if pid == 0 else None
+    exp = lt if PID == 0 else None
     assert res == exp
 
 
@@ -42,7 +42,7 @@ def test_map_not_empty():
     seg1_exp = Segment([TaggedValue(12, "C")])
     seg2_exp = Segment([TaggedValue(30, "N"), TaggedValue(48, "L"), TaggedValue(33, "L")])
     seg3_exp = Segment([TaggedValue(71, "N"), TaggedValue(93, "L"), TaggedValue(43, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if pid == 0 else None
+    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
 
     assert res == exp
 
@@ -62,7 +62,7 @@ def test_reduce():
     lt = LTree([seg1, seg2, seg3])
     pt = PTree(lt)
     res = pt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
-    exp = lt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add) if pid == 0 else None
+    exp = lt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add) if PID == 0 else None
     assert res == exp
 
 
@@ -85,7 +85,7 @@ def test_uacc():
     seg1_exp = Segment([TaggedValue(13 + 31 + 47 + 32 + 72 + 92 + 42, "C")])
     seg2_exp = Segment([TaggedValue(31 + 47 + 32, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg3_exp = Segment([TaggedValue(72 + 92 + 42, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if pid == 0 else None
+    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
     assert exp == res
 
 
@@ -102,7 +102,7 @@ def test_dacc():
     seg1_exp = Segment([TaggedValue(0, "C")])
     seg2_exp = Segment([TaggedValue(13, "N"), TaggedValue(13 + 31, "L"), TaggedValue(13 + 31, "L")])
     seg3_exp = Segment([TaggedValue(13, "N"), TaggedValue(13 + 72, "L"), TaggedValue(13 + 72, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if pid == 0 else None
+    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
 
     assert res == exp
 
@@ -137,7 +137,7 @@ def test_zip():
     seg1_exp = Segment([TaggedValue((1, 2), "C")])
     seg2_exp = Segment([TaggedValue((1, 2), "N"), TaggedValue((1, 2), "L"), TaggedValue((1, 2), "L")])
     seg3_exp = Segment([TaggedValue((1, 2), "N"), TaggedValue((1, 2), "L"), TaggedValue((1, 2), "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if pid == 0 else None
+    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
     assert res == exp
 
 
@@ -171,5 +171,5 @@ def test_map2():
     seg1_exp = Segment([TaggedValue(3, "C")])
     seg2_exp = Segment([TaggedValue(3, "N"), TaggedValue(3, "L"), TaggedValue(3, "L")])
     seg3_exp = Segment([TaggedValue(3, "N"), TaggedValue(3, "L"), TaggedValue(3, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if pid == 0 else None
+    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
     assert res == exp

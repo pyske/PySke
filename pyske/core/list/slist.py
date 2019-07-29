@@ -144,7 +144,7 @@ class SList(list, Generic[T]):
         """
         Example:
 
-            SList([1, 2, 3]).map(lambda x: x % 2 == 0) == [False, True, False]
+            SList([1, 2, 3]).map(lambda value: value % 2 == 0) == [False, True, False]
 
         :param unop:
             The function to apply to every values of the current instance
@@ -171,7 +171,8 @@ class SList(list, Generic[T]):
            reduce the current instance using a reduction operator
 
         Definition:
-        map_reduce f op [x1, x2, ..., xn] e = op(op(op(e, f x1), ...), f xn)
+        map_reduce f binary_op [x1, x2, ..., xn] e =
+          binary_op(binary_op(binary_op(e, f x1), ...), f xn)
 
         Parameters
         ----------
@@ -255,7 +256,7 @@ class SList(list, Generic[T]):
         """Makes a rightward accumulation of the values.
 
         Definition:
-            scanr f [x] = [x]
+            scanr f [value] = [value]
             scanr f [x_1, x_2, ..., x_n] = [x_1, f(x_1, x_2), ..., f(f(f(x_1, x_2), ...), x_n)]
 
         Parameters
@@ -308,7 +309,7 @@ class SList(list, Generic[T]):
             Usually, f is associative.
         initial
             Initial value for the accumulator.
-            Usually, c is the unit of f, i.e. f(x, c) = f(c, x) = x
+            Usually, c is the unit of f, i.e. f(value, c) = f(c, value) = value
         """
         res = self.copy()
         for idx in range(len(self), 0, -1):

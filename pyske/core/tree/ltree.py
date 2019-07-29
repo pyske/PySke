@@ -945,8 +945,8 @@ class LTree(__List):
 
         The parameters must respect these equalities (closure property):
         * k(l, b, r) = psi_n(l, phi(b), r)
-        * psi_n(psi_n(x, l, y), b, r) = psi_n(x, psi_l(l,b,r), y)
-        * psi_n(l, b, psi_n(x, r, y)) = psi_n(x, psi_r(l,b,r), y)
+        * psi_n(psi_n(value, l, y), b, r) = psi_n(value, psi_l(l,b,r), y)
+        * psi_n(l, b, psi_n(value, r, y)) = psi_n(value, psi_r(l,b,r), y)
 
         Precondition
         -------------
@@ -978,8 +978,8 @@ class LTree(__List):
 
         The parameters must respect these equalities (closure property):
         * k(l, b, r) = psi_n(l, phi(b), r)
-        * psi_n(psi_n(x, l, y), b, r) = psi_n(x, psi_l(l,b,r), y)
-        * psi_n(l, b, psi_n(x, r, y)) = psi_n(x, psi_r(l,b,r), y)
+        * psi_n(psi_n(value, l, y), b, r) = psi_n(value, psi_l(l,b,r), y)
+        * psi_n(l, b, psi_n(value, r, y)) = psi_n(value, psi_r(l,b,r), y)
 
         Precondition
         -------------

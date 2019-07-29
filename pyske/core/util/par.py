@@ -4,7 +4,7 @@ Non-skeletal Parallel Functions
 __all__ = ['procs', 'wtime', 'barrier', 'Distribution', 'at_root']
 
 
-from typing import Sequence, Callable
+from typing import Callable
 from operator import add
 import functools
 import random
@@ -18,21 +18,21 @@ def randpid() -> int:
 
     :return: a random processor identifier.
     """
-    return random.randint(0, parallel.nprocs - 1)
+    return random.randint(0, parallel.NPROCS - 1)
 
 
-def procs() -> Sequence[int]:
+def procs() -> range:
     """
     :return: the list of available processor identifiers.
     """
-    return range(0, parallel.nprocs)
+    return range(0, parallel.NPROCS)
 
 
 def wtime() -> float:
     """
     :return:  the current time as a floating point number.
     """
-    return MPI.Wtime()
+    return MPI.Wtime()  # pylint: disable=c-extension-no-member
 
 
 def barrier() -> None:
@@ -41,7 +41,7 @@ def barrier() -> None:
 
     :return: None
     """
-    parallel.comm.barrier()
+    parallel.COMM.barrier()
 
 
 class Distribution(list):
@@ -59,7 +59,7 @@ class Distribution(list):
         :param size: should be >= 0
         :return: bool
         """
-        if len(self) != parallel.nprocs:
+        if len(self) != parallel.NPROCS:
             return False
         for num in self:
             if num < 0:
@@ -67,7 +67,7 @@ class Distribution(list):
         return size == functools.reduce(add, self, 0)
 
     @staticmethod
-    def balanced(size: int):
+    def balanced(size: int) -> 'Distribution':
         """
         :param size: should be >= 0
         :return: Returns a balanced distribution, i.e. a distribution
@@ -84,5 +84,5 @@ def at_root(execute: Callable[[], None]) -> None:
 
     :param execute: the function to execute.
     """
-    if parallel.pid == 0:
+    if parallel.PID == 0:
         execute()

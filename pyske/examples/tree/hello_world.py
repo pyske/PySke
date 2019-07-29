@@ -9,9 +9,9 @@ from pyske.examples.tree.size_by_node import size_by_node
 from pyske.core.support import parallel
 from pyske.core.util import fun
 
-comm = parallel.comm
-pid = parallel.pid
-nprocs = parallel.nprocs
+comm = parallel.COMM
+pid = parallel.PID
+nprocs = parallel.NPROCS
 
 msg = "hello world!"
 

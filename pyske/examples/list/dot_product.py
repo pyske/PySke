@@ -6,12 +6,11 @@ import random
 import argparse
 import gc
 from operator import add, mul
-from pyske.core.util import fun
+from pyske.core.util import fun, timing
 from pyske.core.opt import fun as opt
 from pyske.core.list.plist import PList as DPList
 from pyske.core.opt.list import PList
 from pyske.core.util.par import at_root, barrier
-from pyske.core import timing
 
 __all__ = []
 

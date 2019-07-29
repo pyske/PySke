@@ -3,9 +3,8 @@ Example of use of filtering and then redistribution
 """
 import sys
 import random
-from pyske.core import timing
 from pyske.core.list.plist import PList
-from pyske.core.util import par
+from pyske.core.util import par, timing
 
 
 def _is_even(num):

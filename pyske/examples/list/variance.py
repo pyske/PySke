@@ -5,8 +5,8 @@ import sys
 import random
 from operator import add
 from pyske.core.list.plist import PList
-from pyske.core.util import par
-from pyske.core import timing
+from pyske.core.util import par, timing
+
 
 def _variance():
     time = timing.Timing()
