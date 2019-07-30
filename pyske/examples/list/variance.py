@@ -7,7 +7,15 @@ from operator import add
 from pyske.core import PList, Timing, par
 
 
-def _variance():
+def variance(data):
+    """Return the variance of the random variable"""
+    size = data.length()
+    avg = data.reduce(add) / size
+    var = data.map(lambda num: (num - avg) ** 2).reduce(add) / size
+    return var
+
+
+def _main():
     time = Timing()
     # Generating a parallel list of the size specified on the command line or 1000
     size = 1000
@@ -18,13 +26,7 @@ def _variance():
     # start timing
     time.start()
     # computing the variance
-    size = data.length()
-    avg = data.reduce(add) / size
-
-    def unop(num):
-        return (num-avg) ** 2
-
-    var = data.map(unop).reduce(add) / size
+    var = variance(data)
     # stop timing
     time.stop()
     # output at processor 0
@@ -34,4 +36,5 @@ def _variance():
                       f'Time (avg):\t{avg_elapsed}\nTime (all):\t{all_elapsed}'))
 
 
-_variance()
+if __name__ == '__main__':
+    _main()

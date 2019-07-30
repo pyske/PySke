@@ -242,9 +242,10 @@ def _test3():
     assert res1 == res2
 
 
-if TST == 1:
-    _test1()
-if TST == 2:
-    _test2()
-if TST == 3:
-    _test3()
+if __name__ == '__main__':
+    if TST == 1:
+        _test1()
+    if TST == 2:
+        _test2()
+    if TST == 3:
+        _test3()

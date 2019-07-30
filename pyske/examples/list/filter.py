@@ -18,7 +18,7 @@ def _is_even(num):
 def _main():
     time = Timing()
     # Generating a parallel list of the size specified on the command line or 1000
-    size = 1000
+    size = 10000
     if len(sys.argv) > 1:
         size = int(sys.argv[1])
     data = PList.init(lambda _: 50 + random.randint(0, 100), size)
@@ -36,4 +36,5 @@ def _main():
                       f'Time (avg): \t{avg_elapsed}\nTime (all): \t{all_elapsed}'))
 
 
-_main()
+if __name__ == '__main__':
+    _main()

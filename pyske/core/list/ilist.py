@@ -4,16 +4,56 @@ ilist: interface for lists
 Interface: IList.
 """
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Callable, Optional, List
-from pyske.core.util import par
+from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Any
 
-
-__all__ = ['IList']
-
+__all__ = ['IList', 'IDistribution']
 
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
+
+
+class IDistribution(ABC, list):
+    """
+    A class to represent the distribution of parallel linear data structure.
+    """
+
+    @abstractmethod
+    def is_valid(self, size: int) -> bool:
+        """
+        Check if the distribution is valid.
+
+        Checks if the current distribution really represent the distribution
+        a of linear structure of the given size. Each element of the distribution
+        should be positive, its length should be equal to the number of
+        available processors, and the sum of all its elements should be
+        equal to the given size.
+
+        :param size: should be >= 0
+        :return: bool
+        """
+
+    @staticmethod
+    @abstractmethod
+    def balanced(size: int) -> 'IDistribution':
+        """
+        Return a balanced distribution.
+
+        :param size: should be >= 0
+        :return: Returns a balanced distribution, i.e. a distribution
+        such that for any two elements, their differ by at most 1.
+        The sum of all the elements is size.
+        """
+
+    @abstractmethod
+    def to_pid(self, idx: int, value) -> Tuple[int, Tuple[int, Any]]:
+        """
+        Return the processor identifier of the given index.
+
+        :param idx: a valid index
+        :param value: a value
+        :return: a processor identifier
+        """
 
 
 class IList(ABC, Generic[T]):
@@ -223,6 +263,7 @@ class IList(ABC, Generic[T]):
         :param lst: the second list.
         :return: a new list.
         """
+
     @abstractmethod
     def zip(self: 'IList[T]', lst: 'IList[U]') -> 'IList[Tuple[T, U]]':
         """
@@ -300,6 +341,7 @@ class IList(ABC, Generic[T]):
 
         :return: a flattened list.
         """
+
     @abstractmethod
     def reduce(self: 'IList[T]', binary_op: Callable[[T, T], T], neutral: Optional[T] = None) -> T:
         """
@@ -428,7 +470,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def distribute(self: 'IList[T]', target_distr: par.Distribution) -> 'IList[T]':
+    def distribute(self: 'IList[T]', target_distr: IDistribution) -> 'IList[T]':
         """
         Copy the list while changing its distribution.
 
@@ -509,9 +551,7 @@ class IList(ABC, Generic[T]):
 
         Examples::
 
-            >>> from pyske.core.list.slist import SList
-            >>> from pyske.core.list.plist import PList
-
+            >>> from pyske.core import SList, PList, par
             >>> SList.init(str, 3).scatter(0)
             ['0', '1', '2']
             >>> PList.from_seq([1, 2, 3]).scatter(0).get_partition().map(len).to_seq() == \
@@ -533,9 +573,7 @@ class IList(ABC, Generic[T]):
 
         Examples::
 
-            >>> from pyske.core.list.slist import SList
-            >>> from pyske.core.list.plist import PList
-
+            >>> from pyske.core import SList, PList, par
             >>> SList.init(str, 3).scatter(0)
             ['0', '1', '2']
             >>> PList.from_seq(SList.init(int, 10)).scatter_range(range(0,3)) \
@@ -545,4 +583,21 @@ class IList(ABC, Generic[T]):
 
         :param rng: a valid range.
         :return: a new list containing the elements in the range.
+        """
+
+    @abstractmethod
+    def permute(self: 'IList[T]', bij: Callable[[int], int]) -> 'IList[T]':
+        """
+        Permute the content of the list.
+
+        Examples::
+
+            >>> from pyske.core import SList, PList
+            >>> SList.init(int, 7).permute(lambda i: 6-i)
+            [6, 5, 4, 3, 2, 1, 0]
+            >>> PList.init(int, 7).permute(lambda i: 6-i).to_seq()
+            [6, 5, 4, 3, 2, 1, 0]
+
+        :param bij: bijective function on list indices
+        :return: same content but different ordering
         """

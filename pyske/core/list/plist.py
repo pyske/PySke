@@ -3,14 +3,16 @@ A module of parallel lists and associated skeletons
 
 class PList: parallel lists.
 """
-from operator import add, concat
 import functools
-from typing import TypeVar, Callable, List  # pylint: disable=unused-import
+from collections import defaultdict
+from operator import add, concat
 from typing import Optional, Tuple, Sequence  # pylint: disable=unused-import
-from pyske.core.support import parallel as parimpl, interval
-from pyske.core.util import par
+from typing import TypeVar, Callable, List  # pylint: disable=unused-import
+
 from pyske.core.list.ilist import IList
 from pyske.core.list.slist import SList
+from pyske.core.support import parallel as parimpl, interval
+from pyske.core.util import par
 
 __all__ = ['PList']
 
@@ -18,10 +20,16 @@ _PID: int = parimpl.PID
 _NPROCS: int = parimpl.NPROCS
 _COMM = parimpl.COMM
 
-
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
+
+
+def _group_by(lst):
+    dic = defaultdict(list)
+    for key, val in lst:
+        dic[key].append(val)
+    return dic
 
 
 class PList(IList):
@@ -262,3 +270,15 @@ class PList(IList):
 
     def to_seq(self: 'PList[T]') -> 'SList[T]':
         return SList(self.get_partition().reduce(concat, []))
+
+    def permute(self: 'PList[T]', bij: Callable[[int], int]) -> 'PList[T]':
+        p_list = self.__get_shape()
+        distr = par.Distribution(self.__distribution)
+        new_indices = self.mapi(lambda i, x: distr.to_pid(bij(i), x)).get_partition().map(_group_by)
+        mapping = new_indices.__content[0]
+        keys = mapping.keys()
+        messages = [mapping[pid] if pid in keys else [] for pid in par.procs()]
+        exchanged = SList(parimpl.COMM.alltoall(messages)).flatten()
+        exchanged.sort()
+        p_list.__content = exchanged.map(lambda pair: pair[1])
+        return p_list

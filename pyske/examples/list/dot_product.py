@@ -79,4 +79,5 @@ def __main():
         par.at_root(__print_info(iteration, result, max_elapsed, avg_elapsed, all_elapsed))
 
 
-__main()
+if __name__ == '__main__':
+    __main()

@@ -1,6 +1,7 @@
 """
 Non-skeletal Parallel Functions
 """
+
 __all__ = ['procs', 'wtime', 'barrier', 'Distribution', 'at_root']
 
 
@@ -9,7 +10,9 @@ from operator import add
 import functools
 import random
 from mpi4py import MPI
+from pyske.core.list.slist import SList
 from pyske.core.support import parallel
+from pyske.core.list.ilist import IDistribution
 
 
 def randpid() -> int:
@@ -44,21 +47,11 @@ def barrier() -> None:
     parallel.COMM.barrier()
 
 
-class Distribution(list):
+class Distribution(IDistribution):
     """
     A class to represent the distribution of parallel linear data structure.
     """
     def is_valid(self, size: int) -> bool:
-        """
-        Checks if the current distribution really represent the distribution
-        a of linear structure of the given size. Each element of the distribution
-        should be positive, its length should be equal to the number of
-        available processors, and the sum of all its elements should be
-        equal to the given size.
-
-        :param size: should be >= 0
-        :return: bool
-        """
         if len(self) != parallel.NPROCS:
             return False
         for num in self:
@@ -68,14 +61,18 @@ class Distribution(list):
 
     @staticmethod
     def balanced(size: int) -> 'Distribution':
-        """
-        :param size: should be >= 0
-        :return: Returns a balanced distribution, i.e. a distribution
-        such that for any two elements, their differ by at most 1.
-        The sum of all the elements is size.
-        """
         distr = [parallel.local_size(pid, size) for pid in procs()]
         return Distribution(distr)
+
+    def to_pid(self, idx: int, value):
+        indices = SList(self).scan(add, 0)
+        # size = indices[len(indices) - 1]
+        # assert self.is_valid(size)
+        indices.pop(0)
+        for (pid, bound) in enumerate(indices):
+            if idx < bound:
+                return pid, (idx, value)
+        return parallel.NPROCS - 1, (idx, value)
 
 
 def at_root(execute: Callable[[], None]) -> None:

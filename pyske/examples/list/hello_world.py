@@ -31,4 +31,5 @@ def __main():
                       f'Filtered:\t{filtered}'))
 
 
-__main()
+if __name__ == '__main__':
+    __main()

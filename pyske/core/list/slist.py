@@ -221,3 +221,9 @@ class SList(list, IList):
 
     def scatter_range(self: 'SList[T]', rng: range) -> 'SList[T]':
         return self[rng.start:rng.stop:rng.step]
+
+    def permute(self: 'SList[T]', bij: Callable[[int], int]) -> 'SList[T]':
+        lst = self.copy()
+        for (idx, value) in enumerate(self):
+            lst[bij(idx)] = value
+        return lst
