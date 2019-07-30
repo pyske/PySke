@@ -1,301 +1,161 @@
 """
 A module of sequential lists and associated primitives
+
+class SList: sequential lists.
 """
 import functools
 from operator import concat
-from typing import TypeVar, Callable, Generic, Sequence, Tuple
+from typing import TypeVar, Callable, Sequence, Tuple, Optional
+from pyske.core.list.ilist import IList
 
 __all__ = ['SList']
-
-LEFT_LIST = "["
-RIGHT_LIST = "]"
-SEPARATOR_LIST = ";"
 
 T = TypeVar('T')  # pylint: disable=invalid-name
 R = TypeVar('R')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 
 
-class SList(list, Generic[T]):
+class SList(list, IList):
     # pylint: disable=too-many-public-methods
     """
-    An extended definition of lists, including Bird-Meertens Formalism primitives
+    Sequential list.
 
-    ...
+    Static methods from interface IList:
+        init, from_seq.
 
-    Methods
-    -------
-    from_str(s, parser):
-        Creates a SList from a string
-    head()
-        Gives the first element of the current instance
-    tail()
-        Gives the the current instance without its first element
-    length()
-        Gives the number of element in the current instance
-    filter(f)
-        Removes all the elements that don't verify a predicate
-    empty()
-        Indicates if a list is empty
-    reverse()
-        Reverse a list
-    map(f)
-        Applies f to every element of the current instance
-    mapi(f)
-        Applies f to every index and element of the current instance
-    reduce(f)
-        Reduce the current instance using a reduction function
-    scan(f, c)
-        Makes an total rightward accumulation of the element on the current instance
-        from an initial value
-    scanl(f, c)
-        Makes a rightward accumulation of the values from an initial one,
-        without considering the last value of the instance
-    scanr(f)
-        Makes a total leftward accumulation of the values
-    scanp(f, c)
-         Makes an total leftward accumulation of the element on the current instance
-         from an initial value
-    scanl_last(f, c)
-        Makes a rightward accumulation of the values from an initial one,
-        considering the last accumulation as an external value
-    zip(l)
-        Creates a list of pairs from the element of the current instance and another one
-    map2(f, l)
-        Creates a list of new elements using a function from the element of the current
-        instance and another one
+    Methods from interface IList:
+        length, to_seq,
+        map, mapi, map2, map2i, zip, filter,
+        reduce, map_reduce, scanl, scanl_last, scanr,
+        get_partition, flatten,
+        distribute, balance,
+        gather, scatter, scatter_range,
+        invariant.
+
+    Static methods:
+        from_str.
+
+    Methods:
+        head, tail, empty,
+        scan, scanp.
     """
 
     def __str__(self):
-        res = LEFT_LIST
-        for i in range(0, self.length()):
-            res = res + str(self[i])
-            if i != self.length() - 1:
-                res = res + SEPARATOR_LIST + " "
-        return res + RIGHT_LIST
+        return self.__str__()
 
     @staticmethod
-    def init(value_at: Callable[[int], T], size: int):
+    def from_str(string: str, parser: Callable[[str], U] = int,
+                 opening: str = "[", closing: str = "]", separator: str = ",") -> 'SList[T]':
         """
-        Creates a list of length ``size``. At index ``idx``,
-        the element is ``value_at(idx)``.
+        Create a list from a string.
 
-        :param value_at: callable
-        :param size: int
-            size should be positive
-        :return: SList
-        """
-        assert size >= 0
-        return SList([value_at(i) for i in range(0, size)])
-
-    @staticmethod
-    def from_str(string: str, parser: Callable[[str], U] = int):
-        """
-        Creates a SList from a string
-
-        Parameters
-        ----------
-        string : str
-            A string representation of the SList
-        parser : callable, optional
-            A function that transforms a string into a specific type
-            By default, string to int
+        :param string:
+            A string representation of the list.
+        :param parser: (default: `ìnt``)
+            A function that transforms a string into a value of a specific type.
+        :param opening: (default: '['):
+            The opening string in the string representation of the list.
+        :param closing: (default: ']'):
+            The closing string in the string representation of the list.
+        :param separator: (default: ','):
+            The separator string in the string representation of the list.
         """
         res = SList([])
-        values = string.replace(LEFT_LIST, "").replace(RIGHT_LIST, "").split(SEPARATOR_LIST)
+        values = string.replace(opening, "").replace(closing, "").split(separator)
         for val in values:
             res.append(parser(val))
         return res
 
     def head(self):
-        """Gives the first element of the current instance
-        """
+        """Gives the first element of the current instance"""
         if self.empty():
             return None
         return self[0]
 
     def tail(self):
-        """Gives the the current instance without its first element
-        """
+        """Gives the the current instance without its first element"""
         return SList(self[1:])
 
-    def length(self) -> int:
-        """
-        :return: the number of element in the current instance
-        """
-        return len(self)
-
-    def filter(self, predicate: Callable[[T], bool]):
-        """Removes all the elements that don't verify a predicate
-
-        Parameters
-        ----------
-        predicate: callable
-            A predicate that all elements in the result must verify
-        """
-        return SList(filter(predicate, self))
-
     def empty(self):
-        """Indicates if a list is empty
-        """
+        """Indicates if a list is empty"""
         return self.length() == 0
 
-    def map(self, unop: Callable[[T], R]):
-        """
-        Example:
+    @staticmethod
+    def init(value_at: Callable[[int], T], size: int) -> 'SList[T]':
+        assert size >= 0
+        return SList([value_at(i) for i in range(0, size)])
 
-            SList([1, 2, 3]).map(lambda value: value % 2 == 0) == [False, True, False]
+    def length(self: 'SList[T]') -> int:
+        return len(self)
 
-        :param unop:
-            The function to apply to every values of the current instance
-        :return:
-            a list obtained by applying the unary function to every element of the current instance
+    def filter(self: 'SList[T]', predicate: Callable[[T], bool]):
+        return SList(filter(predicate, self))
 
-        """
-        return SList(map(unop, self))
+    def map(self: 'SList[T]', unary_op: Callable[[T], R]) -> 'SList[R]':
+        return SList(map(unary_op, self))
 
-    def mapi(self, binop: Callable[[int, T], R]):
-        """
-        Applies f to every index and element of the current instance
+    def mapi(self: 'SList[T]', binary_op: Callable[[int, T], R]) -> 'SList[R]':
+        return SList([binary_op(i, self[i]) for i in range(0, len(self))])
 
-        Definition:
-        mapi f [x0, x1, ..., xn] = [f(0,x0), f(1,x1), ..., f(n,xn)]
-
-        :param binop
-            The function to apply to every index and element of the current instance
-        """
-        return SList([binop(i, self[i]) for i in range(0, len(self))])
-
-    def map_reduce(self, unop: Callable[[T], R], binop: Callable[[R, R], R], initial=None):
-        """Applies f to every index and element of the current instance and then
-           reduce the current instance using a reduction operator
-
-        Definition:
-        map_reduce f binary_op [x1, x2, ..., xn] e =
-          binary_op(binary_op(binary_op(e, f x1), ...), f xn)
-
-        Parameters
-        ----------
-        unop : callable
-            The function to apply to every values of the current instance
-        binop: callable
-            The used function to reduce the current instance
-        initial : optional
-            Default value for reduction
-        """
+    def map_reduce(self: 'SList[T]', unary_op: Callable[[T], R],
+                   binary_op: Callable[[R, R], R], neutral: Optional[T] = None) -> R:
         if self.empty():
-            return initial
-        if initial is None:
-            return functools.reduce(binop, map(unop, self))
-        return functools.reduce(binop, map(unop, self), initial)
+            return neutral
+        if neutral is None:
+            return functools.reduce(binary_op, map(unary_op, self))
+        return functools.reduce(binary_op, map(unary_op, self), neutral)
 
-    def reduce(self, binop: Callable[[T, T], T], initial=None):
-        """Reduce the current instance using a reduction function
+    def reduce(self: 'SList[T]', binary_op: Callable[[T, T], T], neutral: Optional[T] = None) -> T:
+        if neutral is None:
+            return functools.reduce(binary_op, self)
+        return functools.reduce(binary_op, self, neutral)
 
-        Definition:
-        reduce f [x1, x2, ..., xn] e = f(f(f(e, x1), ...), xn)
-
-        Parameters
-        ----------
-        binop: callable
-            The used function to reduce the current instance
-        initial : optional
-            Default value for reduction
+    def scan(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R) -> 'SList[R]':
         """
-        if initial is None:
-            return functools.reduce(binop, self)
-        return functools.reduce(binop, self, initial)
+        Return the full prefix-sum list.
 
-    def scan(self, binop: Callable[[R, T], R], initial: R):
-        """Makes total a rightward accumulation of the values from an initial one
-        The result of scan is a list of size n+1 where n is the size of self.
+        The returned list has more additional element than ``self``.
+        The first element of the new list is ``neutral``.
 
-        Definition:
-            scan f c [x_1, x_2, ..., x_n] =
-              [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n)]
-
-        Parameters
-        ----------
-        binop: callable
-            A function to make a new accumulation from the previous accumulation and a current value
-        initial:
-            Initial value for the accumulator
+        :param binary_op: binary associative operator
+        :param neutral: a value that should be a neutral element for the operation,
+            i.e. for all element e,
+                ``binary_op(neutral, e) == binary_op(e, neutral) == e``.
+        :return: a new list.
         """
-        res: SList[R] = self.copy()
-        res.append(initial)
-        res[0] = initial
+        res = self.copy()
+        res.append(neutral)
+        res[0] = neutral
         for i in range(1, len(res)):
-            initial = binop(initial, self[i - 1])
-            res[i] = initial
+            neutral = binary_op(neutral, self[i - 1])
+            res[i] = neutral
         return SList(res)
 
-    def scanl(self, binop: Callable[[R, T], R], initial: R):
-        """Makes a rightward accumulation of the values from an initial one,
-        without considering the last value of the instance
-        The result of scanl is a list of size n where n is the size of self.
-
-        Definition:
-            scanl f c [] = []
-            scanl f c [x_1, x_2, ..., x_n] =
-              [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
-
-        Parameters
-        ----------
-        binop: callable
-            A function to make a new accumulation from the previous accumulation and a current value
-        initial:
-            Initial value for the accumulator
-        """
-        res: SList[R] = self.copy()
+    def scanl(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R) -> 'SList[R]':
+        res = self.copy()
         for (idx, value) in enumerate(res):
-            res[idx] = initial
-            initial = binop(initial, value)
+            res[idx] = neutral
+            neutral = binary_op(neutral, value)
         return SList(res)
 
-    def scanr(self, binop):
-        """Makes a rightward accumulation of the values.
-
-        Definition:
-            scanr f [value] = [value]
-            scanr f [x_1, x_2, ..., x_n] = [x_1, f(x_1, x_2), ..., f(f(f(x_1, x_2), ...), x_n)]
-
-        Parameters
-        ----------
-        binop: callable
-            A function to make a new accumulation from the previous accumulation and a current value
-        """
+    def scanr(self: 'SList[T]', binary_op: Callable[[R, T], R]) -> 'SList[R]':
         assert self != []
         res = self.copy()
         acc = res[0]
         for idx in range(1, len(res)):
-            acc = binop(acc, self[idx])
+            acc = binary_op(acc, self[idx])
             res[idx] = acc
         return SList(res)
 
-    def scanl_last(self, binop: Callable[[R, T], R], initial: R):
-        """Makes a rightward accumulation of the values from an initial one,
-        considering the last accumulation as an external value.
-        The result of scanl_last is a list of size n where n is the size of self
-        and one additional value corresponding to the total accumulation.
-
-        Definition:
-            scanl_last f c [] = ([],c)
-            scanl_last f c [x_1, x_2, ..., x_n]
-                = [c, f(c, x_1), f(f(c, x_1), x_2), ..., f(f(...,f(f(c, x_1), x_2)), x_n-1)]
-
-        Parameters
-        ----------
-        binop : callable
-            A function to make a new accumulation from the previous accumulation and a current value
-        initial
-            Initial value for the accumulator
-        """
-        res: SList[R] = self.scan(binop, initial)
+    def scanl_last(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R)\
+            -> 'Tuple[SList[R], R]':
+        res = self.scan(binary_op, neutral)
         last: R = res.pop()
         return res, last
 
-    def scanp(self, binop, initial):
-        """Makes a leftward accumulation of the values from an initial one.
+    def scanp(self: 'SList[T]', binary_op, neutral):
+        """
+        Makes a leftward accumulation of the values from an neutral one.
         The result of scanp is a list of size n where n is the size of self
         and one additional value corresponding to the total accumulation.
 
@@ -304,110 +164,63 @@ class SList(list, Generic[T]):
 
         Parameters
         ----------
-        binop : callable
+        binary_op : callable
             A function to make a new accumulation from the previous accumulation and a current value
             Usually, f is associative.
-        initial
-            Initial value for the accumulator.
+        neutral
+            neutral value for the accumulator.
             Usually, c is the unit of f, i.e. f(value, c) = f(c, value) = value
         """
         res = self.copy()
         for idx in range(len(self), 0, -1):
-            res[idx - 1] = initial
-            initial = binop(self[idx - 1], initial)
+            res[idx - 1] = neutral
+            neutral = binary_op(self[idx - 1], neutral)
         return res
 
-    def zip(self, lst: Sequence[U]):
-        """Creates a list of pairs from the element of the current instance
-        and another sequential list
-
-        Precondition
-        -------------
-        The lengths of self and lst should be equal.
-
-        Parameters
-        ----------
-        lst : list
-            A list to merge the values of the current instance with
-        """
+    def zip(self: 'SList[T]', lst: 'SList[U]') -> 'SList[Tuple[T, U]]':
         assert len(self) == len(lst)
         lst: Sequence[Tuple[T, U]] = [(left, right) for (left, right) in zip(self, lst)]
         return SList(lst)
 
-    def map2(self, binop: Callable[[T, U], R], lst: Sequence[U]):
-        """Creates a list of new elements using a function applied to the elements of the current
-        instance and another sequential list
-
-        Precondition
-        -------------
-        The lengths of self and lst should be equal.
-
-        Parameters
-        ----------
-        binop : callable
-             A function to zip values
-        lst : list
-            The second list to zip with the current instance
-        """
+    def map2(self: 'SList[T]', binary_op: Callable[[T, U], R], lst: 'SList[U]') -> 'SList[R]':
         assert len(self) == len(lst)
-        return SList([binop(left, right) for (left, right) in zip(self, lst)])
+        return SList([binary_op(left, right) for (left, right) in zip(self, lst)])
 
-    def map2i(self, terop: Callable[[int, T, U], R], lst: Sequence[U]):
-        """Creates a list of new elements using a function applied to the elements of the current
-        instance and another list as well as their index (first argument)
-
-        Precondition
-        -------------
-        The lengths of ``self`` and ``lst`` should be equal.
-
-        Parameters
-        ----------
-        terop : callable
-             A function that takes 3 arguments, the first one being an index
-        lst : list
-            The second list to map with the current instance
-        """
+    def map2i(self: 'SList[T]', ternary_op: Callable[[int, T, U], R],
+              lst: 'SList[U]') -> 'SList[R]':
         assert len(self) == len(lst)
-        return SList([terop(i, self[i], lst[i]) for i in range(0, len(self))])
+        return SList([ternary_op(i, self[i], lst[i]) for i in range(0, len(self))])
 
-    def get_partition(self):
-        """Returns a list containing the local lists.
+    def get_partition(self: 'SList[T]') -> 'SList[SList[T]]':
+        return SList([self])
 
-        For example if the list is ``[1, 2, 3, 4, 5]`` and it is evenly
-        distributed on 2 processors, ```get_partition`` returns
-        ``[[1, 2, 3], [4, 5]]``.
-
-        :return: list
-        """
-        lst: SList[SList[T]] = SList(self)
+    def flatten(self: 'SList[SList[T]]') -> 'SList[T]':
+        lst = SList(self.reduce(concat, []))
         return lst
 
-    def flatten(self):
-        """Returns a flattened version of ``self``: ``self``
-        is supposed to be a list of lists, and ``flatten`` returns
-        a list.
-
-        Example: SList([[1, 2], [3, 4]]).flatten() == [1, 2, 3, 4]
-
-        :return: list
-        """
-        lst: SList[T] = SList(self.reduce(concat, []))
-        return lst
-
-    def distribute(self, _: Sequence[int]):
-        """
-        Returns the same list, but with the new distribution given in argument.
-        In sequential, it just returns ``self``.
-        :param _: a distribution
-        :return: SList
-        """
+    def distribute(self: 'SList[T]', _: Sequence[int]) -> 'SList[T]':
         return self
 
-    def balance(self):
-        """
-        Returns the same list, but the distribution changes to a
-        balanced distribution.
-        In sequential, it just returns ``self``.
-        :return: SList
-        """
+    def balance(self: 'SList[T]') -> 'SList[T]':
         return self
+
+    @staticmethod
+    def from_seq(lst: Sequence[T]) -> 'SList[T]':
+        return SList(lst)
+
+    def to_seq(self: 'SList[T]') -> 'SList[T]':
+        return self
+
+    def gather(self: 'SList[T]', pid: int) -> 'SList[T]':
+        assert pid == 0
+        return self
+
+    def invariant(self: 'SList[T]') -> bool:
+        return True
+
+    def scatter(self: 'SList[T]', pid: int) -> 'SList[T]':
+        assert pid == 0
+        return self
+
+    def scatter_range(self: 'SList[T]', rng: range) -> 'SList[T]':
+        return self[rng.start:rng.stop:rng.step]

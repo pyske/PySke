@@ -429,7 +429,7 @@ def test_zipwith_one_lt():
 def test_from_str_simple():
     # pylint: disable=missing-docstring
     string = "[1;2;3]"
-    res = SList.from_str(string)
+    res = SList.from_str(string, separator=";")
     exp = SList([1, 2, 3])
     assert res == exp
 
@@ -437,7 +437,7 @@ def test_from_str_simple():
 def test_from_str_tuple():
     # pylint: disable=missing-docstring
     string = "[(1,2);(3,4)]"
-    res = SList.from_str(string, parser=parser_tuple)
+    res = SList.from_str(string, parser=parser_tuple, separator=";")
     exp = SList([(1, 2), (3, 4)])
     assert res == exp
 
