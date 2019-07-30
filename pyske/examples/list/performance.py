@@ -7,11 +7,8 @@ import random
 import math
 import gc
 import argparse
-from pyske.core.list.plist import PList as DPList
-from pyske.core.opt.list import PList as OPList
-from pyske.core.list.slist import SList as DSList
-from pyske.core.opt.list import SList as OSList
-from pyske.core.util import par
+from pyske.core import PList as DPList, SList as DSList, par
+from pyske.core.opt.list import PList as OPList, SList as OSList
 
 
 def _test(test_f, data, name, preprocessing=lambda f, num: lambda: f(num), execute=lambda f: f()):

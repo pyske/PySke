@@ -5,8 +5,8 @@ Computation of the conjonction of the negation of a list of Boolean values
 import random
 import argparse
 
-from pyske.core.list.plist import PList
-import pyske.core.util.par as par
+from pyske.core.list import PList
+from pyske.core.util import par
 
 __all__ = []
 

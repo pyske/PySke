@@ -1,36 +1,42 @@
-from pyske.core.list.slist import SList
+"""
+Operations on intervals.
+"""
 from operator import add
+from pyske.core.list.slist import SList
 
 
-def __pos(inter, i):
+def __pos(inter, idx):
     if inter is None:
         return None
-    else:
-        return inter[i]
+    return inter[idx]
 
 
-def interval(low, up):
-    if low <= up:
-        return low, up
-    else:
-        return None
+def interval(lower_, upper_):
+    """Build an interval."""
+    if lower_ <= upper_:
+        return lower_, upper_
+    return None
 
 
 def lower(inter):
+    """Return the lower bound of an interval."""
     return __pos(inter, 0)
 
 
 def upper(inter):
+    """Return the upper bound of an interval."""
     return __pos(inter, 1)
 
 
 def is_valid(inter):
-    return (inter is None) or ((type(inter) is tuple) and (lower(inter) <= upper(inter)))
+    """Check the validity of an interval."""
+    return (inter is None) or (isinstance(inter, tuple) and (lower(inter) <= upper(inter)))
 
 
 def union(inter1, inter2):
-    assert (is_valid(inter1))
-    assert (is_valid(inter2))
+    """Union two intervals."""
+    assert is_valid(inter1)
+    assert is_valid(inter2)
     if inter1 is None:
         return inter2
     if inter2 is None:
@@ -40,39 +46,40 @@ def union(inter1, inter2):
 
 
 def intersection(inter1, inter2):
-    assert (is_valid(inter1))
-    assert (is_valid(inter2))
+    """Intersect two intervals."""
+    assert is_valid(inter1)
+    assert is_valid(inter2)
     if (inter1 is None or inter2 is None or
             upper(inter1) < lower(inter2) or
             upper(inter2) < lower(inter1)):
         return None
-    else:
-        return (max(lower(inter1), lower(inter2)),
-                min(upper(inter1), upper(inter2)))
+    return (max(lower(inter1), lower(inter2)),
+            min(upper(inter1), upper(inter2)))
 
 
 def shift(inter, offset):
+    """Shift an interval by an offset."""
     if inter is None:
         return None
-    else:
-        return lower(inter) + offset, upper(inter) + offset
+    return lower(inter) + offset, upper(inter) + offset
 
 
-def to_slice(l, inter):
-    is_valid(inter)
+def to_slice(lst, inter):
+    """Slice a list using an interval."""
+    assert is_valid(inter)
     if inter is None:
         return []
-    else:
-        return l[lower(inter):upper(inter) + 1]
+    return lst[lower(inter):upper(inter) + 1]
 
 
-def firsts(distr):
+def _firsts(distr):
     return SList(distr).scanl(add, 0)
 
 
-def lasts(distr):
+def _lasts(distr):
     return SList(distr).scan(add, 0).tail().map(lambda x: x - 1)
 
 
 def bounds(distr):
-    return firsts(distr).map2(interval, lasts(distr))
+    """Bounds in a distribution"""
+    return _firsts(distr).map2(interval, _lasts(distr))

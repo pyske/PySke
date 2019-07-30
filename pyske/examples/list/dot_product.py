@@ -6,11 +6,9 @@ import random
 import argparse
 import gc
 from operator import add, mul
-from pyske.core.util import fun, timing
+from pyske.core import fun, par, Timing, PList as DPList
 from pyske.core.opt import fun as opt
-from pyske.core.list.plist import PList as DPList
 from pyske.core.opt.list import PList
-from pyske.core.util.par import at_root, barrier
 
 __all__ = []
 
@@ -55,7 +53,7 @@ def __compute(test, pl1, pl2):
 
 
 def __main():
-    time = timing.Timing()
+    time = Timing()
     random.seed(42)
     # Command-line arguments parsing
     parser = argparse.ArgumentParser()
@@ -70,15 +68,15 @@ def __main():
     # Creation of input lists
     pl1 = DPList.init(__rand, size)
     pl2 = DPList.init(__rand, size)
-    at_root(lambda: print("Test:\t", test))
+    par.at_root(lambda: print("Test:\t", test))
     for iteration in range(0, args.iter):
         gc.collect()
-        barrier()
+        par.barrier()
         time.start()
         result = __compute(test, pl1, pl2)
         time.stop()
         max_elapsed, avg_elapsed, all_elapsed = time.get()
-        at_root(__print_info(iteration, result, max_elapsed, avg_elapsed, all_elapsed))
+        par.at_root(__print_info(iteration, result, max_elapsed, avg_elapsed, all_elapsed))
 
 
 __main()

@@ -1,55 +1,53 @@
+"""
+Module of basic function for composition optimization.
+"""
 __all__ = ['Fun', 'idt', 'compose', 'curry', 'uncurry']
 
-from pyske.core.opt.terms import Var, Term
-from pyske.core.opt.rules import inner_most_strategy, Rule, rules
+from pyske.core.opt.terms import Var, Term, RULES_DB, Rule
 from pyske.core.util import fun
+from pyske.core.util.fun import idt
 
 
 class Fun(Term):
+    """Terms representing basic functions"""
 
-    def __init__(self, f, a, s=True):
-        Term.__init__(self, f, a, s)
-
-    def opt(self):
-        return inner_most_strategy(self)
-
-    def run(self):
-        return self.opt().eval()
+    def __init__(self, fun_f, a, s=True):
+        Term.__init__(self, fun_f, a, s)
 
 
-idt = fun.idt
+def compose(fun_f, fun_g):
+    """Function composition"""
+    return Fun(fun.compose, [fun_f, fun_g])
 
 
-def compose(f, g):
-    return Fun(fun.compose, [f, g])
+def curry(fun_f):
+    """Currying"""
+    return Fun(fun.curry, [fun_f])
 
 
-def curry(f):
-    return Fun(fun.curry, [f])
+def uncurry(fun_f):
+    """Uncurrying"""
+    return Fun(fun.uncurry, [fun_f])
 
 
-def uncurry(f):
-    return Fun(fun.uncurry, [f])
-
-
-id_neutral_compose_left = \
-    Rule(left=compose(idt, Var('f')),
-         right=Var('f'),
+_IDT_COMPOSE_LEFT = \
+    Rule(left=compose(idt, Var('fun_f')),
+         right=Var('fun_f'),
          name="idt neutral compose left",
          type=Fun
          )
 
-id_neutral_compose_right = \
-    Rule(left=compose(Var('f'), id),
-         right=Var('f'),
+_IDT_COMPOSE_RIGHT = \
+    Rule(left=compose(Var('fun_f'), id),
+         right=Var('fun_f'),
          name="idt neutral compose right",
          type=Fun
          )
 
-curry_uncurry_simplification = \
-    Rule(left=curry(uncurry(Var('f'))),
-         right=Var('f'),
+_CURRY_UNCURRY = \
+    Rule(left=curry(uncurry(Var('fun_f'))),
+         right=Var('fun_f'),
          name="curry uncurry simplification",
          type=Fun)
 
-rules.extend([curry_uncurry_simplification, id_neutral_compose_left, id_neutral_compose_right])
+RULES_DB.extend([_CURRY_UNCURRY, _IDT_COMPOSE_LEFT, _IDT_COMPOSE_RIGHT])

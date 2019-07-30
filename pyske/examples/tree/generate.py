@@ -14,12 +14,12 @@ ILL = 'ill'
 CHOICES = [RDM, BAL, ILL]
 
 
-def frdm(_):
+def _randint(_):
     # pylint: disable=missing-docstring
     return random.randint(1, 101)
 
 
-def main():
+def _main():
     # pylint: disable=missing-docstring
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", help="name of the file to create to store the BTree")
@@ -37,12 +37,12 @@ def main():
         raise Exception("Not a valid type of tree")
     btr = None
     if type_bt == RDM:
-        btr = random_btree(frdm, size)
+        btr = random_btree(_randint, size)
     if type_bt == BAL:
-        btr = balanced_btree(frdm, size)
+        btr = balanced_btree(_randint, size)
     if type_bt == ILL:
-        btr = ill_balanced_btree(frdm, size)
+        btr = ill_balanced_btree(_randint, size)
     LTree.init_from_bt(btr, num_m).write_file(filename)
 
 
-main()
+_main()

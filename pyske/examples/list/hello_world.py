@@ -3,9 +3,7 @@ Example: various manipulations on a parallel list
 """
 
 import operator
-from pyske.core.list.plist import PList
-from pyske.core.list.slist import SList
-from pyske.core.util import par
+from pyske.core import PList, SList, par
 
 __all__ = []
 

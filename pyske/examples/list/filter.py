@@ -3,8 +3,7 @@ Example of use of filtering and then redistribution
 """
 import sys
 import random
-from pyske.core.list.plist import PList
-from pyske.core.util import par, timing
+from pyske.core import PList, par, Timing
 
 
 def _is_even(num):
@@ -17,7 +16,7 @@ def _is_even(num):
 
 
 def _main():
-    time = timing.Timing()
+    time = Timing()
     # Generating a parallel list of the size specified on the command line or 1000
     size = 1000
     if len(sys.argv) > 1:

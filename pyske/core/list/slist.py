@@ -40,9 +40,6 @@ class SList(list, IList):
         scan, scanp.
     """
 
-    def __str__(self):
-        return self.__str__()
-
     @staticmethod
     def from_str(string: str, parser: Callable[[str], U] = int,
                  opening: str = "[", closing: str = "]", separator: str = ",") -> 'SList[T]':

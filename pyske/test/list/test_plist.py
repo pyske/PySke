@@ -4,16 +4,12 @@ Tests for parallel lists and associated skeletons
 __all__ = []
 import operator
 import random
-
 import pytest
-
 from pyske.core.list.plist import PList
 from pyske.core.list.slist import SList
-from pyske.core.util import fun
-from pyske.core.util import par
+from pyske.core.util import fun, par
 
-# pylint: disable=invalid-name
-pytestmark = pytest.mark.plist
+pytestmark = pytest.mark.plist  # pylint: disable=invalid-name
 
 MSG = "Hello World!"
 
@@ -281,24 +277,23 @@ def test_scanl_non_empty():
     assert res == exp
 
 
-def test_scanl_last_empty():
+def _test_scanl_last(size):
     # pylint: disable=missing-docstring
-    size = 0
     data = PList.init(fun.idt, size)
     res_pl, res_scalar = data.scanl_last(operator.add, 0)
     res = (res_pl.to_seq(), res_scalar)
     exp = SList(range(0, size)).scanl_last(operator.add, 0)
     assert res == exp
+
+
+def test_scanl_last_empty():
+    # pylint: disable=missing-docstring
+    _test_scanl_last(0)
 
 
 def test_scanl_last_non_empty():
     # pylint: disable=missing-docstring
-    size = 23
-    data = PList.init(fun.idt, size)
-    res_pl, res_scalar = data.scanl_last(operator.add, 0)
-    res = (res_pl.to_seq(), res_scalar)
-    exp = SList(range(0, size)).scanl_last(operator.add, 0)
-    assert res == exp
+    _test_scanl_last(23)
 
 
 def test_distribute_data():
@@ -306,7 +301,7 @@ def test_distribute_data():
     dst = par.randpid()
     data = generate_int_plist()
     size = data.length()
-    distr = [0 for _ in par.procs()]
+    distr = par.Distribution([0 for _ in par.procs()])
     distr[dst] = size
     res = data.distribute(distr).to_seq()
     exp = SList(range(0, size))
@@ -318,7 +313,7 @@ def test_distribute_distr():
     data = generate_str_plist()
     size = data.length()
     dst = par.randpid()
-    exp = [0 for _ in par.procs()]
+    exp = par.Distribution([0 for _ in par.procs()])
     exp[dst] = size
     res = get_distribution(data.distribute(exp))
     assert res == exp
@@ -338,7 +333,7 @@ def test_balance_distr():
     data = generate_str_plist()
     size = data.length()
     dst = par.randpid()
-    distr = [0 for _ in par.procs()]
+    distr = par.Distribution([0 for _ in par.procs()])
     distr[dst] = size
     res = get_distribution(data.distribute(distr).balance())
     exp = par.Distribution.balanced(size)
