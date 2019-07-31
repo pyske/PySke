@@ -6,7 +6,8 @@ class SList: sequential lists.
 import functools
 from operator import concat
 from typing import TypeVar, Callable, Sequence, Tuple, Optional
-from pyske.core.interface.linear import IList
+from pyske.core import interface
+from pyske.core.support.list import scan
 
 __all__ = ['SList']
 
@@ -15,7 +16,7 @@ R = TypeVar('R')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 
 
-class SList(list, IList):
+class SList(list, interface.List):
     # pylint: disable=too-many-public-methods
     """
     Sequential list.
@@ -37,7 +38,7 @@ class SList(list, IList):
 
     Methods:
         head, tail, empty,
-        scan, scanp.
+        scanp.
     """
 
     @staticmethod
@@ -107,27 +108,6 @@ class SList(list, IList):
             return functools.reduce(binary_op, self)
         return functools.reduce(binary_op, self, neutral)
 
-    def scan(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R) -> 'SList[R]':
-        """
-        Return the full prefix-sum list.
-
-        The returned list has more additional element than ``self``.
-        The first element of the new list is ``neutral``.
-
-        :param binary_op: binary associative operator
-        :param neutral: a value that should be a neutral element for the operation,
-            i.e. for all element e,
-                ``binary_op(neutral, e) == binary_op(e, neutral) == e``.
-        :return: a new list.
-        """
-        res = self.copy()
-        res.append(neutral)
-        res[0] = neutral
-        for i in range(1, len(res)):
-            neutral = binary_op(neutral, self[i - 1])
-            res[i] = neutral
-        return SList(res)
-
     def scanl(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R) -> 'SList[R]':
         res = self.copy()
         for (idx, value) in enumerate(res):
@@ -146,7 +126,7 @@ class SList(list, IList):
 
     def scanl_last(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R)\
             -> 'Tuple[SList[R], R]':
-        res = self.scan(binary_op, neutral)
+        res = scan(self, binary_op, neutral)
         last: R = res.pop()
         return res, last
 
@@ -174,36 +154,36 @@ class SList(list, IList):
             neutral = binary_op(self[idx - 1], neutral)
         return res
 
-    def zip(self: 'SList[T]', lst: 'SList[U]') -> 'SList[Tuple[T, U]]':
-        assert len(self) == len(lst)
-        lst: Sequence[Tuple[T, U]] = [(left, right) for (left, right) in zip(self, lst)]
-        return SList(lst)
+    def zip(self: 'SList[T]', a_list: 'SList[U]') -> 'SList[Tuple[T, U]]':
+        assert len(self) == len(a_list)
+        a_list: Sequence[Tuple[T, U]] = [(left, right) for (left, right) in zip(self, a_list)]
+        return SList(a_list)
 
-    def map2(self: 'SList[T]', binary_op: Callable[[T, U], R], lst: 'SList[U]') -> 'SList[R]':
-        assert len(self) == len(lst)
-        return SList([binary_op(left, right) for (left, right) in zip(self, lst)])
+    def map2(self: 'SList[T]', binary_op: Callable[[T, U], R], a_list: 'SList[U]') -> 'SList[R]':
+        assert len(self) == len(a_list)
+        return SList([binary_op(left, right) for (left, right) in zip(self, a_list)])
 
     def map2i(self: 'SList[T]', ternary_op: Callable[[int, T, U], R],
-              lst: 'SList[U]') -> 'SList[R]':
-        assert len(self) == len(lst)
-        return SList([ternary_op(i, self[i], lst[i]) for i in range(0, len(self))])
+              a_list: 'SList[U]') -> 'SList[R]':
+        assert len(self) == len(a_list)
+        return SList([ternary_op(i, self[i], a_list[i]) for i in range(0, len(self))])
 
     def get_partition(self: 'SList[T]') -> 'SList[SList[T]]':
         return SList([self])
 
     def flatten(self: 'SList[SList[T]]') -> 'SList[T]':
-        lst = SList(self.reduce(concat, []))
-        return lst
+        a_list = SList(self.reduce(concat, []))
+        return a_list
 
-    def distribute(self: 'SList[T]', _: Sequence[int]) -> 'SList[T]':
+    def distribute(self: 'SList[T]', _: interface.Distribution) -> 'SList[T]':
         return self
 
     def balance(self: 'SList[T]') -> 'SList[T]':
         return self
 
     @staticmethod
-    def from_seq(lst: Sequence[T]) -> 'SList[T]':
-        return SList(lst)
+    def from_seq(sequence: Sequence[T]) -> 'SList[T]':
+        return SList(sequence)
 
     def to_seq(self: 'SList[T]') -> 'SList[T]':
         return self
@@ -223,7 +203,7 @@ class SList(list, IList):
         return self[rng.start:rng.stop:rng.step]
 
     def permute(self: 'SList[T]', bij: Callable[[int], int]) -> 'SList[T]':
-        lst = self.copy()
+        a_list = self.copy()
         for (idx, value) in enumerate(self):
-            lst[bij(idx)] = value
-        return lst
+            a_list[bij(idx)] = value
+        return a_list

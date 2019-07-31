@@ -7,11 +7,13 @@ import functools
 from collections import defaultdict
 from operator import add, concat
 from typing import Optional, Tuple, Sequence  # pylint: disable=unused-import
-from typing import TypeVar, Callable, List  # pylint: disable=unused-import
+from typing import TypeVar, Callable  # pylint: disable=unused-import
 
-from pyske.core.interface.linear import IList
 from pyske.core.list.slist import SList
+from pyske.core.list.distribution import Distribution
+from pyske.core import interface
 from pyske.core.support import parallel as parimpl, interval
+from pyske.core.support.list import scan
 from pyske.core.util import par
 
 __all__ = ['PList']
@@ -25,14 +27,14 @@ U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
 
-def _group_by(lst):
+def _group_by(a_list):
     dic = defaultdict(list)
-    for key, val in lst:
+    for key, val in a_list:
         dic[key].append(val)
     return dic
 
 
-class PList(IList):
+class PList(interface.List):
     # pylint: disable=too-many-public-methods
     # pylint: disable=protected-access
     """
@@ -57,7 +59,7 @@ class PList(IList):
         self.__global_size: int = 0
         self.__local_size: int = 0
         self.__start_index: int = 0
-        self.__distribution: List[int] = [0 for _ in range(0, _NPROCS)]
+        self.__distribution = Distribution([0 for _ in range(0, _NPROCS)])
 
     def __get_shape(self: 'PList[T]') -> 'PList':
         p_list = PList()
@@ -77,7 +79,8 @@ class PList(IList):
 
     def invariant(self: 'PList[T]') -> None:
         assert isinstance(self.__content, SList)
-        prefix = SList(self.__distribution).scan(add, 0)
+        assert isinstance(self.__distribution, Distribution)
+        prefix = scan(self.__distribution, add, 0)
         assert len(self.__content) == self.__local_size
         assert self.__distribution[_PID] == self.__local_size
         assert self.__start_index == prefix[_PID]
@@ -95,7 +98,8 @@ class PList(IList):
         p_list = PList()
         p_list.__global_size = size
         p_list.__local_size = parimpl.local_size(_PID, size)
-        p_list.__distribution = [parimpl.local_size(i, size) for i in range(0, _NPROCS)]
+        distribution_list = [parimpl.local_size(i, size) for i in range(0, _NPROCS)]
+        p_list.__distribution = Distribution(distribution_list)
         p_list.__start_index = SList(p_list.__distribution).scanl(lambda x, y: x + y, 0)[_PID]
         p_list.__content = SList([value_at(i) for i in
                                   range(p_list.__start_index,
@@ -113,23 +117,23 @@ class PList(IList):
         p_list.__content = self.__content.mapi(lambda i, x: binary_op(i + self.__start_index, x))
         return p_list
 
-    def map2(self: 'PList[T]', binary_op: Callable[[T, U], V], lst: 'PList[U]') -> 'PList[V]':
-        assert self.__distribution == lst.__distribution
+    def map2(self: 'PList[T]', binary_op: Callable[[T, U], V], a_list: 'PList[U]') -> 'PList[V]':
+        assert self.__distribution == a_list.__distribution
         res = self.__get_shape()
-        res.__content = self.__content.map2(binary_op, lst.__content)
+        res.__content = self.__content.map2(binary_op, a_list.__content)
         return res
 
     def map2i(self: 'PList[T]', ternary_op: Callable[[int, T, U], V],
-              lst: 'PList[U]') -> 'PList[V]':
-        assert self.__distribution == lst.__distribution
+              a_list: 'PList[U]') -> 'PList[V]':
+        assert self.__distribution == a_list.__distribution
         res = self.__get_shape()
         res.__content = self.__content.map2i(lambda i, x, y:
                                              ternary_op(i + self.__start_index, x, y),
-                                             lst.__content)
+                                             a_list.__content)
         return res
 
-    def zip(self: 'PList[T]', lst: 'PList[U]') -> 'PList[Tuple[T, U]]':
-        res = self.map2(lambda x, y: (x, y), lst)
+    def zip(self: 'PList[T]', a_list: 'PList[U]') -> 'PList[Tuple[T, U]]':
+        res = self.map2(lambda x, y: (x, y), a_list)
         return res
 
     def filter(self: 'PList[T]', predicate: Callable[[T], bool]) -> 'PList[T]':
@@ -184,8 +188,8 @@ class PList(IList):
         last = partials[self.__local_size - 1]
         acc, _ = parimpl.scan(binary_op, last)
         if _PID != 0:
-            for (idx, value) in enumerate(partials):
-                partials[idx] = binary_op(acc, value)
+            for (index, value) in enumerate(partials):
+                partials[index] = binary_op(acc, value)
         p_list.__content = partials
         return p_list
 
@@ -195,8 +199,8 @@ class PList(IList):
         partials, last = self.__content.scanl_last(binary_op, neutral)
         acc, red = parimpl.scan(binary_op, last)
         if _PID != 0:
-            for (idx, value) in enumerate(partials):
-                partials[idx] = binary_op(acc, value)
+            for (index, value) in enumerate(partials):
+                partials[index] = binary_op(acc, value)
         p_list.__content = partials
         return p_list, red
 
@@ -204,8 +208,8 @@ class PList(IList):
         res, _ = self.scanl_last(binary_op, neutral)
         return res
 
-    def distribute(self: 'PList[T]', target_distr: par.Distribution) -> 'PList[T]':
-        assert par.Distribution.is_valid(target_distr, self.__global_size)
+    def distribute(self: 'PList[T]', target_distr: Distribution) -> 'PList[T]':
+        assert Distribution.is_valid(target_distr, self.__global_size)
         source_distr = self.__distribution
         source_bounds = interval.bounds(source_distr)
         target_bounds = interval.bounds(target_distr)
@@ -223,29 +227,29 @@ class PList(IList):
         return p_list
 
     def balance(self: 'PList[T]') -> 'PList[T]':
-        return self.distribute(par.Distribution.balanced(self.__global_size))
+        return self.distribute(Distribution.balanced(self.__global_size))
 
     def gather(self: 'PList[T]', pid: int) -> 'PList[T]':
         assert pid in par.procs()
         d_list = [self.length() if i == pid else 0 for i in par.procs()]
-        distr = par.Distribution(d_list)
+        distr = Distribution(d_list)
         return self.distribute(distr)
 
     def scatter(self: 'PList[T]', pid: int) -> 'PList[T]':
         assert pid in par.procs()
 
-        def select(idx, lst):
-            if idx == pid:
-                return lst
+        def select(index, a_list):
+            if index == pid:
+                return a_list
             return []
 
         at_pid = self.get_partition().mapi(select).flatten()
-        return at_pid.distribute(par.Distribution.balanced(at_pid.length()))
+        return at_pid.distribute(Distribution.balanced(at_pid.length()))
 
     def scatter_range(self: 'PList[T]', rng) -> 'PList[T]':
 
-        def select(idx, value):
-            if idx in rng:
+        def select(index, value):
+            if index in rng:
                 return value
             return None
 
@@ -253,14 +257,14 @@ class PList(IList):
             return value is not None
 
         selected = self.mapi(select).filter(not_none)
-        return selected.distribute(par.Distribution.balanced(selected.length()))
+        return selected.distribute(Distribution.balanced(selected.length()))
 
     @staticmethod
-    def from_seq(lst: Sequence[T]) -> 'PList[T]':
+    def from_seq(sequence: Sequence[T]) -> 'PList[T]':
         p_list = PList()
         if _PID == 0:
-            p_list.__content = SList(lst)
-            p_list.__distribution = [len(lst) if i == 0 else 0 for i in par.procs()]
+            p_list.__content = SList(sequence)
+            p_list.__distribution = [len(sequence) if i == 0 else 0 for i in par.procs()]
         from_root = _COMM.bcast(p_list.__distribution, 0)
         p_list.__distribution = from_root
         p_list.__local_size = p_list.__distribution[_PID]
@@ -273,7 +277,7 @@ class PList(IList):
 
     def permute(self: 'PList[T]', bij: Callable[[int], int]) -> 'PList[T]':
         p_list = self.__get_shape()
-        distr = par.Distribution(self.__distribution)
+        distr = Distribution(self.__distribution)
         new_indices = self.mapi(lambda i, x: distr.to_pid(bij(i), x)).get_partition().map(_group_by)
         mapping = new_indices.__content[0]
         keys = mapping.keys()

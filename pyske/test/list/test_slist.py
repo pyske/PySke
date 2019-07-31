@@ -231,26 +231,6 @@ def test_reduce_sum_non_empty():
 
 # -------------------------- #
 
-def test_scan_nil():
-    # pylint: disable=missing-docstring
-    neutral = 0
-    slst = SList()
-    res = slst.scan(operator.add, neutral)
-    exp = SList([0])
-    assert res == exp
-
-
-def test_scan_cons():
-    # pylint: disable=missing-docstring
-    neutral = 0
-    slst = SList([1, 2, 3, 4])
-    res = slst.scan(operator.add, neutral)
-    exp = SList([0, 1, 3, 6, 10])
-    assert res == exp
-
-
-# -------------------------- #
-
 def test_scanr_empty():
     # pylint: disable=missing-docstring
     with pytest.raises(AssertionError):

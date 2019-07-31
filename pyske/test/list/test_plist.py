@@ -1,13 +1,13 @@
 """
 Tests for parallel lists and associated skeletons
 """
+
 __all__ = []
 import operator
 import random
 import pytest
-from pyske.core.list.plist import PList
-from pyske.core.list.slist import SList
-from pyske.core.util import fun, par
+from pyske.core import PList, SList, Distribution, par, fun
+
 
 pytestmark = pytest.mark.plist  # pylint: disable=invalid-name
 
@@ -301,7 +301,7 @@ def test_distribute_data():
     dst = par.randpid()
     data = generate_int_plist()
     size = data.length()
-    distr = par.Distribution([0 for _ in par.procs()])
+    distr = Distribution([0 for _ in par.procs()])
     distr[dst] = size
     res = data.distribute(distr).to_seq()
     exp = SList(range(0, size))
@@ -313,7 +313,7 @@ def test_distribute_distr():
     data = generate_str_plist()
     size = data.length()
     dst = par.randpid()
-    exp = par.Distribution([0 for _ in par.procs()])
+    exp = Distribution([0 for _ in par.procs()])
     exp[dst] = size
     res = get_distribution(data.distribute(exp))
     assert res == exp
@@ -333,10 +333,10 @@ def test_balance_distr():
     data = generate_str_plist()
     size = data.length()
     dst = par.randpid()
-    distr = par.Distribution([0 for _ in par.procs()])
+    distr = Distribution([0 for _ in par.procs()])
     distr[dst] = size
     res = get_distribution(data.distribute(distr).balance())
-    exp = par.Distribution.balanced(size)
+    exp = Distribution.balanced(size)
     assert res == exp
 
 
@@ -374,7 +374,7 @@ def test_scatter_distr():
     src = par.randpid()
     distr = get_distribution(data)
     res = get_distribution(data.scatter(src))
-    exp = par.Distribution.balanced(distr[src])
+    exp = Distribution.balanced(distr[src])
     assert res == exp
 
 
@@ -392,7 +392,7 @@ def test_scatter_range_distr():
     data = generate_str_plist()
     min_, max_ = rand_min_max(data.length())
     res = get_distribution(data.scatter_range(range(min_, max_)))
-    exp = par.Distribution.balanced(max_ - min_)
+    exp = Distribution.balanced(max_ - min_)
     assert res == exp
 
 

@@ -1,19 +1,19 @@
 """
-linear: interface for lists
+linear: interface for PySke linearly ordered data structures.
 
-Interface: IList.
+Interfaces: Distribution, List.
 """
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Callable, Optional, List, Tuple, Any
+from typing import TypeVar, Generic, Callable, Optional, Sequence, Tuple, Any
 
-__all__ = ['IList', 'IDistribution']
+__all__ = ['List', 'Distribution']
 
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
 
-class IDistribution(ABC, list):
+class Distribution(ABC, list):
     """
     A class to represent the distribution of parallel linear data structure.
     """
@@ -35,7 +35,7 @@ class IDistribution(ABC, list):
 
     @staticmethod
     @abstractmethod
-    def balanced(size: int) -> 'IDistribution':
+    def balanced(size: int) -> 'Distribution':
         """
         Return a balanced distribution.
 
@@ -46,17 +46,17 @@ class IDistribution(ABC, list):
         """
 
     @abstractmethod
-    def to_pid(self, idx: int, value) -> Tuple[int, Tuple[int, Any]]:
+    def to_pid(self, index: int, value) -> Tuple[int, Tuple[int, Any]]:
         """
         Return the processor identifier of the given index.
 
-        :param idx: a valid index
+        :param index: a valid index
         :param value: a value
         :return: a processor identifier
         """
 
 
-class IList(ABC, Generic[T]):
+class List(ABC, Generic[T]):
     # pylint: disable=too-many-public-methods
     """
     PySke lists (interface)
@@ -108,7 +108,7 @@ class IList(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def from_seq(lst: List[T]) -> 'IList[T]':
+    def from_seq(sequence: Sequence[T]) -> 'List[T]':
         """
         Return a list built from a sequential list at processor 0.
 
@@ -125,11 +125,11 @@ class IList(ABC, Generic[T]):
                     [3 if pid == 0 else 0 for pid in par.procs()]
             True
 
-       :param lst: a list (at processor 0).
+       :param sequence: a list (at processor 0).
        :return: a list with the same content, all at processor 0.
        """
 
-    def to_seq(self: 'IList[T]') -> List[T]:
+    def to_seq(self: 'List[T]') -> 'List[T]':
         """
         Return a sequential list with same content.
 
@@ -171,7 +171,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def map(self: 'IList[T]', unary_op: Callable[[T], V]) -> 'IList[V]':
+    def map(self: 'List[T]', unary_op: Callable[[T], V]) -> 'List[V]':
         """
         Apply a function to all the elements.
 
@@ -192,7 +192,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def mapi(self: 'IList[T]', binary_op: Callable[[int, T], V]) -> 'IList[V]':
+    def mapi(self: 'List[T]', binary_op: Callable[[int, T], V]) -> 'List[V]':
         """
         Apply a function to all the elements and their indices.
 
@@ -208,15 +208,15 @@ class IList(ABC, Generic[T]):
             >>> PList.init(lambda x: x, 5).mapi(lambda i, x: i * x).to_seq()
             [0, 1, 4, 9, 16]
 
-        :param unary_op: function to apply to each index and element
+        :param binary_op: function to apply to each index and element
         :return: a new list
         """
 
     @abstractmethod
-    def map2(self: 'IList[T]', binary_op: Callable[[T, U], V],
-             lst: 'IList[U]') -> 'IList[V]':
+    def map2(self: 'List[T]', binary_op: Callable[[T, U], V],
+             a_list: 'List[U]') -> 'List[V]':
         """
-        Apply a function to all the elements of ``self`` and ``lst``.
+        Apply a function to all the elements of ``self`` and ``sequence``.
 
         The returned list has the same shape (same length, same distribution)
         than the initial lists.
@@ -234,14 +234,14 @@ class IList(ABC, Generic[T]):
             [5, 5, 5, 5, 5]
 
         :param binary_op: function to apply to each pair of elements
-        :param lst: the second list.
-            The length of ``lst`` should be the same than the length of ``self``.
+        :param a_list: the second list.
+            The length of ``sequence`` should be the same than the length of ``self``.
         :return: a new list.
         """
 
     @abstractmethod
-    def map2i(self: 'IList[T]', ternary_op: Callable[[int, T, U], V],
-              lst: 'IList[U]') -> 'IList[V]':
+    def map2i(self: 'List[T]', ternary_op: Callable[[int, T, U], V],
+              a_list: 'List[U]') -> 'List[V]':
         """
         Apply a function to all the indices and elements of both lists.
 
@@ -260,12 +260,12 @@ class IList(ABC, Generic[T]):
             [0, 5, 10, 15, 20]
 
         :param ternary_op: function to apply to each index, and elements of both lists.
-        :param lst: the second list.
+        :param a_list: the second list.
         :return: a new list.
         """
 
     @abstractmethod
-    def zip(self: 'IList[T]', lst: 'IList[U]') -> 'IList[Tuple[T, U]]':
+    def zip(self: 'List[T]', a_list: 'List[U]') -> 'List[Tuple[T, U]]':
         """
         Create a list of pairs.
 
@@ -283,12 +283,12 @@ class IList(ABC, Generic[T]):
             >>> l.zip(l).to_seq()
             [('0', '0'), ('1', '1')]
 
-        :param lst: a list of same shape than ``self``.
+        :param a_list: a list of same shape than ``self``.
         :return: a list of pairs.
         """
 
     @abstractmethod
-    def filter(self: 'IList[T]', predicate: Callable[[T], bool]) -> 'IList[T]':
+    def filter(self: 'List[T]', predicate: Callable[[T], bool]) -> 'List[T]':
         """
         Return a filtered list.
 
@@ -307,7 +307,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def get_partition(self: 'IList[T]') -> 'IList[List[T]]':
+    def get_partition(self: 'List[T]') -> 'List[List[T]]':
         """
         Make the distribution visible.
 
@@ -326,7 +326,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def flatten(self: 'IList[List[T]]') -> 'IList[T]':
+    def flatten(self: 'List[List[T]]') -> 'List[T]':
         """
         Flatten the list of lists.
 
@@ -343,7 +343,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def reduce(self: 'IList[T]', binary_op: Callable[[T, T], T], neutral: Optional[T] = None) -> T:
+    def reduce(self: 'List[T]', binary_op: Callable[[T, T], T], neutral: Optional[T] = None) -> T:
         """
         Reduce a list of value to one value.
 
@@ -368,7 +368,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def map_reduce(self: 'IList[T]', unary_op: Callable[[T], V],
+    def map_reduce(self: 'List[T]', unary_op: Callable[[T], V],
                    binary_op: Callable[[V, V], V], neutral: Optional[V] = None) -> V:
         """
         Combination of a map and a reduce.
@@ -391,7 +391,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def scanr(self: 'IList[T]', binary_op: Callable[[T, T], T]) -> 'IList[T]':
+    def scanr(self: 'List[T]', binary_op: Callable[[T, T], T]) -> 'List[T]':
         """
         Return the prefix-sum from right-to-left.
 
@@ -413,7 +413,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def scanl_last(self: 'IList[T]', binary_op: Callable[[T, T], T], neutral: T):
+    def scanl_last(self: 'List[T]', binary_op: Callable[[T, T], T], neutral: T):
         """
         Return the prefix-sum list and the reduction.
 
@@ -429,8 +429,8 @@ class IList(ABC, Generic[T]):
             >>> from pyske.core.list.plist import PList
             >>> SList.init(float, 4).scanl_last(lambda x, y: x + y, 0.0)
             ([0.0, 0.0, 1.0, 3.0], 6.0)
-            >>> (lst, value) = PList.init(lambda x: x + 1, 4).scanl_last(lambda x, y: x + y, 0)
-            >>> (lst.to_seq(), value)
+            >>> (sequence, value) = PList.init(lambda x: x + 1, 4).scanl_last(lambda x, y: x + y, 0)
+            >>> (sequence.to_seq(), value)
             ([0, 1, 3, 6], 10)
 
         :param binary_op: a binary associative  operation.
@@ -442,7 +442,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def scanl(self: 'IList[T]', binary_op: Callable[[T, T], T], neutral: T) -> 'IList[T]':
+    def scanl(self: 'List[T]', binary_op: Callable[[T, T], T], neutral: T) -> 'List[T]':
         """
         Return the prefix-sum list.
 
@@ -470,7 +470,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def distribute(self: 'IList[T]', target_distr: IDistribution) -> 'IList[T]':
+    def distribute(self: 'List[T]', target_distr: Distribution) -> 'List[T]':
         """
         Copy the list while changing its distribution.
 
@@ -486,7 +486,7 @@ class IList(ABC, Generic[T]):
             >>> SList.init(int, 4).distribute(distr)
             [0, 1, 2, 3]
             >>> PList.init(int, 4).distribute(distr).get_partition().to_seq() == \
-                    [list(range(0,4)) if idx == 0 else [] for idx in par.procs()]
+                    [list(range(0,4)) if index == 0 else [] for index in par.procs()]
             True
 
         :param target_distr: a list of positive numbers.
@@ -495,28 +495,27 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def balance(self: 'IList[T]') -> 'IList[T]':
+    def balance(self: 'List[T]') -> 'List[T]':
         """
         Copy the list while changing its distribution.
 
         In sequential, it just returns ``self``. In parallel, communications
         are performed so that the list is evenly distributed.
 
-            >>> from pyske.core.list.slist import SList
-            >>> from pyske.core.list.plist import PList
+            >>> from pyske.core import SList, PList, Distribution
             >>> from pyske.core.util import par
 
             >>> SList.init(int, 4).balance()
             [0, 1, 2, 3]
             >>> PList.init(int, 4).balance().get_partition().map(len).to_seq() == \
-                    par.Distribution.balanced(4)
+                    Distribution.balanced(4)
             True
 
         :return: a list containing the same elements.
         """
 
     @abstractmethod
-    def gather(self: 'IList[T]', pid: int) -> 'IList[T]':
+    def gather(self: 'List[T]', pid: int) -> 'List[T]':
         """
         Gather all the elements on one processor.
 
@@ -526,8 +525,7 @@ class IList(ABC, Generic[T]):
 
         Examples::
 
-            >>> from pyske.core.list.slist import SList
-            >>> from pyske.core.list.plist import PList
+            >>> from pyske.core import SList, PList
             >>> from pyske.core.util import par
 
             >>> SList.init(int, 4).gather(0)
@@ -545,17 +543,17 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def scatter(self: 'IList[T]', pid: int) -> 'IList[T]':
+    def scatter(self: 'List[T]', pid: int) -> 'List[T]':
         """
         Return a new list containing elements from processor ``pid``.
 
         Examples::
 
-            >>> from pyske.core import SList, PList, par
+            >>> from pyske.core import SList, PList, Distribution, par
             >>> SList.init(str, 3).scatter(0)
             ['0', '1', '2']
             >>> PList.from_seq([1, 2, 3]).scatter(0).get_partition().map(len).to_seq() == \
-                    par.Distribution.balanced(3)
+                    Distribution.balanced(3)
             True
 
         :param pid: should be a valid processor.
@@ -564,7 +562,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def scatter_range(self: 'IList[T]', rng) -> 'IList[T]':
+    def scatter_range(self: 'List[T]', rng) -> 'List[T]':
         """
         Return a new list containing elements in the range.
 
@@ -573,12 +571,12 @@ class IList(ABC, Generic[T]):
 
         Examples::
 
-            >>> from pyske.core import SList, PList, par
+            >>> from pyske.core import SList, PList, Distribution, par
             >>> SList.init(str, 3).scatter(0)
             ['0', '1', '2']
             >>> PList.from_seq(SList.init(int, 10)).scatter_range(range(0,3)) \
                     .get_partition().map(len).to_seq() \
-                    == par.Distribution.balanced(3)
+                    == Distribution.balanced(3)
             True
 
         :param rng: a valid range.
@@ -586,7 +584,7 @@ class IList(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def permute(self: 'IList[T]', bij: Callable[[int], int]) -> 'IList[T]':
+    def permute(self: 'List[T]', bij: Callable[[int], int]) -> 'List[T]':
         """
         Permute the content of the list.
 

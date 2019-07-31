@@ -8,5 +8,6 @@ Classes:
 
 from .plist import PList
 from .slist import SList
+from .distribution import Distribution
 
-__all__ = ['SList', 'PList']
+__all__ = ['SList', 'PList', 'Distribution']

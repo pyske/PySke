@@ -2,6 +2,7 @@
 Operations on intervals.
 """
 from operator import add
+from pyske.core.support.list import scan
 from pyske.core.list.slist import SList
 
 
@@ -34,7 +35,7 @@ def is_valid(inter):
 
 
 def union(inter1, inter2):
-    """Union two intervals."""
+    """Union of two intervals."""
     assert is_valid(inter1)
     assert is_valid(inter2)
     if inter1 is None:
@@ -77,7 +78,7 @@ def _firsts(distr):
 
 
 def _lasts(distr):
-    return SList(distr).scan(add, 0).tail().map(lambda x: x - 1)
+    return SList(scan(distr, add, 0)).tail().map(lambda x: x - 1)
 
 
 def bounds(distr):

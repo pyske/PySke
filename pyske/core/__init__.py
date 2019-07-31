@@ -5,6 +5,7 @@ Classes:
     * PList
     * SList
     * Timing
+    * Distribution
 
 Modules:
     * par
@@ -12,9 +13,9 @@ Modules:
     * opt
 """
 
-from pyske.core.list import PList, SList
+from pyske.core.list import PList, SList, Distribution
 from pyske.core.util.timing import Timing
 from pyske.core.util import par
 from pyske.core.util import fun
 
-__all__ = ['PList', 'SList', 'Timing', 'par', 'fun']
+__all__ = ['PList', 'SList', 'Timing', 'Distribution', 'par', 'fun']
