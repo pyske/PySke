@@ -266,7 +266,7 @@ class PList(interface.List):
             p_list.__content = SList(sequence)
             p_list.__distribution = [len(sequence) if i == 0 else 0 for i in par.procs()]
         from_root = _COMM.bcast(p_list.__distribution, 0)
-        p_list.__distribution = from_root
+        p_list.__distribution = Distribution(from_root)
         p_list.__local_size = p_list.__distribution[_PID]
         p_list.__global_size = p_list.__distribution[0]
         p_list.__start_index = SList(p_list.__distribution).scanl(add, 0)[_PID]

@@ -5,9 +5,10 @@ Tests for parallel lists and associated skeletons
 __all__ = []
 import operator
 import random
-import pytest
-from pyske.core import PList, SList, Distribution, par, fun
 
+import pytest
+from pyske.test.support import swap
+from pyske.core import PList, SList, Distribution, par, fun
 
 pytestmark = pytest.mark.plist  # pylint: disable=invalid-name
 
@@ -178,7 +179,64 @@ def test_mapi_empty():
     assert res == exp
 
 
+def test_mapi_non_empty():
+    # pylint: disable=missing-docstring
+    data = generate_str_plist(1)
+    res = data.mapi(pos_upper).to_seq()
+    exp = data.to_seq().mapi(pos_upper)
+    assert res == exp
+
+
+def test_mapi_non_empty_2():
+    # pylint: disable=missing-docstring
+    data = PList.init(lambda i: MSG[i], len(MSG))
+    res = data.mapi(pos_upper).to_seq()
+    exp = SList(MSG).mapi(pos_upper)
+    assert res == exp
+
+
+def test_map2_empty():
+    # pylint: disable=missing-docstring
+    data = PList()
+    res = data.map2(operator.add, data).to_seq()
+    exp = []
+    assert res == exp
+
+
+def test_map2_non_empty():
+    # pylint: disable=missing-docstring
+    data = generate_int_plist()
+    res = data.map2(operator.add, data).to_seq()
+    exp = data.to_seq().map(lambda x: 2 * x)
+    assert res == exp
+
+
+def test_map2i_non_empty():
+    # pylint: disable=missing-docstring
+    data = generate_int_plist()
+    res = data.map2i(fun.add, data).to_seq()
+    exp = data.to_seq().map2i(fun.add, data.to_seq())
+    assert res == exp
+
+
+def test_zip_empty():
+    # pylint: disable=missing-docstring
+    data = PList()
+    res = data.zip(data).to_seq()
+    exp = []
+    assert res == exp
+
+
+def test_zip_non_empty():
+    # pylint: disable=missing-docstring
+    data = generate_int_plist()
+    res = data.zip(data).to_seq()
+    exp = data.to_seq().zip(data.to_seq())
+    assert res == exp
+
+
 # -------------------------- #
+
 
 def test_reduce_nil():
     # pylint: disable=missing-docstring
@@ -241,13 +299,6 @@ def test_map_reduce_cons():
 
 
 # -------------------------- #
-
-def test_mapi_non_empty():
-    # pylint: disable=missing-docstring
-    data = PList.init(lambda i: MSG[i], len(MSG))
-    res = data.mapi(pos_upper).to_seq()
-    exp = SList(MSG).mapi(pos_upper)
-    assert res == exp
 
 
 def test_scanr_non_empty():
@@ -387,6 +438,15 @@ def test_scatter_range_data():
     assert res == exp
 
 
+def test_scatter_range_data_non_empty():
+    # pylint: disable=missing-docstring
+    data = generate_str_plist(1)
+    min_, max_ = rand_min_max(data.length())
+    res = data.scatter_range(range(min_, max_)).to_seq()
+    exp = data.to_seq()[min_:max_]
+    assert res == exp
+
+
 def test_scatter_range_distr():
     # pylint: disable=missing-docstring
     data = generate_str_plist()
@@ -404,3 +464,20 @@ def test_filter():
     assert exp == res
     for value in res:
         assert is_even(value)
+
+
+def test_permute_idt():
+    # pylint: disable=missing-docstring
+    input_list = generate_str_plist()
+    exp = input_list.to_seq()
+    res = input_list.permute(fun.idt).to_seq()
+    assert exp == res
+
+
+def test_permute_swap():
+    # pylint: disable=missing-docstring
+    input_list = generate_str_plist()
+    size = input_list.length()
+    exp = input_list.to_seq()
+    res = input_list.permute(swap(size)).permute(swap(size)).to_seq()
+    assert exp == res

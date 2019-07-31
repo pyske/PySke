@@ -206,4 +206,4 @@ class SList(list, interface.List):
         a_list = self.copy()
         for (idx, value) in enumerate(self):
             a_list[bij(idx)] = value
-        return a_list
+        return SList(a_list)

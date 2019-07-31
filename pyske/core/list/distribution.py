@@ -33,4 +33,4 @@ class Distribution(interface.Distribution):
         for (pid, bound) in enumerate(indices):
             if index < bound:
                 return pid, (index, value)
-        return parallel.NPROCS - 1, (index, value)
+        return None  # unreachable if index is valid

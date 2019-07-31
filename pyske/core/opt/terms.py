@@ -52,14 +52,6 @@ class Term:
         """Execute an optimized term."""
         return self.opt().eval()
 
-    def graft(self, pos, term):
-        """Graft a term at a given position."""
-        i = pos.pop(0)
-        if not pos:
-            self.arguments[i] = term
-        else:
-            self.arguments[i].graft(pos, term)
-
     @staticmethod
     def __match(obj, pattern):
         if isinstance(pattern, Var):

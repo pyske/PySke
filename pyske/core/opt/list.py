@@ -55,14 +55,17 @@ class PList(Term, _List):
 
 class SList(Term, _List):
     """Representation of sequential lists."""
-    def __init__(self, f='__init__', a=None, s=True):
-        if a is None:
-            a = ['SList']
-        Term.__init__(self, f, a, s)
+    def __init__(self, f_symbol='__init__', args=None, is_static=True):
+        if args is None:
+            args = ['SList']
+            if f_symbol != '__init__':
+                args = args + [f_symbol]
+                f_symbol = '__init__'
+        Term.__init__(self, f_symbol, args, is_static)
 
     @staticmethod
     def raw(lst):
-        return PList("__raw__", [lst])
+        return SList("__raw__", [lst])
 
     @staticmethod
     def init(value_at, size):

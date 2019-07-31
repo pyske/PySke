@@ -5,8 +5,8 @@ Tests of sequential lists
 import operator
 import pytest
 from pyske.core.util import fun
-from pyske.core.list.slist import SList
-
+from pyske.core import SList, Distribution
+from pyske.test.support import swap
 
 def parser_tuple(string):
     """
@@ -158,14 +158,6 @@ def test_mapi_empty():
     assert res == exp
 
 
-def test_mapi_non_empty():
-    # pylint: disable=missing-docstring
-    slst = SList([1, 2, 3])
-    exp = SList([0, 2, 6])
-    res = slst.mapi(operator.mul)
-    assert res == exp
-
-
 def test_mapi_id():
     # pylint: disable=missing-docstring
     slst = SList([1, 2, 3])
@@ -174,7 +166,39 @@ def test_mapi_id():
     assert res == exp
 
 
+def test_mapi_non_empty():
+    # pylint: disable=missing-docstring
+    data = SList([1, 3, 5, 8, 12])
+    res = data.mapi(operator.add)
+    exp = SList([1, 4, 7, 11, 16])
+    assert res == exp
+
+
+def test_map2_empty():
+    # pylint: disable=missing-docstring
+    data = SList()
+    res = data.map2(operator.add, data).to_seq()
+    exp = []
+    assert res == exp
+
+
+def test_map2_non_empty():
+    # pylint: disable=missing-docstring
+    data = SList([42, 11, 0, -42])
+    res = data.map2(operator.add, data).to_seq()
+    exp = data.to_seq().map(lambda x: 2 * x)
+    assert res == exp
+
+
+def test_map2i_non_empty():
+    # pylint: disable=missing-docstring
+    data = SList([0, 1, 0, 2, 0, 42])
+    res = data.map2i(fun.add, data).to_seq()
+    exp = SList([0, 3, 2, 7, 4, 89])
+    assert res == exp
+
 # -------------------------- #
+
 
 def test_map_reduce_nil():
     # pylint: disable=missing-docstring
@@ -192,6 +216,13 @@ def test_map_reduce_cons():
     exp = slst.map(fun.incr).reduce(operator.add)
     assert res == exp
 
+
+def test_map_reduce_non_empty():
+    # pylint: disable=missing-docstring
+    slst = SList([1, 2, 3, 4])
+    res = slst.map_reduce(fun.incr, operator.add, 0)
+    exp = slst.map(fun.incr).reduce(operator.add)
+    assert res == exp
 
 # -------------------------- #
 
@@ -422,3 +453,82 @@ def test_from_str_tuple():
     assert res == exp
 
 # -------------------------- #
+
+
+def test_distribute_data():
+    # pylint: disable=missing-docstring
+    data = SList.init(int, 42)
+    size = data.length()
+    distr = Distribution([size])
+    res = data.distribute(distr)
+    exp = SList(range(0, size))
+    assert res == exp
+
+
+def test_balance_data():
+    # pylint: disable=missing-docstring
+    data = SList.init(int, 23)
+    size = data.length()
+    res = data.balance()
+    exp = SList(range(0, size))
+    assert res == exp
+
+
+def test_gather_data():
+    # pylint: disable=missing-docstring
+    data = SList.init(float, 17)
+    res = data.gather(0)
+    exp = SList(range(0, len(data)))
+    assert res == exp
+
+
+def test_scatter_data():
+    # pylint: disable=missing-docstring
+    data = SList.init(str, 13)
+    res = data.scatter(0)
+    exp = data
+    assert res == exp
+
+
+def test_scatter_range_data():
+    # pylint: disable=missing-docstring
+    data = SList.init(float, 111)
+    res = data.scatter_range(range(23, 27))
+    exp = SList(range(23, 27)).map(float)
+    assert res == exp
+
+
+def test_permute_idt():
+    # pylint: disable=missing-docstring
+    input_list = SList.init(str, 37)
+    exp = input_list
+    res = input_list.permute(fun.idt)
+    assert exp == res
+
+
+def test_permute_swap():
+    # pylint: disable=missing-docstring
+    exp = SList.init(str, 43)
+    size = exp.length()
+    res = exp.permute(swap(size)).permute(swap(size))
+    assert exp == res
+
+
+def test_from_seq():
+    # pylint: disable=missing-docstring
+    exp = SList([1, 2, 3])
+    res = SList.from_seq([1, 2, 3])
+    assert exp == res
+
+
+def test_get_partition():
+    # pylint: disable=missing-docstring
+    exp = SList([[1, 2, 3]])
+    res = SList([1, 2, 3]).get_partition()
+    assert exp == res
+
+
+def test_invariant():
+    # pylint: disable=missing-docstring
+    res = SList([1, 2, 3]).get_partition().invariant()
+    assert res
