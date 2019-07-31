@@ -9,7 +9,7 @@ from operator import add, concat
 from typing import Optional, Tuple, Sequence  # pylint: disable=unused-import
 from typing import TypeVar, Callable, List  # pylint: disable=unused-import
 
-from pyske.core.list.ilist import IList
+from pyske.core.interface.linear import IList
 from pyske.core.list.slist import SList
 from pyske.core.support import parallel as parimpl, interval
 from pyske.core.util import par

@@ -2,7 +2,7 @@
 Maximum Prefix Sum
 """
 
-from pyske.core.list.ilist import IList
+from pyske.core.interface.linear import IList
 
 
 # ------- Maximum Prefix Sum ------------

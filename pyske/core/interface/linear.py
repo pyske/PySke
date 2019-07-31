@@ -1,5 +1,5 @@
 """
-ilist: interface for lists
+linear: interface for lists
 
 Interface: IList.
 """

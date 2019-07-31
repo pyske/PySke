@@ -6,7 +6,7 @@ class SList: sequential lists.
 import functools
 from operator import concat
 from typing import TypeVar, Callable, Sequence, Tuple, Optional
-from pyske.core.list.ilist import IList
+from pyske.core.interface.linear import IList
 
 __all__ = ['SList']
 

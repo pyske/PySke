@@ -12,7 +12,7 @@ import random
 from mpi4py import MPI
 from pyske.core.list.slist import SList
 from pyske.core.support import parallel
-from pyske.core.list.ilist import IDistribution
+from pyske.core.interface.linear import IDistribution
 
 
 def randpid() -> int:
