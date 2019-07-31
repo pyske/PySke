@@ -35,7 +35,7 @@ def mps(data: IList):
     :param data: a PySke list of numbers
     :return: a number, the maximum prefix sum
     """
-    max_, _ = data.map(_max0_copy).reduce(_max_sum)
+    max_, _ = data.map(_max0_copy).reduce(_max_sum, (0, 0))
     return max_
 
 
@@ -51,9 +51,9 @@ def _parse_command_line():
     parser = argparse.ArgumentParser()
     parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
     parser.add_argument("--iter", help="number of iterations", type=int, default=30)
-    parser.add_argument("--data", help="type of data structure", choices=[_PAR, _SEQ])
+    parser.add_argument("--data", help="type of data structure", choices=[_PAR, _SEQ], default=_SEQ)
     args = parser.parse_args()
-    return args.size, args.iter, args.choice
+    return max(0, args.size), max(0, args.iter), args.data
 
 
 def _select_pyske_list(choice):
@@ -73,16 +73,16 @@ def _select_execute(choice):
 
 def _generate_data(cls, size):
     import random
-    return cls.init(lambda: float(random.randint(-100, 100)), size)
+    return cls.init(lambda _: float(random.randint(-100, 100)), size)
 
 
 def _print(iteration, result, timing, execute):
     avg_t, max_t, all_t = timing
-    execute(lambda: print(f'Iteration:\t{iteration}'
-                          f'Result:\t{result}'
-                          f'Timing (average):\t{avg_t}'
-                          f'Timing (maximum):\t{max_t}'
-                          f'Timing (all): \t{all_t}'))
+    execute(lambda: print(f'Iteration:\t{iteration}\n'
+                          f'Result:\t{result}\n'
+                          f'Timing (average):\t{avg_t}\n'
+                          f'Timing (maximum):\t{max_t}\n'
+                          f'Timing (all): \t{all_t}\n'))
 
 
 def _main():
@@ -92,7 +92,7 @@ def _main():
     data = _generate_data(pyske_list, size)
     timing = Timing()
     execute = _select_execute(choice)
-    for iteration in range(0, max(0, num_iter)):
+    for iteration in range(1, 1 + num_iter):
         timing.start()
         result = mps(data)
         timing.stop()

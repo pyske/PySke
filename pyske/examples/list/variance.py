@@ -8,7 +8,7 @@ from pyske.core import PList, Timing, par
 
 
 def variance(data):
-    """Return the variance of the random variable"""
+    """Return the variance of a random variable"""
     size = data.length()
     avg = data.reduce(add) / size
     var = data.map(lambda num: (num - avg) ** 2).reduce(add) / size

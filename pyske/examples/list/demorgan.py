@@ -1,5 +1,5 @@
 """
-Computation of the conjonction of the negation of a list of Boolean values
+Computation of the conjunction of the negation of a list of Boolean values
 """
 
 import random
