@@ -11,6 +11,15 @@ from pyske.core import PList
 from pyske.examples.list import performance
 
 
+def _parse_command_line():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=100_000)
+    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
+    args = parser.parse_args()
+    return max(0, args.size), max(0, args.iter)
+
+
 def _pyske_gather(input_list: PList):
     return input_list.gather(0)
 
@@ -40,8 +49,9 @@ def _mpi_scatter(input_list):
 
 
 def __performance():
-    performance.ITERATIONS = 30
-    input_list = PList.init(str, 500_000)
+    size, num_iter = _parse_command_line()
+    performance.ITERATIONS = num_iter
+    input_list = PList.init(str, size)
     mpi_input_list = None
 
     def mpi_set(value):
@@ -58,8 +68,4 @@ def __performance():
 
 
 if __name__ == "__main__":
-    # comm = MPI.COMM_WORLD
-    # pid = comm.Get_rank()
-    # res = comm.scatter([[1, 2],[3, 4]])
-    # print(f'[{pid}]:\t{res}')
     __performance()
