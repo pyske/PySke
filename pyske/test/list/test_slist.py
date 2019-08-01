@@ -8,6 +8,7 @@ from pyske.core.util import fun
 from pyske.core import SList, Distribution
 from pyske.test.support import swap
 
+
 def parser_tuple(string):
     """
     Returns a pair of string from a string of comma separate elements.

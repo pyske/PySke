@@ -227,7 +227,7 @@ class PList(interface.List):
         return p_list
 
     def balance(self: 'PList[T]') -> 'PList[T]':
-        return self.distribute(Distribution.balanced(self.__global_size))
+        return self.distribute(Distribution.balanced(self.length()))
 
     def gather(self: 'PList[T]', pid: int) -> 'PList[T]':
         assert pid in par.procs()
@@ -244,7 +244,8 @@ class PList(interface.List):
             return []
 
         at_pid = self.get_partition().mapi(select).flatten()
-        return at_pid.distribute(Distribution.balanced(at_pid.length()))
+        distr = Distribution.balanced(at_pid.length())
+        return at_pid.distribute(distr)
 
     def scatter_range(self: 'PList[T]', rng) -> 'PList[T]':
 
@@ -257,7 +258,8 @@ class PList(interface.List):
             return value is not None
 
         selected = self.mapi(select).filter(not_none)
-        return selected.distribute(Distribution.balanced(selected.length()))
+        distr = Distribution.balanced(selected.length())
+        return selected.distribute(distr)
 
     @staticmethod
     def from_seq(sequence: Sequence[T]) -> 'PList[T]':

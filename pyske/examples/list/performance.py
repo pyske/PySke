@@ -11,11 +11,26 @@ from pyske.core import PList as DPList, SList as DSList, par
 from pyske.core.opt.list import PList as OPList, SList as OSList
 
 
-def _test(test_f, data, name, preprocessing=lambda f, num: lambda: f(num), execute=lambda f: f()):
+def test_timing(test_f, data, name,
+                preprocessing=lambda f, num: lambda: f(num), execute=lambda f: f(),
+                print_test_f=False):
+    # pylint: disable=too-many-arguments
+    """
+    Iterate and output timing of the application of a function.
+
+    :param test_f: the function to test.
+    :param data: the input data to the function.
+    :param name: of the test.
+    :param preprocessing: a function to apply to the test function.
+    :param execute: a function to executed the test function.
+    :return: the result of the application of the test function.
+        Output the timings on standard output.
+    """
     assert ITERATIONS > 0
     par.at_root(lambda: print(f'Test: {name}'))
     skel = preprocessing(test_f, data)
-    par.at_root(lambda: print("Term: ", skel))
+    if print_test_f:
+        par.at_root(lambda: print("Term: ", skel))
     gc.collect()
     par.barrier()
     time: DPList = DPList.init(lambda _: par.wtime())
@@ -182,10 +197,10 @@ def _test1():
         input1 = DSList.init(lambda num: random.randint(0, 1000), SIZE)
     else:
         input1 = DPList.init(lambda num: random.randint(0, 1000), SIZE)
-    res1 = _test(_test_mmr_direct, input1, "map/map/reduce")
-    res2 = _test(_test_mmr_direct, input1, "map/reduce[hc]")
-    res3 = _test(_test_mmr_run, input1, "map/map/reduce[_opt]")
-    res4 = _test(_test_mmr_optimized, input1, "map/map/reduce[_opt/_run]", _opt, _run)
+    res1 = test_timing(_test_mmr_direct, input1, "map/map/reduce")
+    res2 = test_timing(_test_mmr_direct, input1, "map/reduce[hc]")
+    res3 = test_timing(_test_mmr_run, input1, "map/map/reduce[_opt]")
+    res4 = test_timing(_test_mmr_optimized, input1, "map/map/reduce[_opt/_run]", _opt, _run)
     assert res1 == res2 and res1 == res3 and res1 == res4
 
 
@@ -194,9 +209,9 @@ def _test2():
         input2 = DSList.init(lambda i: random.randint(0, 9) <= 4, SIZE)
     else:
         input2 = DPList.init(lambda i: random.randint(0, 9) <= 4, SIZE)
-    res1 = _test(_test_bool_direct, input2, "map/reduce bool")
-    res2 = _test(_test_bool_mr, input2, "map_reduce bool")
-    res3 = _test(_test_bool_optimized, input2, "map/reduce bool[_opt]", _opt, _run)
+    res1 = test_timing(_test_bool_direct, input2, "map/reduce bool")
+    res2 = test_timing(_test_bool_mr, input2, "map_reduce bool")
+    res3 = test_timing(_test_bool_optimized, input2, "map/reduce bool[_opt]", _opt, _run)
     assert res1 == res3
     assert res1 == res2
 
@@ -237,8 +252,8 @@ def _test3():
         data = DSList.init(_vrand, SIZE)
     else:
         data = DPList.init(_vrand, SIZE)
-    res1 = _test(_vavg, data, "vector average")
-    res2 = _test(_wrapped_vavg, data, "vector average [_run]")
+    res1 = test_timing(_vavg, data, "vector average")
+    res2 = test_timing(_wrapped_vavg, data, "vector average [_run]")
     assert res1 == res2
 
 
