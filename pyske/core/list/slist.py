@@ -5,7 +5,7 @@ class SList: sequential lists.
 """
 import functools
 from operator import concat
-from typing import TypeVar, Callable, Sequence, Tuple, Optional
+from typing import TypeVar, Callable, Sequence, Tuple, Optional, Generic
 from pyske.core import interface
 from pyske.core.support.list import scan
 
@@ -16,7 +16,7 @@ R = TypeVar('R')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 
 
-class SList(list, interface.List):
+class SList(list, interface.List, Generic[T]):
     # pylint: disable=too-many-public-methods
     """
     Sequential list.

@@ -6,7 +6,7 @@ class PList: parallel lists.
 import functools
 from collections import defaultdict
 from operator import add, concat
-from typing import Optional, Tuple, Sequence  # pylint: disable=unused-import
+from typing import Optional, Tuple, Sequence, Generic  # pylint: disable=unused-import
 from typing import TypeVar, Callable  # pylint: disable=unused-import
 
 from pyske.core.list.slist import SList
@@ -34,7 +34,7 @@ def _group_by(a_list):
     return dic
 
 
-class PList(interface.List):
+class PList(interface.List, Generic[T]):
     # pylint: disable=too-many-public-methods
     # pylint: disable=protected-access
     """

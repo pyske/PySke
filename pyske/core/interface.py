@@ -75,14 +75,14 @@ class List(ABC, Generic[T]):
     """
 
     @abstractmethod
-    def __init__(self):
+    def __init__(self: 'List[T]') -> 'List[T]':
         """
         Return an empty list.
         """
 
     @staticmethod
     @abstractmethod
-    def init(value_at, size):
+    def init(value_at: Callable[[int], T], size: int) -> 'List[T]':
         """
         Return a list built using a function.
 
@@ -99,7 +99,7 @@ class List(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def __len__(self) -> int:
+    def __len__(self: 'List[T]') -> int:
         """
         Return the length of the list.
 
