@@ -326,7 +326,7 @@ class List(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def flatten(self: 'List[List[T]]') -> 'List[T]':
+    def flatten(self: 'List[List[T]]', new_distr: Distribution = None) -> 'List[T]':
         """
         Flatten the list of lists.
 

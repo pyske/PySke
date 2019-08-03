@@ -4,9 +4,10 @@ Computation of the conjunction of the negation of a list of Boolean values
 
 import random
 import argparse
+from operator import and_, or_, not_
 
-from pyske.core.list import PList
-from pyske.core.util import par
+from pyske.core import PList, Timing, par
+
 
 __all__ = []
 
@@ -25,16 +26,23 @@ def __main():
     data = PList.init(lambda _: bool(random.getrandbits(1)), size)
     par.barrier()
     # Solution 1
+    timer = Timing()
+    timer.start()
     if algorithm == 1:
-        res = data.map(lambda x: not x).reduce(lambda x, y: x and y)
+        res = data.map(not_).reduce(and_)
     # Solution 2
     if algorithm == 2:
-        res = data.map_reduce(lambda x: not x, lambda x, y: x and y, True)
+        res = data.map_reduce(not_, and_, True)
     # Solution 3
     if algorithm == 3:
-        res = not data.reduce(lambda x, y: x or y, False)
+        res = not data.reduce(or_, False)
+    timer.stop()
+    max_t, avg_t, all_t = timer.get()
     if algorithm in [1, 2, 3]:
-        par.at_root(lambda: print(res))
+        par.at_root(lambda: print(f'Result: \t{res}\n'
+                                  f'Time (max):\t{max_t}\n'
+                                  f'Time (avg):\t{avg_t}\n'
+                                  f'Time (all):\t{all_t}'))
 
 
 if __name__ == '__main__':

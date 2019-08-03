@@ -171,9 +171,10 @@ class SList(list, interface.List):
     def get_partition(self: 'SList[T]') -> 'SList[SList[T]]':
         return SList([self])
 
-    def flatten(self: 'SList[SList[T]]') -> 'SList[T]':
-        a_list = SList(self.reduce(concat, []))
-        return a_list
+    def flatten(self: 'SList[SList[T]]',
+                new_distr: interface.Distribution = None) -> 'SList[T]':
+        a_list = functools.reduce(concat, self, [])
+        return SList(a_list)
 
     def distribute(self: 'SList[T]', _: interface.Distribution) -> 'SList[T]':
         return self

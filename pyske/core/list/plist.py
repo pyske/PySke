@@ -52,6 +52,7 @@ class PList(interface.List):
         gather, scatter, scatter_range,
         invariant.
     """
+    __distribution: Distribution
 
     def __init__(self: 'PList[T]'):
         # pylint: disable=super-init-not-called
@@ -76,6 +77,11 @@ class PList(interface.List):
                "  start_index: " + str(self.__start_index) + "\n" + \
                "  distribution: " + str(self.__distribution) + "\n" + \
                "  content: " + str(self.__content) + "\n"
+
+    @property
+    def distribution(self):
+        """Return the distribution of the list"""
+        return self.__distribution
 
     def invariant(self: 'PList[T]') -> None:
         assert isinstance(self.__content, SList)
@@ -148,11 +154,15 @@ class PList(interface.List):
         p_list.__distribution = [1 for _ in par.procs()]
         return p_list
 
-    def flatten(self: 'PList[SList[T]]') -> 'PList[T]':
+    def flatten(self: 'PList[SList[T]]', new_distr: Distribution = None) -> 'PList[T]':
         p_list = PList()
         p_list.__content = self.__content.flatten()
         p_list.__local_size = len(p_list.__content)
-        p_list.__distribution = _COMM.allgather(p_list.__local_size)
+        if new_distr is None:
+            p_list.__distribution = _COMM.allgather(p_list.__local_size)
+        else:
+            p_list.__distribution = new_distr
+            assert new_distr[_PID] == p_list.__local_size
         p_list.__start_index = SList(p_list.__distribution).scanl(add, 0)[_PID]
         p_list.__global_size = SList(p_list.__distribution).reduce(add)
         return p_list
@@ -243,7 +253,10 @@ class PList(interface.List):
                 return a_list
             return []
 
-        at_pid = self.get_partition().mapi(select).flatten()
+        select_distr = Distribution([size if index == pid else 0
+                                     for (index, size) in enumerate(self.distribution)])
+        at_pid = self.get_partition().mapi(select).flatten(select_distr)
+
         distr = Distribution.balanced(at_pid.length())
         return at_pid.distribute(distr)
 
