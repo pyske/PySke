@@ -139,6 +139,7 @@ def _main():
     timing = Timing()
     execute = util.select_execute(choice)
     example = pssr if choice == util.PAR else _sort
+    print('Version:\t', choice)
     for iteration in range(1, 1 + num_iter):
         timing.start()
         result = example(input_list)
