@@ -3,6 +3,7 @@ Parallel regular sampling sort
 """
 
 import functools
+import gc
 from heapq import merge
 from operator import and_
 from pyske.core import PList, Distribution, par
@@ -41,11 +42,6 @@ def bcast(input_list: PList, src_pid: int) -> PList:
 
 
 # ----------------- Parallel Sort -------------------------
-
-def _sort(a_list):
-    to_sort = a_list.copy()
-    to_sort.sort()
-    return to_sort
 
 
 def _merge2(sorted_list1, sorted_list2):
@@ -98,7 +94,7 @@ def pssr(input_list: PList) -> PList:
     """
     nprocs = len(par.procs())
     if nprocs == 1:
-        return input_list.get_partition().map(_sort).flatten()
+        return input_list.get_partition().map(sorted).flatten()
     for local_size in input_list.distribution:
         assert local_size >= nprocs
 
@@ -112,7 +108,7 @@ def pssr(input_list: PList) -> PList:
             return list_to_sample[step:size:step]
         return []
 
-    locally_sorted = input_list.get_partition().map(_sort)
+    locally_sorted = input_list.get_partition().map(sorted)
     first_samples = locally_sorted.map(_sample).gather(0).get_partition()
     second_samples = bcast(first_samples.map(_merge).map(_sample), 0)
     slices = locally_sorted.map2(_slice, second_samples).flatten()
@@ -138,12 +134,14 @@ def _main():
     input_list = util.rand_list(pyske_list_class, size)
     timing = Timing()
     execute = util.select_execute(choice)
-    example = pssr if choice == util.PAR else _sort
-    print('Version:\t', choice)
+    example = pssr if choice == util.PAR else sorted
+    execute(lambda: print('Version:\t', choice))
+    gc.disable()
     for iteration in range(1, 1 + num_iter):
         timing.start()
         result = example(input_list)
         timing.stop()
+        gc.collect()
         if choice == util.PAR:
             assert is_sorted(result)
         result = len(result)
