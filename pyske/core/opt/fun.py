@@ -38,7 +38,7 @@ _IDT_COMPOSE_LEFT = \
          )
 
 _IDT_COMPOSE_RIGHT = \
-    Rule(left=compose(Var('fun_f'), id),
+    Rule(left=compose(Var('fun_f'), idt),
          right=Var('fun_f'),
          name="idt neutral compose right",
          type=Fun
