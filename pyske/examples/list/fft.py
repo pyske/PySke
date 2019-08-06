@@ -14,10 +14,6 @@ def _bit_complement(index_k: int, index_i: int) -> int:
     return index_i ^ (1 << index_k)
 
 
-def _fetch(log2_size: int, index_j: int, index_i: int) -> int:
-    return _bit_complement(log2_size - index_j - 1, index_i)
-
-
 def _omega(size: int, log2_size: int, index_j: int, index_i: int) -> complex:
     index = index_i >> (log2_size - index_j - 1)
     index_2 = 0
@@ -65,7 +61,7 @@ def fft(input_list: PList[float]) -> PList[complex]:
         result = permutation.map2i(partial(_combine, size, log2_size, index_j), result)
     for index_j in range(log2_nprocs, log2_size):
         permutation = result.get_partition()\
-            .map(lambda l: l.permute(partial(_fetch, log2_size, index_j)))\
+            .map(lambda l: l.permute(partial(_bit_complement, log2_size - index_j - 1)))\
             .flatten()
         result = permutation.map2i(partial(_combine, size, log2_size, index_j), result)
     return result
