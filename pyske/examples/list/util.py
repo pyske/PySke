@@ -6,24 +6,37 @@ PAR = 'parallel'
 SEQ = 'sequential'
 
 
-def standard_parse_command_line():
+def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     """
     Parse command line for standard example.
 
     --size size for the size of the generated random list
     --iter iter for the number of iterations
-    --input_list [parallel, sequential] for choosing a sequential or parallel list
+    --data [parallel, sequential] for choosing a sequential or parallel list
 
-    :return:  (size, iter, input_list)
+    :return:  (size, iter, ['parallel' | 'sequential'])
     """
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
-    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
-    parser.add_argument("--data", help="type of data structure",
-                        choices=[PAR, SEQ], default=SEQ)
+    if size_arg:
+        parser.add_argument("--size", help="size of the list to generate",
+                            type=int, default=1_000_000)
+    if iter_arg:
+        parser.add_argument("--iter", help="number of iterations",
+                            type=int, default=30)
+    if data_arg:
+        parser.add_argument("--data", help="type of data structure",
+                            choices=[PAR, SEQ], default=SEQ)
+    size = num_iter = 0
+    data_type = PAR
     args = parser.parse_args()
-    return max(0, args.size), max(0, args.iter), args.data
+    if size_arg:
+        size = max(0, args.size)
+    if iter_arg:
+        num_iter = max(0, args.iter)
+    if data_arg:
+        data_type = args.data
+    return size, num_iter, data_type
 
 
 def select_pyske_list(choice):
