@@ -1,40 +1,19 @@
 """
 Example of use of filtering and then redistribution
 """
-import sys
-import random
-from pyske.core import PList, par, Timing
+
+from pyske.core.util import fun
+from pyske.core import PList, Distribution
+from pyske.examples.list.util import standard_main
 
 
-def _is_even(num):
-    """
-    Checks whether its argument is even.
-    :param num: int
-    :return: bool
-    """
-    return num % 2 == 0
+# ----------------- Example -------------------
+
+def _filter_even(input_list: PList) -> Distribution:
+    return input_list.filter(fun.is_even).balance().distribution
 
 
-def _main():
-    time = Timing()
-    # Generating a parallel list of the size specified on the command line or 1000
-    size = 10000
-    if len(sys.argv) > 1:
-        size = int(sys.argv[1])
-    data = PList.init(lambda _: 50 + random.randint(0, 100), size)
-    par.barrier()
-    # start timing
-    time.start()
-    # filter out odd values and get the distribution after balancing
-    distr = data.filter(_is_even).balance().get_partition().map(len).to_seq()
-    # stop timing
-    time.stop()
-    max_elapsed, avg_elapsed, all_elapsed = time.get()
-    # output at processor 0
-    par.at_root(lambda:
-                print(f'Distribution: \t{distr}\nTime (max): \t{max_elapsed}\n'
-                      f'Time (avg): \t{avg_elapsed}\nTime (all): \t{all_elapsed}'))
-
+# ----------------- Execution -------------------
 
 if __name__ == '__main__':
-    _main()
+    standard_main(_filter_even, data_arg=False)

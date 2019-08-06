@@ -14,6 +14,9 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     --iter iter for the number of iterations
     --data [parallel, sequential] for choosing a sequential or parallel list
 
+    :param size_arg: (default True) flag to select argument --size
+    :param iter_arg: (default True) flag to select argument --iter
+    :param data_arg: (default True) flag to select argument --data
     :return:  (size, iter, ['parallel' | 'sequential'])
     """
     import argparse
@@ -101,14 +104,17 @@ def print_experiment(result, timing, execute, iteration=None):
     execute(lambda: print(msg))
 
 
-def standard_main(example):
+def standard_main(example, size_arg=True, iter_arg=True, data_arg=True):
     """
     Perform an experiment on the given example.
 
+    :param size_arg: (default True) flag to select argument --size
+    :param iter_arg: (default True) flag to select argument --iter
+    :param data_arg: (default True) flag to select argument --data
     :param example: a function on PySke lists.
     """
     from pyske.core import Timing
-    size, num_iter, choice = standard_parse_command_line()
+    size, num_iter, choice = standard_parse_command_line(size_arg, iter_arg, data_arg)
     pyske_list_class = select_pyske_list(choice)
     input_list = rand_list(pyske_list_class, size)
     timing = Timing()
