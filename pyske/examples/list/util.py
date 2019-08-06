@@ -119,6 +119,7 @@ def standard_main(example, size_arg=True, iter_arg=True, data_arg=True):
     input_list = rand_list(pyske_list_class, size)
     timing = Timing()
     execute = select_execute(choice)
+    execute(lambda: print(f'Version:\t{choice}'))
     for iteration in range(1, 1 + num_iter):
         timing.start()
         result = example(input_list)
