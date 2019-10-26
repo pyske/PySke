@@ -4,23 +4,19 @@ from pyske.core.tree.btree import Leaf, Node
 from pyske.core.util import fun
 
 
-def max3(x, y, z):
-    return max(x, max(y.get_value(), z.get_value()))
-
-
 # -------------------------- #
 
 def test_is_leaf_true():
     bt = Leaf(1)
     exp = True
-    res = bt.is_leaf()
+    res = bt.is_leaf
     assert exp == res
 
 
 def test_is_leaf_false():
     bt = Node(1, Leaf(1), Leaf(1))
     exp = False
-    res = bt.is_leaf()
+    res = bt.is_leaf
     assert exp == res
 
 
@@ -30,14 +26,14 @@ def test_is_leaf_false():
 def test_is_node_false():
     bt = Leaf(1)
     exp = False
-    res = bt.is_node()
+    res = bt.is_node
     assert exp == res
 
 
 def test_is_node_true():
     bt = Node(1, Leaf(1), Leaf(1))
     exp = True
-    res = bt.is_node()
+    res = bt.is_node
     assert exp == res
 
 
@@ -56,36 +52,19 @@ def test_map_node():
     exp = Node(0, Leaf(3), Leaf(4))
     assert exp == res
 
-
 # -------------------------- #
 
-
-def test_mapt_leaf():
-    bt = Leaf(1)
-    res = bt.mapt(fun.incr, fun.decr)
-    exp = Leaf(2)
-    assert exp == res
-
-
-def test_mapt_node():
-    bt = Node(1, Leaf(2), Leaf(3))
-    res = bt.mapt(fun.incr, max3)
-    exp = Node(3, Leaf(3), Leaf(4))
-    assert exp == res
-
-
-# -------------------------- #
 
 def test_reduce_leaf():
     bt = Leaf(2)
-    res = bt.reduce(lambda x, y, z: max(x, max(y, z)))
+    res = bt.reduce(fun.max3)
     exp = 2
     assert exp == res
 
 
 def test_reduce_node():
     bt = Node(1, Leaf(2), Leaf(3))
-    res = bt.reduce(lambda x, y, z: max(x, max(y, z)))
+    res = bt.reduce(fun.max3)
     exp = 3
     assert exp == res
 
@@ -162,7 +141,7 @@ def test_zipwith_leaf():
     bt1 = Leaf(1)
     bt2 = Leaf(2)
     exp = Leaf(3)
-    res = bt1.map2(fun.add, bt2)
+    res = bt1.map2(fun.add, fun.add, bt2)
     assert exp == res
 
 
@@ -170,7 +149,7 @@ def test_zipwith_node():
     bt1 = Node(1, Leaf(2), Leaf(3))
     bt2 = Node(4, Leaf(5), Leaf(6))
     exp = Node(5, Leaf(7), Leaf(9))
-    res = bt1.map2(fun.add, bt2)
+    res = bt1.map2(fun.add, fun.add, bt2)
     assert exp == res
 
 
@@ -178,14 +157,14 @@ def test_zipwith_leaf_node():
     bt1 = Leaf(1)
     bt2 = Node(4, Leaf(5), Leaf(6))
     with pytest.raises(AssertionError):
-        bt1.map2(fun.add, bt2)
+        bt1.map2(fun.add, fun.add, bt2)
 
 
 def test_zipwith_node_leaf():
     bt1 = Node(1, Leaf(2), Leaf(3))
     bt2 = Leaf(2)
     with pytest.raises(AssertionError):
-        bt1.map2(fun.add, bt2)
+        bt1.map2(fun.add, fun.add, bt2)
 
 
 # -------------------------- #

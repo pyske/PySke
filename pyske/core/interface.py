@@ -6,11 +6,16 @@ Interfaces: Distribution, List.
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Callable, Optional, Sequence, Tuple, Any
 
-__all__ = ['List', 'Distribution']
+__all__ = ['List', 'Distribution', 'BinTree']
 
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
+
+A = TypeVar('A')  # pylint: disable=invalid-name
+B = TypeVar('B')  # pylint: disable=invalid-name
+C = TypeVar('C')  # pylint: disable=invalid-name
+D = TypeVar('D')  # pylint: disable=invalid-name
 
 
 class Distribution(ABC, list):
@@ -599,3 +604,124 @@ class List(ABC, Generic[T]):
         :param bij: bijective function on list indices
         :return: same content but different ordering
         """
+
+
+class BinTree(ABC, Generic[A, B]):
+    # pylint: disable=too-many-public-methods
+    """
+    PySke binary trees (interface)
+
+    Methods:
+        init_from_bt,
+        size, map, zip, map2,
+        reduce, uacc, dacc
+    """
+
+    @staticmethod
+    @abstractmethod
+    def init_from_bt(bt: 'BTree[A, B]', m: int = 1) -> Any:
+        """
+        TODO
+
+        :param m:
+        :return:
+        """
+
+    @abstractmethod
+    def size(self: 'BinTree[A, B]') -> int:
+        """
+        TODO
+
+        :return:
+        """
+
+    @abstractmethod
+    def map(self: 'BinTree[A, B]', kl: Callable[[A], C], kn: Callable[[B], D]) -> 'BinTree[C, D]':
+        """
+        TODO
+
+        :param kl:
+        :param kn:
+        :return:
+        """
+
+    @abstractmethod
+    def zip(self: 'BinTree[A, B]',
+            a_bintree: 'BinTree[C, D]') -> 'BinTree[Tuple[A, C], Tuple[B, D]]':
+        """
+        TODO
+
+        :param binary_op:
+        :param a_bintree:
+        :return:
+        """
+
+    @abstractmethod
+    def map2(self: 'BinTree[A, B]', kl: Callable[[A, C], U], kn: Callable[[B, D], V],
+             a_bintree: 'BinTree[C, D]') -> 'BinTree[U, V]':
+        """
+        TODO
+
+        :param kl:
+        :param kn:
+        :param a_bintree:
+        :return:
+        """
+
+    @abstractmethod
+    def reduce(self: 'BinTree[A, B]', k: Callable[[A, B, A], A],
+               phi: Callable[[B], C] = None,
+               psi_n: Callable[[A, C, A], A] = None,
+               psi_l: Callable[[C, C, A], C] = None,
+               psi_r: Callable[[A, C, C], C] = None
+               ) -> A:
+        """
+        TODO
+
+        :param k:
+        :param phi:
+        :param psi_n:
+        :param psi_l:
+        :param psi_r:
+        :return:
+        """
+
+    @abstractmethod
+    def uacc(self: 'BinTree[A, B]', k: Callable[[A, B, A], A],
+               phi: Callable[[B], C] = None,
+               psi_n: Callable[[A, C, A], A] = None,
+               psi_l: Callable[[C, C, A], C] = None,
+               psi_r: Callable[[A, C, C], C] = None
+               ) -> 'BinTree[A, A]':
+        """
+        TODO
+
+        :param k:
+        :param phi:
+        :param psi_n:
+        :param psi_l:
+        :param psi_r:
+        :return:
+        """
+
+    @abstractmethod
+    def dacc(self: 'BinTree[A, B]', gl: Callable[[C, B], C], gr: Callable[[C, B], C], c: C,
+               phi_l: Callable[[B], D] = None,
+               phi_r: Callable[[B], D] = None,
+               psi_u: Callable[[C, D], D] = None,
+               psi_d: Callable[[C, D], C] = None
+               ) -> 'BinTree [C, C]':
+        """
+        TODO
+
+        :param gl:
+        :param gr:
+        :param c:
+        :param phi_l:
+        :param phi_r:
+        :param psi_u:
+        :param psi_d:
+        :return:
+        """
+
+

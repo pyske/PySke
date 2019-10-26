@@ -1,22 +1,15 @@
-import pytest
 import operator
+
 from pyske.core.list.slist import SList
-from pyske.core.support.errors import ConstructorError
 from pyske.core.tree.btree import Node, Leaf
 from pyske.core.tree.rtree import RNode
 
 
 # -------------------------- #
 
-def test_b2r_leaf_none():
-    bt = Leaf(None)
-    with pytest.raises(ConstructorError):
-        RNode(bt)
-
-
 def test_b2r_leaf():
     bt = Leaf(1)
-    res = RNode(bt)
+    res = RNode.init_from_bt(bt)
     exp = RNode(1)
     assert res == exp
 
@@ -47,7 +40,7 @@ def test_b2r_node_from_rt():
     rn2 = RNode(2)
     rn4 = RNode(4)
     exp = RNode(1, SList([rn2, rn3, rn4]))
-    res = RNode(bt)
+    res = RNode.init_from_bt(bt)
 
     assert res == exp
 
@@ -55,10 +48,7 @@ def test_b2r_node_from_rt():
 # -------------------------- #
 
 def test_r2b_1():
-    ch = SList()
-    ch.append(RNode(2))
-    ch.append(RNode(3))
-    rn = RNode(1, ch)
+    rn = RNode(1, SList([RNode(2), RNode(3)]))
     res = rn.r2b()
     exp = Node(1, Node(2, Leaf(None), Node(3, Leaf(None), Leaf(None))), Leaf(None))
     assert res == exp

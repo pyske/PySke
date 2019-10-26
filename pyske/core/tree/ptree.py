@@ -1,470 +1,115 @@
-import logging
+from typing import Generic, TypeVar, Callable, Tuple
 
-from pyske.core.tree.ltree import TaggedValue, Segment, LTree
-from pyske.core.support.parallel import *
-from pyske.core.support.separate import *
-from pyske.core.util import par
+from pyske.core import interface, SList
+from pyske.core.tree.distribution import Distribution
+from pyske.core.tree.ltree import LTree, Segment, TAG_NODE, TAG_LEAF
+from pyske.core.tree.btree import BTree
+
+from pyske.core.util import fun
+
+from pyske.core.support import parallel
+
+__all__ = ['PTree']
+
+# <editor-fold desc="constants">
+A = TypeVar('A')  # pylint: disable=invalid-name
+B = TypeVar('B')  # pylint: disable=invalid-name
+C = TypeVar('C')  # pylint: disable=invalid-name
+D = TypeVar('D')  # pylint: disable=invalid-name
+U = TypeVar('U')  # pylint: disable=invalid-name
+V = TypeVar('V')  # pylint: disable=invalid-name
+
+TAG_BASE = "12367890"  # pylint: disable=invalid-name
+TAG_COMM_REDUCE = int(TAG_BASE + "11")  # pylint: disable=invalid-name
+TAG_COMM_UACC_1 = int(TAG_BASE + "21")  # pylint: disable=invalid-name
+TAG_COMM_UACC_2 = int(TAG_BASE + "22")  # pylint: disable=invalid-name
+TAG_COMM_DACC_1 = int(TAG_BASE + "31")  # pylint: disable=invalid-name
+TAG_COMM_DACC_2 = int(TAG_BASE + "32")  # pylint: disable=invalid-name
+TAG_COMM_MERGE = int(TAG_BASE + "00")  # pylint: disable=invalid-name
+TAG_TO_SEQ = int(TAG_BASE + "01")  # pylint: disable=invalid-name
+
+_PID: int = parallel.PID
+_NPROCS: int = parallel.NPROCS
+_COMM = parallel.COMM
+# </editor-fold>
 
 
-TAG_BASE = "270995"
-TAG_COMM_REDUCE = int(TAG_BASE + "11")
-TAG_COMM_UACC_1 = int(TAG_BASE + "21")
-TAG_COMM_UACC_2 = int(TAG_BASE + "22")
-TAG_COMM_DACC_1 = int(TAG_BASE + "31")
-TAG_COMM_DACC_2 = int(TAG_BASE + "32")
-TAG_COMM_MERGE = int(TAG_BASE + "00")
-TAG_TO_SEQ = int(TAG_BASE + "01")
+class PTree(interface.BinTree, Generic[A, B]):
+    # pylint: disable=too-many-public-methods
+    """
+    PySke distributed binary trees
 
-logging.basicConfig(filename='run_ptree.log', level=logging.DEBUG)
-with open('run_ptree.log', 'w'):
-    pass
-logger = logging.getLogger('ptree')
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+    Methods from interface BinTree:
+        init_from_bt,
+        size, map, zip, map2,
+        reduce, uacc, dacc
 
-
-class PTree:
-    """A class used to represent a distributed tree
-
-    Attributes
-    ----------
-    __distribution: PID -> nb of segments
-    __global_index: num seg -> (start, offset)
-    __start_index: index of first index for the current PID in global_index
-    __nb_segs: nb of indexes for the current PID in global_index
-    __content: concatenation of the segments contained in the current instance
+    Methods:
+        init_from_seq, to_seq
     """
 
-    def __init__(self, lt=None):
-        self.__distribution = SList([])
-        self.__global_index = SList([])
+    def __init__(self):
+        self.__distribution = Distribution([0 for _ in range(_NPROCS)])
+        self.__global_index = SList()
         self.__start_index = 0
         self.__nb_segs = 0
-        self.__content = SList([])
-        if lt is not None:
-            (distribution, global_index) = distribute_tree(lt, NPROCS)
-            self.__distribution = distribution
-            self.__global_index = global_index
-            self.__start_index = distribution.scanl(lambda x, y: x + y, 0)[PID]
-            self.__nb_segs = distribution[PID]
-            for i_seg in range(self.__start_index, self.__start_index + self.__nb_segs):
-                self.__content.extend(lt[i_seg])
-
-    def __eq__(self, other):
-        if isinstance(other, PTree):
-            return self.__distribution == other.__distribution \
-                   and self.__global_index == other.__distribution \
-                   and self.__start_index == other.__start_index \
-                   and self.__nb_segs == other.__nb_segs \
-                   and self.__content == other.__content
-        return False
-
-    @staticmethod
-    def init(pt, content):
-        """Factory for distributed tree.
-
-        Creates a PTree from a already existing one, but changing its content
-
-        Parameters
-        ----------
-        pt : :obj:`PTree`
-            A parallel tree that we want to copy the distribution
-        content : :obj:`SList`
-            The content of the resulting PTree
-        """
-        p = PTree()
-        p.__distribution = pt.__distribution
-        p.__global_index = pt.__global_index
-        p.__start_index = pt.__start_index
-        p.__nb_segs = pt.__nb_segs
-        p.__content = content
-        return p
-
-    @staticmethod
-    def init_from_file(filename, parser=int):
-        """Instantiate a distributed tree from a file
-
-        Parameters
-        ----------
-        filename : str
-            The name of the file that contains the PTree to instantiate
-        parser : callable, optional
-            A function that transforms a string into a specific type.
-            By default, string to int
-        """
-        filename = filename + "." + str(PID)
-
-        def __parser_couple(s):
-            s = s.replace("(", "")
-            s = s.replace(")", "")
-            ss = s.split(",")
-            return int(ss[0]), int(ss[1])
-
-        p = PTree()
-        content = SList([])
-        with open(filename, "r") as f:
-            count_line = 0
-            for line in f:
-                if line.strip()[0] == '#':
-                    continue
-                # __distribution: PID -> nb of segments
-                # __global_index: num seg -> (start, offset)
-                if count_line == 0:  # Get the distribution
-                    p.__distribution = SList.from_str(line)
-                    p.__start_index = p.__distribution.scanl(lambda x, y: x + y, 0)[PID]
-                    p.__nb_segs = p.__distribution[PID]
-                elif count_line == 1:  # Get the global_index
-                    p.__global_index = SList.from_str(line, parser=__parser_couple)
-                else:  # Get the content
-                    content.extend(Segment.from_str(line, parser=parser))
-                count_line = count_line + 1
-        p.__content = content
-        return p
+        self.__content = SList()
+        self.__local_size = 0
+        self.__global_size = 0
 
     def __str__(self):
-        return "PID[" + str(PID) + "]:\n" + \
+        return "PID[" + str(_PID) + "]:\n" + \
                "  global_index: " + str(self.__global_index) + "\n" + \
                "  distribution: " + str(self.__distribution) + "\n" + \
                "  nb_segs: " + str(self.__nb_segs) + "\n" + \
                "  start_index: " + str(self.__start_index) + "\n" + \
-               "  content: " + str(self.__content) + "\n"
+               "  content: " + str(self.__content) + "\n" + \
+               "  local_size: " + str(self.__local_size) + "\n" + \
+               "  global_size: " + str(self.__global_size) + "\n"
 
-    def browse(self):
+    def str_content(self):
         """Browse the linearized distributed tree contained in the current processor
         """
-        res = "PID[" + str(PID) + "] "
+        res = "PID[" + str(_PID) + "] "
         for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
             seg = Segment(self.__content[start:start + offset])
             res = res + "\n   " + str(seg)
         return res
 
-    def map(self, kl, kn):
-        """Map skeleton for distributed tree
-
-        Parameters
-        ----------
-        kl : callable
-            Function to apply to every leaf value of the current instance
-        kn : callable
-            Function to apply to every node value of the current instance
-        """
-        content = SList([None] * self.__content.length())
-        logger.debug(
-            '[START] PID[' + str(PID) + '] map skeleton')
-        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            logger.debug('[START] PID[' + str(PID) + '] map_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = Segment(self.__content[start:start + offset]).map_local(kl, kn)
-            logger.debug('[END] PID[' + str(PID) + '] map_local from ' + str(start) + ' to ' + str(start + offset))
-        res = PTree.init(self, content)
-        logger.debug(
-            '[END] PID[' + str(PID) + '] map skeleton')
-        return res
-
-    def reduce(self, k, phi, psi_n, psi_l, psi_r):
-        """Reduce skeleton for distributed tree
-
-        The parameters must respect these equalities (closure property):
-        * k(l, b, r) = psi_n(l, phi(b), r)
-        * psi_n(psi_n(value, l, y), b, r) = psi_n(value, psi_l(l,b,r), y)
-        * psi_n(l, b, psi_n(value, r, y)) = psi_n(value, psi_r(l,b,r), y)
-
-        Parameters
-        ----------
-        k : callable
-            The function used to reduce a BTree into a single value
-        phi : callable
-            A function used to respect the closure property to allow partial computation
-        psi_n : callable
-            A function used to respect the closure property to make partial computation
-        psi_l : callable
-            A function used to respect the closure property to make partial computation on the left
-        psi_r : callable
-            A function used to respect the closure property to make partial computation on the right
-        """
-        logger.debug(
-            '[START] PID[' + str(PID) + '] reduce skeleton')
-        # Step 1 : Local Reduction
-        gt = Segment([None] * self.__nb_segs)
-        i = 0
-        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            logger.debug('[START] PID[' + str(PID) + '] reduce_local from ' + str(start) + ' to ' + str(start + offset))
-            gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
-            logger.debug('[END] PID[' + str(PID) + '] reduce_local from ' + str(start) + ' to ' + str(start + offset))
-            i = i+1
-        # Step 2 : Gather local Results
-        if PID == 0:
-            for i in range(1, NPROCS):
-                logger.debug(
-                    '[START] PID[' + str(PID) + '] reception from ' + str(i))
-                gt.extend(COMM.recv(source=i, tag=TAG_COMM_REDUCE)['c'])
-                logger.debug(
-                    '[END] PID[' + str(PID) + '] reception from ' + str(i))
+    def __eq__(self, other):
+        if isinstance(other, PTree):
+            return self.__distribution == other.__distribution \
+                   and self.__global_index == other.__global_index\
+                   and self.__start_index == other.__start_index \
+                   and self.__nb_segs == other.__nb_segs \
+                   and self.__content == other.__content \
+                   and self.__local_size == other.__local_size \
+                   and self.__global_size == other.__global_size
         else:
-            logger.debug(
-                    '[START] PID[' + str(PID) + '] emission to ' + str(0))
-            COMM.send({'c': gt}, dest=0, tag=TAG_COMM_REDUCE)
-            logger.debug(
-                    '[END] PID[' + str(PID) + '] emission to ' + str(0))
-        # Step 3 : Global Reduction
-        par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] reduce_global'))
-        res = gt.reduce_global(psi_n) if PID == 0 else None
-        par.at_root(lambda: logger.debug('[END] PID[' + str(PID) + '] reduce_global'))
-        logger.debug(
-            '[END] PID[' + str(PID) + '] reduce skeleton')
-        return res
+            return False
 
-    def uacc(self, k, phi, psi_n, psi_l, psi_r):
-        """Upward accumulation skeleton for distributed tree
+    @staticmethod
+    def init_from_bt(bt: 'BTree[A, B]', m: int = 1) -> 'PTree[A, B]':
+        lt = LTree.init_from_bt(bt, m)
+        return PTree.from_seq(lt)
 
-        The parameters must respect these equalities (closure property):
-        * k(l, b, r) = psi_n(l, phi(b), r)
-        * psi_n(psi_n(value, l, y), b, r) = psi_n(value, psi_l(l,b,r), y)
-        * psi_n(l, b, psi_n(value, r, y)) = psi_n(value, psi_r(l,b,r), y)
+    @staticmethod
+    def from_seq(lt: 'LTree[A, B]') -> 'PTree[A, B]':
+        p_tree = PTree()
+        sizes = [len(lt[i]) for i in range(len(lt))]
+        (distribution, global_index) = Distribution.balanced_tree(sizes)
+        p_tree.__distribution = distribution
+        p_tree.__global_index = SList(global_index)
+        p_tree.__start_index = SList(distribution).scanl(lambda x, y: x + y, 0)[_PID]
+        p_tree.__nb_segs = distribution[_PID]
+        p_tree.__global_size = lt.size()
+        p_tree.__local_size = 0
+        for i_seg in range(p_tree.__start_index, p_tree.__start_index + p_tree.__nb_segs):
+            p_tree.__content.extend(lt[i_seg])
+            p_tree.__local_size += len(lt[i_seg])
+        return p_tree
 
-        Parameters
-        ----------
-        k : callable
-            The function used to reduce a BTree into a single value
-        phi : callable
-            A function used to respect the closure property to allow partial computation
-        psi_n : callable
-            A function used to respect the closure property to make partial computation
-        psi_l : callable
-            A function used to respect the closure property to make partial computation on the left
-        psi_r : callable
-            A function used to respect the closure property to make partial computation on the right
-        """
-        logger.debug(
-            '[START] PID[' + str(PID) + '] uAcc skeleton')
-        assert self.__distribution != []
-        # Step 1 : Local Upwards Accumulation
-        gt = Segment([None] * self.__nb_segs)
-        lt2 = SList([None] * self.__nb_segs)
-        i = 0
-        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] uacc_local from ' + str(start) + ' to ' + str(start + offset))
-            (top, res) = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
-            logger.debug(
-                '[END] PID[' + str(PID) + '] uacc_local from ' + str(start) + ' to ' + str(start + offset))
-            gt[i] = top
-            lt2[i] = res
-            i = i + 1
-
-        # Step 2 : Gather local Results
-        if PID == 0:
-            for iproc in range(1, NPROCS):
-                logger.debug(
-                    '[START] PID[' + str(PID) + '] reception local from ' + str(i))
-                gt.extend(COMM.recv(source=iproc, tag=TAG_COMM_UACC_1)['c'])
-                logger.debug(
-                    '[END] PID[' + str(PID) + '] reception local from ' + str(i))
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] emission local to ' + str(0))
-            COMM.send({'c': gt}, dest=0, tag=TAG_COMM_UACC_1)
-            logger.debug(
-                '[END] PID[' + str(PID) + '] emission local to ' + str(0))
-
-        # Step 3 : Global Upward Accumulation
-        gt2 = None
-        if PID == 0:
-            par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] uacc_global'))
-            gt2 = gt.uacc_global(psi_n)
-            for i in range(len(gt2)):
-                if gt2[i].is_node():
-                    gt2[i] = TaggedValue((gt2.get_left(i).get_value(), gt2.get_right(i).get_value()), gt2[i].get_tag())
-            par.at_root(lambda: logger.debug('[END] PID[' + str(PID) + '] uacc_global'))
-
-        # Step 4 : Distributing Global Result
-        start = 0
-        if PID == 0:
-            for iproc in range(NPROCS):
-                iproc_off = self.__distribution[iproc]
-                if iproc != 0:
-                    logger.debug(
-                        '[START] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                    COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_UACC_2)
-                    logger.debug(
-                        '[END] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                start = start + iproc_off
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] reception global from ' + str(0))
-            gt2 = COMM.recv(source=0, tag=TAG_COMM_UACC_2)['g']
-            logger.debug(
-                '[END] PID[' + str(PID) + '] reception global from ' + str(0))
-
-        # Step 5 : Local Updates
-        content = SList([None] * self.__content.length())
-        for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
-            (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            logger.debug('[START] PID[' + str(PID) + '] uacc_update from ' + str(start) + ' to ' + str(start + offset))
-            if gt[i].is_node():
-                (lc, rc) = gt2[i].get_value()
-                val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
-            else:
-                val = lt2[i]
-            logger.debug('[END] PID[' + str(PID) + '] uacc_update from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = val
-        res = PTree.init(self, content)
-        logger.debug(
-            '[END] PID[' + str(PID) + '] uAcc skeleton')
-        return res
-
-    def dacc(self, gl, gr, c, phi_l, phi_r, psi_u, psi_d):
-        """Downward accumulation skeleton for distributed tree
-
-        The parameters must respect these equalities (closure property):
-        * gl(c, b) = psi_d(c, phi_l(b))
-        * gr(c, b) = psi_d(c, phi_r(b))
-        * psi_d(psi_d(c, b), a) = psi_d(c, psi_u(b,a))
-
-        Parameters
-        ---------
-        gl : callable
-            The function used to make an accumulation to the left children in a binary tree
-        gr : callable
-            The function used to make an accumulation to the right children in a binary tree
-        c
-            Initial value of accumulation
-        phi_l : callable
-            A function used to respect the closure property to allow partial computation on the left
-        phi_r : callable
-            A function used to respect the closure property to allow partial computation on the right
-        psi_d : callable
-            A function used to respect the closure property to make partial downward accumulation
-        psi_u : callable
-            A function used to respect the closure property to make partial computation
-        """
-        logger.debug(
-            '[START] PID[' + str(PID) + '] dAcc skeleton')
-        # Step 1 : Computing Local Intermediate Values
-        gt = Segment([None] * self.__nb_segs)
-        i = 0
-        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            seg = Segment(self.__content[start:start + offset])
-            logger.debug(
-                '[START] PID[' + str(PID) + '] dacc_path from ' + str(start) + ' to ' + str(start + offset))
-            if seg.has_critical():
-                gt[i] = seg.dacc_path(phi_l, phi_r, psi_u)
-            else:
-                gt[i] = TaggedValue(seg[0].get_value(), "L")
-            logger.debug(
-                '[END] PID[' + str(PID) + '] dacc_path from ' + str(start) + ' to ' + str(start + offset))
-            i = i + 1
-        # Step 2 : Gather Local Results
-        if PID == 0:
-            for iproc in range(1, NPROCS):
-                logger.debug(
-                    '[START] PID[' + str(PID) + '] reception update from ' + str(i))
-                gt.extend(COMM.recv(source=iproc, tag=TAG_COMM_DACC_1)['c'])
-                logger.debug(
-                    '[END] PID[' + str(PID) + '] reception update from ' + str(i))
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] emission update to ' + str(0))
-            COMM.send({'c': gt}, dest=0, tag=TAG_COMM_DACC_1)
-            logger.debug(
-                '[END] PID[' + str(PID) + '] emission update to ' + str(0))
-        # Step 3 : Global Downward Accumulation
-        par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] dacc_global'))
-        gt2 = (gt.dacc_global(psi_d, c) if PID == 0 else None)
-        par.at_root(lambda: logger.debug('[END] PID[' + str(PID) + '] dacc_global'))
-        # Step 4 : Distributing Global Result
-        if PID == 0:
-            start = 0
-            for iproc in range(NPROCS):
-                iproc_off = self.__distribution[iproc]
-                if iproc != 0:
-                    logger.debug(
-                        '[START] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                    COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_DACC_2)
-                    logger.debug(
-                        '[END] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                start = start + iproc_off
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] reception global from ' + str(0))
-            gt2 = COMM.recv(source=0, tag=TAG_COMM_DACC_2)['g']
-            logger.debug(
-                '[END] PID[' + str(PID) + '] reception global from ' + str(0))
-        # Step 5 : Local Downward Accumulation
-        content = SList([None] * self.__content.length())
-        for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
-            (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            logger.debug(
-                '[START] PID[' + str(PID) + '] dacc_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = \
-                Segment(self.__content[start:start + offset]).dacc_local(gl, gr, gt2[i].get_value())
-            logger.debug(
-                '[END] PID[' + str(PID) + '] dacc_local from ' + str(start) + ' to ' + str(start + offset))
-        res = PTree.init(self, content)
-        logger.debug(
-            '[END] PID[' + str(PID) + '] dAcc skeleton')
-        return res
-
-    def zip(self, pt):
-        """Zip skeleton for distributed tree
-
-        Precondition
-        -------------
-        The distributions of self and pt should be the same
-
-        Parameters
-        ----------
-        pt : :obj:`PTree`
-            The PTree to zip with the current instance
-        """
-        logger.debug(
-            '[START] PID[' + str(PID) + '] zip skeleton')
-        assert self.__distribution == pt.__distribution
-        content = SList([None] * self.__content.length())
-        for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
-            (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            logger.debug('[START] PID[' + str(PID) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = Segment(self.__content[start:start+offset]).\
-                zip(Segment(pt.__content[start:start+offset]))
-            logger.debug('[END] PID[' + str(PID) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
-        res = PTree.init(self, content)
-        logger.debug(
-            '[END] PID[' + str(PID) + '] zip skeleton')
-        return res
-
-    def map2(self, f, pt):
-        """Map2 skeleton for distributed tree
-
-        Precondition
-        -------------
-        The distributions of self and pt should be the same
-
-        Parameters
-        ----------
-        pt : :obj:`LTree`
-            The LTree to zip with the current instance
-        f : callable
-            A function to zip values
-        """
-        logger.debug(
-            '[START] PID[' + str(PID) + '] map2 skeleton')
-        assert self.__distribution == pt.__distribution
-        content = SList([None] * self.__content.length())
-        for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
-            (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            logger.debug('[START] PID[' + str(PID) + '] map2_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = Segment(self.__content[start:start + offset]).map2(f, Segment(
-                pt.__content[start:start + offset]))
-            logger.debug('[END] PID[' + str(PID) + '] map2_local from ' + str(start) + ' to ' + str(start + offset))
-        res = PTree.init(self, content)
-        logger.debug(
-            '[END] PID[' + str(PID) + '] map2 skeleton')
-        return res
-
-    def get_full_index(self):
+    def __get_full_index(self):
         def f(x, y):
             (x1, y1) = x
             (x2, y2) = y
@@ -473,17 +118,178 @@ class PTree:
 
     def to_seq(self):
         full_content = []
-        if PID == 0:
-            full_index = self.get_full_index()
-            res = LTree([None] * full_index.length())
+        if _PID == 0:
+            full_index = self.__get_full_index()
+            res = LTree.init(fun.none, full_index.length())
             full_content.extend(self.__content)
-            for iproc in range(1, NPROCS):
-                full_content.extend(COMM.recv(source=iproc, tag=TAG_TO_SEQ)['c'])
-
+            for iproc in range(1, _NPROCS):
+                full_content.extend(_COMM.recv(source=iproc, tag=TAG_TO_SEQ)['c'])
             for i in range(full_index.length()):
                 (start, offset) = full_index[i]
                 res[i] = full_content[start:start + offset]
             return res
         else:
-            COMM.send({'c': self.__content}, dest=0, tag=TAG_TO_SEQ)
-            return None
+            _COMM.send({'c': self.__content}, dest=0, tag=TAG_TO_SEQ)
+
+    @staticmethod
+    def init(pt, new_content):
+        p = PTree()
+        p.__distribution = pt.__distribution
+        p.__global_index = pt.__global_index
+        p.__start_index = pt.__start_index
+        p.__nb_segs = pt.__nb_segs
+        p.__local_size = pt.__local_size
+        p.__global_size = pt.__global_size
+        p.__content = new_content
+        return p
+
+    def __get_local_index(self: 'PTree[A, B]'):
+        return self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]
+
+    def size(self: 'PTree[A, B]') -> int:
+        return self.__global_size
+
+    def map(self: 'PTree[A, B]', kl: Callable[[A], C], kn: Callable[[B], D]) -> 'PTree[C, D]':
+        if len(self.__content) == 0:
+            return self
+        new_content = SList.init(fun.none, self.__local_size)
+        for (start, offset) in self.__get_local_index():
+            new_content[start:start + offset] = Segment(self.__content[start:start + offset]).map_local(kl, kn)
+        return PTree.init(self, new_content)
+
+    def zip(self: 'PTree[A, B]',
+            a_bintree: 'PTree[C, D]') -> 'PTree[Tuple[A, C], Tuple[B, D]]':
+        assert self.__distribution == a_bintree.__distribution
+        new_content = SList.init(fun.none, self.__content.length())
+        for i in range(len(self.__get_local_index())):
+            start, offset = self.__get_local_index()[i]
+            new_content[start:start + offset] = Segment(self.__content[start:start+offset]).\
+                zip_local(Segment(a_bintree.__content[start:start+offset]))
+        res = PTree.init(self, new_content)
+        return res
+
+    def map2(self: 'PTree[A, B]', kl: Callable[[A, C], U], kn: Callable[[B, D], V],
+             a_bintree: 'PTree[C, D]') -> 'PTree[U, V]':
+        assert self.__distribution == a_bintree.__distribution
+        new_content = SList.init(fun.none, self.__content.length())
+        for i in range(len(self.__get_local_index())):
+            start, offset = self.__get_local_index()[i]
+            new_content[start:start + offset] = Segment(self.__content[start:start+offset]).\
+                map2_local(kl, kn, Segment(a_bintree.__content[start:start+offset]))
+        res = PTree.init(self, new_content)
+        return res
+
+    def reduce(self: 'PTree[A, B]', k: Callable[[A, B, A], A],
+               phi: Callable[[B], C] = fun.idt,
+               psi_n: Callable[[A, C, A], A] = None,
+               psi_l: Callable[[C, C, A], C] = None,
+               psi_r: Callable[[A, C, C], C] = None
+               ) -> A:
+        gt = Segment.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__get_local_index():
+            gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
+            i += 1
+        if _PID is 0:
+            for i in range(1, _NPROCS):
+                gt.extend(_COMM.recv(source=i, tag=TAG_COMM_REDUCE)['c'])
+        else:
+            _COMM.send({'c': gt}, dest=0, tag=TAG_COMM_REDUCE)
+        return gt.reduce_global(psi_n) if _PID == 0 else None
+
+    def uacc(self: 'PTree[A, B]', k: Callable[[A, B, A], A],
+             phi: Callable[[B], C] = fun.idt,
+             psi_n: Callable[[A, C, A], A] = None,
+             psi_l: Callable[[C, C, A], C] = None,
+             psi_r: Callable[[A, C, C], C] = None
+             ) -> 'PTree[A, A]':
+        if len(self.__content) == 0:
+            return self
+        gt = Segment.init(fun.none, self.__nb_segs)
+        lt2 = SList.init(fun.none, self.__nb_segs)
+        # Step 1 : Local Upwards Accumulation
+        i = 0
+        for (start, offset) in self.__get_local_index():
+            gt[i], lt2[i] = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
+            i += 1
+        # Step 2 : Gather local Results
+        if _PID is 0:
+            for i in range(1, _NPROCS):
+                gt.extend(_COMM.recv(source=i, tag=TAG_COMM_UACC_1)['c'])
+        else:
+            _COMM.send({'c': gt}, dest=0, tag=TAG_COMM_UACC_1)
+        # Step 3 : Global Upward Accumulation
+        gt2 = None
+        if _PID is 0:
+            gt2 = gt.uacc_global(psi_n)
+            for i in range(len(gt2)):
+                _, tag = gt2[i]
+                if tag is TAG_NODE:
+                    val_left, _ = gt2.get_left(i)
+                    val_right, _ = gt2.get_right(i)
+                    gt2[i] = (val_left, val_right), TAG_NODE
+        # Step 4 : Distributing Global Result
+        start = 0
+        if _PID is 0:
+            for iproc in range(_NPROCS):
+                iproc_off = self.__distribution[iproc]
+                if iproc != 0:
+                    _COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_UACC_2)
+                start = start + iproc_off
+        else:
+            gt2 = _COMM.recv(source=0, tag=TAG_COMM_UACC_2)['g']
+        # Step 5 : Local Updates
+        new_content = SList.init(fun.none, self.__content.length())
+        for i in range(len(self.__get_local_index())):
+            start, offset = self.__get_local_index()[i]
+            _, tag = gt[i]
+            if tag is TAG_NODE:
+                (lc, rc), _ = gt2[i]
+                val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
+            else:
+                val = lt2[i]
+            new_content[start:start + offset] = val
+        return PTree.init(self, new_content)
+
+    def dacc(self: 'PTree[A, B]', gl: Callable[[C, B], C], gr: Callable[[C, B], C], c: C,
+             phi_l: Callable[[B], D] = fun.idt,
+             phi_r: Callable[[B], D] = fun.idt,
+             psi_u: Callable[[C, D], D] = None,
+             psi_d: Callable[[C, D], C] = None
+             ) -> 'PTree [C, C]':
+        # Step 1 : Computing Local Intermediate Values
+        gt = Segment.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__get_local_index():
+            seg = Segment(self.__content[start:start + offset])
+            if seg.has_critical():
+                gt[i] = seg.dacc_path(phi_l, phi_r, psi_u)
+            else:
+                val, _ = seg[0]
+                gt[i] = (val, TAG_LEAF)
+            i += 1
+        # Step 2 : Gather Local Results
+        if _PID is 0:
+            for iproc in range(1, _NPROCS):
+                gt.extend(_COMM.recv(source=iproc, tag=TAG_COMM_DACC_1)['c'])
+        else:
+            _COMM.send({'c': gt}, dest=0, tag=TAG_COMM_DACC_1)
+        # Step 3 : Global Downward Accumulation
+        gt2 = gt.dacc_global(psi_d, c) if _PID == 0 else None
+        # Step 4 : Distributing Global Result
+        if _PID is 0:
+            start = 0
+            for iproc in range(_NPROCS):
+                iproc_off = self.__distribution[iproc]
+                if iproc != 0:
+                    _COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_DACC_2)
+                start = start + iproc_off
+        else:
+            gt2 = _COMM.recv(source=0, tag=TAG_COMM_DACC_2)['g']
+        # Step 5 : Local Downward Accumulation
+        new_content = SList.init(fun.none, self.__content.length())
+        for i in range(len(self.__get_local_index())):
+            start, offset = self.__get_local_index()[i]
+            val, _ = gt2[i]
+            new_content[start:start + offset] = Segment(self.__content[start:start + offset]).dacc_local(gl, gr, val)
+        return PTree.init(self, new_content)

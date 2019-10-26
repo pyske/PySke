@@ -1,175 +1,204 @@
+import operator
+
 import pytest
 
+from pyske.core.support.errors import IllFormedError
+from pyske.core.support.parallel import PID
+from pyske.core.tree.btree import Node, Leaf
 from pyske.core.tree.ltree import *
 from pyske.core.tree.ptree import *
+from pyske.core.util import fun
 
 
-def illformed_ltree():
-    seg1 = Segment([TaggedValue(13, "C")])
-    seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    lt = LTree([seg1, seg3])
-    with pytest.raises(IllFormedError):
-        PTree(lt)
+# -------------------------- #
 
-
-def test_to_seq():
-    seg1 = Segment([TaggedValue(13, "C")])
-    seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    lt = LTree([seg1, seg2, seg3])
-    pt = PTree(lt)
-    res = pt.to_seq()
-    exp = lt if PID == 0 else None
-    assert res == exp
-
-
-def test_map_empty():
-    pt = PTree()
-    exp = PTree()
-    res = pt.map(fun.idt, fun.idt)
+def test_map_leaf():
+    m = 1
+    bt = Leaf(1)
+    res = PTree.init_from_bt(bt, m).map(lambda x: x + 1, lambda x: x - 1).to_seq()
+    exp = PTree.init_from_bt(Leaf(2), m).to_seq()
     assert exp == res
 
 
-def test_map_not_empty():
-    seg1 = Segment([TaggedValue(13, "C")])
-    seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    lt = LTree([seg1, seg2, seg3])
-    pt = PTree(lt)
-
-    res = pt.map(lambda x: x + 1, lambda x: x - 1).to_seq()
-
-    seg1_exp = Segment([TaggedValue(12, "C")])
-    seg2_exp = Segment([TaggedValue(30, "N"), TaggedValue(48, "L"), TaggedValue(33, "L")])
-    seg3_exp = Segment([TaggedValue(71, "N"), TaggedValue(93, "L"), TaggedValue(43, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
-
-    assert res == exp
-
+def test_map_node():
+    m = 1
+    bt = Node(1, Leaf(2), Leaf(3))
+    res = PTree.init_from_bt(bt, m).map(fun.incr, fun.decr).to_seq()
+    exp = PTree.init_from_bt(Node(0, Leaf(3), Leaf(4)), m).to_seq()
+    assert exp == res
 
 # -------------------------- #
+
 
 def test_reduce_empty():
-    pt = PTree()
+    lt = PTree()
     with pytest.raises(AssertionError):
-        pt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
+        lt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
 
-def test_reduce():
-    seg1 = Segment([TaggedValue(13, "C")])
-    seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    lt = LTree([seg1, seg2, seg3])
-    pt = PTree(lt)
-    res = pt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
-    exp = lt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add) if PID == 0 else None
-    assert res == exp
+def test_reduce_illformed():
+    seg1 = Segment([(13, TAG_CRITICAL)])
+    seg3 = Segment([(72, TAG_NODE), (92, TAG_LEAF), (42, TAG_LEAF)])
+    lt = LTree([seg1, seg3])
+    with pytest.raises(IllFormedError):
+        PTree.from_seq(lt).reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
+
+def test_reduce_leaf():
+    bt = Leaf(2)
+    res = PTree.init_from_bt(bt, 1)
+    res = res.reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    exp = bt.reduce(fun.max3)
+    assert (exp == res if PID == 0 else res is None)
+
+
+def test_reduce_node():
+    bt = Node(1, Leaf(2), Leaf(3))
+    res = PTree.init_from_bt(bt, 1)
+    res = res.reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    exp = bt.reduce(fun.max3)
+    assert (exp == res if PID == 0 else res is None)
 
 # -------------------------- #
 
-def test_uacc_empty():
-    pt = PTree()
-    with pytest.raises(AssertionError):
-        pt.uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
+def test_uacc_illformed():
+    seg1 = Segment([(13, TAG_CRITICAL)])
+    seg3 = Segment([(72, TAG_NODE), (92, TAG_LEAF), (42, TAG_LEAF)])
+    lt = LTree([seg1, seg3])
+    with pytest.raises(IllFormedError):
+        PTree.from_seq(lt).uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
+
+
+def test_uacc_leaf():
+    m = 1
+    bt = Leaf(1)
+    res = PTree.init_from_bt(bt, m).uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
+    exp = PTree.init_from_bt(bt.uacc(fun.add), m)
+    assert exp == res
+
+
+def test_uacc_node():
+    m = 1
+    bt = Node(1, Leaf(2), Leaf(3))
+    res = PTree.init_from_bt(bt, m).uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
+    exp = PTree.init_from_bt(bt.uacc(fun.add), m)
+    assert exp == res
 
 
 def test_uacc():
-    seg1 = Segment([TaggedValue(13, "C")])
-    seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
+    seg1 = Segment([(13, TAG_CRITICAL)])
+    seg2 = Segment([(31, TAG_NODE), (47, TAG_LEAF), (32, TAG_LEAF)])
+    seg3 = Segment([(72, TAG_NODE), (92, TAG_LEAF), (42, TAG_LEAF)])
     lt = LTree([seg1, seg2, seg3])
-    pt = PTree(lt)
-    res = pt.uacc(fun.add, fun.idt, fun.add, fun.add, fun.add).to_seq()
+    pt = PTree.from_seq(lt)
+    res = pt.uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
-    seg1_exp = Segment([TaggedValue(13 + 31 + 47 + 32 + 72 + 92 + 42, "C")])
-    seg2_exp = Segment([TaggedValue(31 + 47 + 32, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg3_exp = Segment([TaggedValue(72 + 92 + 42, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
+    seg1_exp = Segment([(13 + 31 + 47 + 32 + 72 + 92 + 42, TAG_CRITICAL)])
+    seg2_exp = Segment([(31 + 47 + 32, TAG_NODE), (47, TAG_LEAF), (32, TAG_LEAF)])
+    seg3_exp = Segment([(72 + 92 + 42, TAG_NODE), (92, TAG_LEAF), (42, TAG_LEAF)])
+    lt = LTree([seg1_exp, seg2_exp, seg3_exp])
+    exp = PTree.from_seq(lt)
     assert exp == res
 
-
 # -------------------------- #
+
 
 def test_dacc():
     c = 0
-    seg1 = Segment([TaggedValue(13, "C")])
-    seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
+    seg1 = Segment([(13, TAG_CRITICAL)])
+    seg2 = Segment([(31, TAG_NODE), (47, TAG_LEAF), (32, TAG_LEAF)])
+    seg3 = Segment([(72, TAG_NODE), (92, TAG_LEAF), (42, TAG_LEAF)])
     lt = LTree([seg1, seg2, seg3])
-    res = PTree(lt).dacc(fun.add, fun.add, c, fun.idt, fun.idt, fun.add, fun.add).to_seq()
-
-    seg1_exp = Segment([TaggedValue(0, "C")])
-    seg2_exp = Segment([TaggedValue(13, "N"), TaggedValue(13 + 31, "L"), TaggedValue(13 + 31, "L")])
-    seg3_exp = Segment([TaggedValue(13, "N"), TaggedValue(13 + 72, "L"), TaggedValue(13 + 72, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
-
+    res = PTree.from_seq(lt).dacc(operator.add, operator.add, c, fun.idt, fun.idt, operator.add, operator.add)
+    seg1_exp = Segment([(0, TAG_CRITICAL)])
+    seg2_exp = Segment([(13, TAG_NODE), (13 + 31, TAG_LEAF), (13 + 31, TAG_LEAF)])
+    seg3_exp = Segment([(13, TAG_NODE), (13 + 72, TAG_LEAF), (13 + 72, TAG_LEAF)])
+    lt = LTree([seg1_exp, seg2_exp, seg3_exp])
+    exp = PTree.from_seq(lt)
     assert res == exp
 
+
+def test_dacc_leaf():
+    m = 1
+    c = 0
+    bt = Leaf(1)
+    res = PTree.init_from_bt(bt, m).dacc(operator.add, operator.add, c, fun.idt, fun.idt, operator.add, operator.add)
+    exp = PTree.init_from_bt(bt.dacc(operator.add, operator.add, c), m)
+    assert exp == res
+
+
+def test_dacc_node():
+    m = 1
+    c = 0
+    bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+    res = PTree.init_from_bt(bt, m).dacc(operator.add, operator.add, c, fun.idt, fun.idt, operator.add, operator.add)
+    exp = PTree.init_from_bt(bt.dacc(operator.add, operator.add, c), m)
+    assert exp == res
 
 # -------------------------- #
 
-def test_zip_not_same_size():
-    seg11 = Segment([TaggedValue(13, "C")])
-    seg21 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg31 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    lt1 = LTree([seg11, seg21, seg31])
-    seg22 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    lt2 = LTree([seg22])
-    pt1 = PTree(lt1)
-    pt2 = PTree(lt2)
+
+def test_zip_leaf():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Leaf(2)
+    res = PTree.init_from_bt(bt1, m).zip(PTree.init_from_bt(bt2, m))
+    exp = PTree.init_from_bt(bt1.zip(bt2), m)
+    assert exp == res
+
+
+def test_zip_node():
+    m = 1
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Node(4, Leaf(5), Leaf(6))
+    res = PTree.init_from_bt(bt1, m).zip(PTree.init_from_bt(bt2, m))
+    exp = PTree.init_from_bt(bt1.zip(bt2), m)
+    assert exp == res
+
+
+def test_zip_leaf_node():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Node(4, Leaf(5), Leaf(6))
     with pytest.raises(AssertionError):
-        pt1.zip(pt2)
-
-
-def test_zip():
-    seg11 = Segment([TaggedValue(1, "C")])
-    seg21 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
-    seg31 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
-    lt1 = LTree([seg11, seg21, seg31])
-    seg12 = Segment([TaggedValue(2, "C")])
-    seg22 = Segment([TaggedValue(2, "N"), TaggedValue(2, "L"), TaggedValue(2, "L")])
-    seg32 = Segment([TaggedValue(2, "N"), TaggedValue(2, "L"), TaggedValue(2, "L")])
-    lt2 = LTree([seg12, seg22, seg32])
-    pt1 = PTree(lt1)
-    pt2 = PTree(lt2)
-    res = pt1.zip(pt2).to_seq()
-    seg1_exp = Segment([TaggedValue((1, 2), "C")])
-    seg2_exp = Segment([TaggedValue((1, 2), "N"), TaggedValue((1, 2), "L"), TaggedValue((1, 2), "L")])
-    seg3_exp = Segment([TaggedValue((1, 2), "N"), TaggedValue((1, 2), "L"), TaggedValue((1, 2), "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
-    assert res == exp
-
+        PTree.init_from_bt(bt1, m).zip(PTree.init_from_bt(bt2, m))
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Leaf(2)
+    with pytest.raises(AssertionError):
+        PTree.init_from_bt(bt1, m).zip(PTree.init_from_bt(bt2, m))
 
 # -------------------------- #
 
-def test_map2_not_same_size():
-    seg11 = Segment([TaggedValue(13, "C")])
-    seg21 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    seg31 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
-    lt1 = LTree([seg11, seg21, seg31])
-    seg22 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
-    lt2 = LTree([seg22])
-    pt1 = PTree(lt1)
-    pt2 = PTree(lt2)
+
+def test_zipwith_leaf():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Leaf(2)
+    res = PTree.init_from_bt(bt1, m).map2(fun.add, fun.add, PTree.init_from_bt(bt2, m))
+    exp = PTree.init_from_bt(bt1.map2(fun.add, fun.add, bt2), m)
+    assert exp == res
+
+
+def test_zipwith_node():
+    m = 1
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Node(4, Leaf(5), Leaf(6))
+    res = PTree.init_from_bt(bt1, m).map2(fun.add, fun.add, PTree.init_from_bt(bt2, m))
+    exp = PTree.init_from_bt(bt1.map2(fun.add, fun.add, bt2), m)
+    assert exp == res
+
+
+def test_zipwith_leaf_node():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Node(4, Leaf(5), Leaf(6))
     with pytest.raises(AssertionError):
-        pt1.zip(pt2)
+        PTree.init_from_bt(bt1, m).map2(fun.add, fun.add, PTree.init_from_bt(bt2, m))
 
 
-def test_map2():
-    seg11 = Segment([TaggedValue(1, "C")])
-    seg21 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
-    seg31 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
-    lt1 = LTree([seg11, seg21, seg31])
-    seg12 = Segment([TaggedValue(2, "C")])
-    seg22 = Segment([TaggedValue(2, "N"), TaggedValue(2, "L"), TaggedValue(2, "L")])
-    seg32 = Segment([TaggedValue(2, "N"), TaggedValue(2, "L"), TaggedValue(2, "L")])
-    lt2 = LTree([seg12, seg22, seg32])
-    pt1 = PTree(lt1)
-    pt2 = PTree(lt2)
-    res = pt1.map2(fun.add, pt2).to_seq()
-    seg1_exp = Segment([TaggedValue(3, "C")])
-    seg2_exp = Segment([TaggedValue(3, "N"), TaggedValue(3, "L"), TaggedValue(3, "L")])
-    seg3_exp = Segment([TaggedValue(3, "N"), TaggedValue(3, "L"), TaggedValue(3, "L")])
-    exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
-    assert res == exp
+def test_zipwith_node_leaf():
+    m = 1
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Leaf(2)
+    with pytest.raises(AssertionError):
+        PTree.init_from_bt(bt1, m).map2(fun.add, fun.add, PTree.init_from_bt(bt2, m))

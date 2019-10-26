@@ -1,11 +1,24 @@
 """
 A module of useful simple functions.
 """
-__all__ = ['idt', 'compose', 'curry', 'uncurry', 'zero', 'one', 'add', 'incr', 'decr',
-           'is_even', 'is_odd']
+__all__ = ['up_div', 'idt', 'compose', 'curry', 'uncurry', 'zero', 'one', 'add', 'incr', 'decr',
+           'is_even', 'is_odd', 'max3', 'none']
 
 import functools
 import operator
+
+
+def up_div(n, m):
+    """
+    Return up rounded n/m
+
+    :param n: int
+    :param m: int
+    :return: n/m
+    """
+    if m == 0:
+        return 0
+    return int(n / m) + (0 if n % m == 0 else 1)
 
 
 def idt(value):
@@ -57,6 +70,16 @@ def one(_):
     :return: 1
     """
     return 1
+
+
+def none(_):
+    """
+    Return always None.
+
+    :param _: anything
+    :return: None
+    """
+    return None
 
 
 def zero(_):
@@ -128,3 +151,20 @@ def is_odd(num):
     :return: bool
     """
     return num % 2 == 1
+
+
+def max3(x, y, z):
+    """
+    Return the maximum value among 3 numerical values
+
+        >>> max3(1, 2, 3)
+        3
+        >>> max3(1, -2, 3)
+        3
+
+    :param x: int
+    :param y: int
+    :param z: int
+    :return: int
+    """
+    return max(x, max(y, z))
