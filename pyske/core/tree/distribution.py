@@ -32,7 +32,7 @@ class Distribution(interface.Distribution):
         if sizes:
             nb_segment = len(sizes)
             total_size = functools.reduce(add, sizes, 0)
-            avg_elements = int(total_size / max(1, nb_segment))
+            avg_elements = int(total_size / max(1, parallel.NPROCS))
             iterator_sizes = 0
             accumulated_size = 0
             for iterator_pid in range(parallel.NPROCS):
@@ -50,7 +50,9 @@ class Distribution(interface.Distribution):
                     accumulated_size += sizes[iterator_sizes]
                     iterator_sizes += 1
                     seg_by_pid += 1
+                accumulated_size = 0
                 distr[iterator_pid] = seg_by_pid
+
         return Distribution(distr), global_index
 
     def to_pid(self, index: int, value):

@@ -9,6 +9,8 @@ from pyske.core.util import fun
 
 from pyske.core.support import parallel
 
+import itertools
+
 __all__ = ['PTree']
 
 # <editor-fold desc="constants">
@@ -190,12 +192,12 @@ class PTree(interface.BinTree, Generic[A, B]):
         for (start, offset) in self.__get_local_index():
             gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
             i += 1
-        if _PID is 0:
-            for i in range(1, _NPROCS):
-                gt.extend(_COMM.recv(source=i, tag=TAG_COMM_REDUCE)['c'])
-        else:
-            _COMM.send({'c': gt}, dest=0, tag=TAG_COMM_REDUCE)
-        return gt.reduce_global(psi_n) if _PID == 0 else None
+        gt2 = _COMM.allgather(gt)
+        prime_gt = gt2[0]
+        for i_seg in range(1, len(gt2)):
+            prime_gt.extend(gt2[i_seg])
+
+        return prime_gt.reduce_global(psi_n) 
 
     def uacc(self: 'PTree[A, B]', k: Callable[[A, B, A], A],
              phi: Callable[[B], C] = fun.idt,
