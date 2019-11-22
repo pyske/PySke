@@ -58,30 +58,34 @@ class PTree(interface.BinTree, Generic[A, B]):
         self.__content = SList()
         self.__local_size = 0
         self.__global_size = 0
+        self.__local_index = SList()
 
     def __str__(self):
         return "PID[" + str(_PID) + "]:\n" + \
                "  global_index: " + str(self.__global_index) + "\n" + \
+               "  local_index: " + str(self.__local_index) + "\n" + \
                "  distribution: " + str(self.__distribution) + "\n" + \
                "  nb_segs: " + str(self.__nb_segs) + "\n" + \
                "  start_index: " + str(self.__start_index) + "\n" + \
-               "  content: " + str(self.__content) + "\n" + \
+               "  content: " + self.str_content() + "\n" + \
                "  local_size: " + str(self.__local_size) + "\n" + \
                "  global_size: " + str(self.__global_size) + "\n"
 
     def str_content(self):
         """Browse the linearized distributed tree contained in the current processor
         """
-        res = "PID[" + str(_PID) + "] "
-        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
+        res = "PID[" + str(_PID) + "]: ["
+        for i in range(len(self.__local_index)):
+            (start, offset) = self.__global_index[i]
             seg = Segment(self.__content[start:start + offset])
-            res = res + "\n   " + str(seg)
-        return res
+            res = res + str(seg)+ (',' if i != len(self.__local_index) - 1 else '')
+        return res+"]"
 
     def __eq__(self, other):
         if isinstance(other, PTree):
             return self.__distribution == other.__distribution \
                    and self.__global_index == other.__global_index\
+                   and self.__local_index == other.__local_index\
                    and self.__start_index == other.__start_index \
                    and self.__nb_segs == other.__nb_segs \
                    and self.__content == other.__content \
@@ -109,6 +113,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         for i_seg in range(p_tree.__start_index, p_tree.__start_index + p_tree.__nb_segs):
             p_tree.__content.extend(lt[i_seg])
             p_tree.__local_size += len(lt[i_seg])
+        p_tree.__local_index = p_tree.__get_local_index()
         return p_tree
 
     def __get_full_index(self):
@@ -117,6 +122,9 @@ class PTree(interface.BinTree, Generic[A, B]):
             (x2, y2) = y
             return x1 + y1, y2
         return SList(self.__global_index.scanr(f))
+
+    def __get_local_index(self: 'PTree[A, B]'):
+        return self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]
 
     def to_seq(self):
         full_content = []
@@ -142,11 +150,9 @@ class PTree(interface.BinTree, Generic[A, B]):
         p.__nb_segs = pt.__nb_segs
         p.__local_size = pt.__local_size
         p.__global_size = pt.__global_size
+        p.__local_index = pt.__local_index
         p.__content = new_content
         return p
-
-    def __get_local_index(self: 'PTree[A, B]'):
-        return self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]
 
     def size(self: 'PTree[A, B]') -> int:
         return self.__global_size
@@ -155,7 +161,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         if len(self.__content) == 0:
             return self
         new_content = SList.init(fun.none, self.__local_size)
-        for (start, offset) in self.__get_local_index():
+        for (start, offset) in self.__local_index:
             new_content[start:start + offset] = Segment(self.__content[start:start + offset]).map_local(kl, kn)
         return PTree.init(self, new_content)
 
@@ -163,8 +169,8 @@ class PTree(interface.BinTree, Generic[A, B]):
             a_bintree: 'PTree[C, D]') -> 'PTree[Tuple[A, C], Tuple[B, D]]':
         assert self.__distribution == a_bintree.__distribution
         new_content = SList.init(fun.none, self.__content.length())
-        for i in range(len(self.__get_local_index())):
-            start, offset = self.__get_local_index()[i]
+        for i in range(len(self.__local_index)):
+            start, offset = self.__local_index[i]
             new_content[start:start + offset] = Segment(self.__content[start:start+offset]).\
                 zip_local(Segment(a_bintree.__content[start:start+offset]))
         res = PTree.init(self, new_content)
@@ -174,8 +180,8 @@ class PTree(interface.BinTree, Generic[A, B]):
              a_bintree: 'PTree[C, D]') -> 'PTree[U, V]':
         assert self.__distribution == a_bintree.__distribution
         new_content = SList.init(fun.none, self.__content.length())
-        for i in range(len(self.__get_local_index())):
-            start, offset = self.__get_local_index()[i]
+        for i in range(len(self.__local_index)):
+            start, offset = self.__local_index[i]
             new_content[start:start + offset] = Segment(self.__content[start:start+offset]).\
                 map2_local(kl, kn, Segment(a_bintree.__content[start:start+offset]))
         res = PTree.init(self, new_content)
@@ -189,7 +195,7 @@ class PTree(interface.BinTree, Generic[A, B]):
                ) -> A:
         gt = Segment.init(fun.none, self.__nb_segs)
         i = 0
-        for (start, offset) in self.__get_local_index():
+        for (start, offset) in self.__local_index:
             gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
             i += 1
         gt2 = _COMM.allgather(gt)
@@ -211,7 +217,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         lt2 = SList.init(fun.none, self.__nb_segs)
         # Step 1 : Local Upwards Accumulation
         i = 0
-        for (start, offset) in self.__get_local_index():
+        for (start, offset) in self.__local_index:
             gt[i], lt2[i] = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
             i += 1
         # Step 2 : Gather local Results
@@ -242,8 +248,8 @@ class PTree(interface.BinTree, Generic[A, B]):
             gt2 = _COMM.recv(source=0, tag=TAG_COMM_UACC_2)['g']
         # Step 5 : Local Updates
         new_content = SList.init(fun.none, self.__content.length())
-        for i in range(len(self.__get_local_index())):
-            start, offset = self.__get_local_index()[i]
+        for i in range(len(self.__local_index)):
+            start, offset = self.__local_index[i]
             _, tag = gt[i]
             if tag is TAG_NODE:
                 (lc, rc), _ = gt2[i]
@@ -262,7 +268,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         # Step 1 : Computing Local Intermediate Values
         gt = Segment.init(fun.none, self.__nb_segs)
         i = 0
-        for (start, offset) in self.__get_local_index():
+        for (start, offset) in self.__local_index:
             seg = Segment(self.__content[start:start + offset])
             if seg.has_critical():
                 gt[i] = seg.dacc_path(phi_l, phi_r, psi_u)
@@ -290,8 +296,8 @@ class PTree(interface.BinTree, Generic[A, B]):
             gt2 = _COMM.recv(source=0, tag=TAG_COMM_DACC_2)['g']
         # Step 5 : Local Downward Accumulation
         new_content = SList.init(fun.none, self.__content.length())
-        for i in range(len(self.__get_local_index())):
-            start, offset = self.__get_local_index()[i]
+        for i in range(len(self.__local_index)):
+            start, offset = self.__local_index[i]
             val, _ = gt2[i]
             new_content[start:start + offset] = Segment(self.__content[start:start + offset]).dacc_local(gl, gr, val)
         return PTree.init(self, new_content)
