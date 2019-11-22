@@ -64,6 +64,21 @@ class Segment(__List, Generic[A, B]):
             return True
         return False
 
+    def __str__(self):
+        def __str_v(p):
+            val, tag = p
+            if tag is TAG_LEAF:
+                return str(val)+"L"
+            if tag is TAG_NODE:
+                return str(val)+"N"
+            if tag is TAG_CRITICAL:
+                return str(val)+"C"
+        res = "["
+        for i in range(len(self)):
+            res = res + __str_v(self[i]) + (',' if i != len(self) - 1 else '')
+        res = res + "]"
+        return res
+
     def empty(self: '__List') -> bool:
         return self == Segment()
 
@@ -378,6 +393,15 @@ class LTree(__List, interface.BinTree, Generic[A, B]):
     def init(value_at: Callable[[int], Any], size: int):
         assert size >= 0
         return LTree([value_at(i) for i in range(0, size)])
+
+
+    def __str__(self):
+        res = "["
+        for i in range(len(self)):
+            res = res + str(self[i]) + (',' if i != len(self) - 1 else '')
+        res = res + "]"
+        return res
+
 
     def size(self: 'LTree[A, B]') -> int:
         res = 0

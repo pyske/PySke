@@ -62,6 +62,12 @@ class Leaf(BTree):
         else:
             return False
 
+    def _get_string(self, depth=0):
+        return ("  "*depth) +"Leaf("+str(self.__value)+")"
+
+    def __str__(self):
+        return self._get_string()
+
     @property
     def size(self: 'BTree[A, B]') -> int:
         """Return the size of the tree"""
@@ -150,6 +156,14 @@ class Node(BTree):
             return self.value == other.value and self.left == other.left and self.right == other.right
         else:
             return False
+
+    def _get_string(self, depth=0):
+        res_l = self.__left._get_string(depth = depth + 1)
+        res_r = self.__right._get_string(depth = depth + 1)
+        return ("  "*depth) +"Node("+str(self.__value)+"\n" + res_l + "\n" + res_r + "\n" +("  "*depth) + ")"
+
+    def __str__(self):
+        return self._get_string()
 
     @property
     def size(self: 'BTree[A, B]') -> int:
