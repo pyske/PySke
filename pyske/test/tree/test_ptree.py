@@ -5,6 +5,7 @@ import pytest
 from pyske.core.support.errors import IllFormedError
 from pyske.core.support.parallel import PID
 from pyske.core.tree.btree import Node, Leaf
+from pyske.core.tree.tag import *
 from pyske.core.tree.ltree import *
 from pyske.core.tree.ptree import *
 from pyske.core.util import fun

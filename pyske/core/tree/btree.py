@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from typing import TypeVar, Callable, Tuple, Generic, Union
 from pyske.core import interface
+from pyske.core.util.fun import up_div, dist_euclidean
 
-__all__ = ['BTree', 'Node', 'Leaf']
+__all__ = ['BTree', 'Node', 'Leaf', 'TAG_LEAF', 'TAG_NODE', 'TAG_CRITICAL']
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
@@ -10,6 +11,7 @@ C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
+
 
 
 class BTree(interface.BinTree, Generic[A, B]):
@@ -33,7 +35,6 @@ class BTree(interface.BinTree, Generic[A, B]):
         """
         :return: the top value of the current tree
         """
-
 
 class Leaf(BTree):
     # pylint: disable=too-many-public-methods
@@ -225,7 +226,7 @@ class Node(BTree):
              ) -> 'BTree[A, A]':
         lu = self.left.uacc(k)
         ru = self.right.uacc(k)
-        return Node(self.reduce(k), lu, ru)
+        return Node(k(lu.value, self.value, ru.value), lu, ru)
 
     def dacc(self: 'BTree[A, B]', gl: Callable[[C, B], C], gr: Callable[[C, B], C], c: C,
              phi_l: Callable[[B], D] = None,

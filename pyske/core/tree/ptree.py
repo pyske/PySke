@@ -2,8 +2,10 @@ from typing import Generic, TypeVar, Callable, Tuple
 
 from pyske.core import interface, SList
 from pyske.core.tree.distribution import Distribution
-from pyske.core.tree.ltree import LTree, Segment, TAG_NODE, TAG_LEAF
+from pyske.core.tree.ltree import LTree, Segment
 from pyske.core.tree.btree import BTree
+
+from pyske.core.tree.tag import TAG_NODE, TAG_LEAF
 
 from pyske.core.util import fun
 

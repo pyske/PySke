@@ -2,18 +2,15 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Callable, Union, Tuple, Optional, Any
 from pyske.core.tree.btree import BTree, Node, Leaf
+from pyske.core.tree.tag import Tag, TAG_LEAF, TAG_NODE, TAG_CRITICAL
 
 from pyske.core.util import fun
 from pyske.core import interface, SList
 from pyske.core.support.errors import IllFormedError, ApplicationError, NotSameTagError
-from pyske.core.util.fun import up_div
 
-__all__ = ['Segment', 'LTree', 'TAG_LEAF', 'TAG_NODE', 'TAG_CRITICAL']
+__all__ = ['Segment', 'LTree']
 
 MINUS_INFINITY = int((-sys.maxsize - 1) / 2)
-TAG_LEAF = 1
-TAG_NODE = 2
-TAG_CRITICAL = 3
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
@@ -494,7 +491,7 @@ class LTree(__List, interface.BinTree, Generic[A, B]):
         return res
 
     @staticmethod
-    def init_from_bt(bt: 'BTree[A, B]', m: int = 1) -> 'LTree[A, B]':
+    def init_from_bt(bt: 'BTree[A, B]', m: int = 1, ftag = Tag.mbridge) -> 'LTree[A, B]':
         def __tv2lv(bt_value):
             val, tag = bt_value.value
             res = Segment.init(fun.none, 0)
@@ -518,23 +515,8 @@ class LTree(__List, interface.BinTree, Generic[A, B]):
                     res.extend(res_left[1:])
                     res.extend(res_right[1:])
             return res
-
-        def k_mapt(l, b, r):
-            size_l, _ = l
-            size_r, _ = r
-
-            if up_div(b, m) > up_div(size_l, m) and up_div(b, m) > up_div(size_r, m):
-                return b, TAG_CRITICAL
-            else:
-                return b, TAG_NODE
-
-        bt_one = bt.map(lambda x: 1, lambda x: 1)
-        bt_size = bt_one.uacc(lambda x, y, z: x + y + z)
-        bt_temp = bt_size.map(lambda x: (x, TAG_LEAF), lambda x: x)
-        bt_tagged_acc = bt_temp.uacc(k_mapt)
-        bt_tags = bt_tagged_acc.map(lambda x: x[1], lambda x: x[1])
-        bt_val = bt.map2(lambda x, y: (x, y), lambda x, y: (x, y), bt_tags)
-        return LTree(__tv2lv(bt_val))
+        bt_tagged = ftag(bt, m)
+        return LTree(__tv2lv(bt_tagged))   
 
     def deserialization(self: 'LTree[A, B]') -> 'BTree[A, B]':
         def __lv2ibt(a_seg: 'Segment A B') -> Tuple[int, 'BTree[A, B]']:

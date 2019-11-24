@@ -6,7 +6,7 @@ from pyske.core import interface
 from pyske.core.support import parallel
 from pyske.core.support.list import scan
 from pyske.core.util.par import procs
-
+from pyske.core.util.fun import dist_euclidean
 
 class Distribution(interface.Distribution):
 
@@ -25,8 +25,7 @@ class Distribution(interface.Distribution):
 
     @staticmethod
     def balanced_tree(sizes: 'list [int]') -> Tuple['Distribution', 'list[Tuple[int, int]]']:
-        def __distance(x, y):
-            return abs(x - y)
+        
         distr = [0] * parallel.NPROCS
         global_index = []
         if sizes:
@@ -43,7 +42,7 @@ class Distribution(interface.Distribution):
                     iterator_sizes += 1
                     seg_by_pid += 1
                 while(iterator_sizes < nb_segment and
-                      (__distance(accumulated_size + sizes[iterator_sizes], avg_elements) < __distance(accumulated_size,
+                      (dist_euclidean(accumulated_size + sizes[iterator_sizes], avg_elements) < dist_euclidean(accumulated_size,
                                                                                                        avg_elements)
                        or iterator_pid == parallel.NPROCS - 1)):
                     global_index.append((accumulated_size, sizes[iterator_sizes]))

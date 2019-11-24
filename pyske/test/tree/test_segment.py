@@ -3,7 +3,8 @@ import operator
 import pytest
 
 from pyske.core.support.errors import IllFormedError, ApplicationError, NotSameTagError
-from pyske.core.tree.ltree import Segment, TAG_CRITICAL, TAG_LEAF, TAG_NODE
+from pyske.core.tree.ltree import Segment
+from pyske.core.tree.tag import *
 from pyske.core.util import fun
 
 
@@ -223,7 +224,7 @@ def test_uacc_update_prefix():
     lc = (1, 3)
     rc = (1, 3)
     res = seg.uacc_update(seg2, k, lc, rc)
-    exp = Segment([((5, 9), TAG_NODE), ((1, 5), TAG_CRITICAL), ((0, 1), TAG_LEAF)])
+    exp = Segment([((7, 9), TAG_NODE), ((3, 7), TAG_CRITICAL), ((0, 1), TAG_LEAF)])
     assert res == exp
 
 

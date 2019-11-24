@@ -2,11 +2,20 @@
 A module of useful simple functions.
 """
 __all__ = ['up_div', 'idt', 'compose', 'curry', 'uncurry', 'zero', 'one', 'add', 'incr', 'decr',
-           'is_even', 'is_odd', 'max3', 'none']
+           'is_even', 'is_odd', 'max3', 'none', 'dist_euclidean']
 
 import functools
 import operator
 
+def dist_euclidean(x, y):
+    """
+    Return the euclidian distance between values
+
+    :param n: int
+    :param m: int
+    :return: |n-m|
+    """
+    return abs(x - y)
 
 def up_div(n, m):
     """
