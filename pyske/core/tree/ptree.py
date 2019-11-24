@@ -128,18 +128,17 @@ class PTree(interface.BinTree, Generic[A, B]):
 
     def to_seq(self):
         full_content = []
-        if _PID == 0:
-            full_index = self.__get_full_index()
-            res = LTree.init(fun.none, full_index.length())
-            full_content.extend(self.__content)
-            for iproc in range(1, _NPROCS):
-                full_content.extend(_COMM.recv(source=iproc, tag=TAG_TO_SEQ)['c'])
-            for i in range(full_index.length()):
-                (start, offset) = full_index[i]
-                res[i] = full_content[start:start + offset]
-            return res
-        else:
-            _COMM.send({'c': self.__content}, dest=0, tag=TAG_TO_SEQ)
+        full_index = self.__get_full_index()
+        res = LTree.init(fun.none, full_index.length())
+        full_content.extend(self.__content)
+        content2 = _COMM.allgather(full_content)
+        prime_content = content2[0]
+        for i_seg in range(1, len(content2)):
+            prime_content.extend(content2[i_seg])
+        for i in range(full_index.length()):
+            (start, offset) = full_index[i]
+            res[i] = Segment(prime_content[start:start + offset])
+        return res
 
     @staticmethod
     def init(pt, new_content):

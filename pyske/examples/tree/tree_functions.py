@@ -4,11 +4,14 @@ Functions on trees
 from operator import add
 from pyske.core.util import fun
 
-__all__ = ['size', 'size_by_node', 'sum_values', 'prefix', 'ancestors']
+__all__ = ['size', 'size_by_node', 'sum_values', 'prefix', 'ancestors', 'depth']
 
 
 def _incr(num1, num2):
     return num1 + num2 + 1
+
+def _incr_left(num1, num2):
+    return num1 + 1
 
 
 def ancestors(tree):
@@ -45,7 +48,7 @@ def _psi_n(left, node_value, right):
     (nv0, nv1, nv2, nv3) = node_value
     (__, right) = right
     res_1 = nv0 * left + nv1 * (left + right + 1) + nv2
-    res_2 = left + 1 + right + nv3
+    res_2 = left +  right + nv3
     return res_1, res_2
 
 
@@ -93,6 +96,10 @@ def _zero_one(_):
     return 0, 1
 
 
+def _zero(_):
+    return 0
+
+
 def _phi(_):
     return 1, 0, 0, 1
 
@@ -102,3 +109,8 @@ def prefix(tree):
     mapped = tree.map(_zero_one, fun.idt)
     tree2 = mapped.uacc(_k, _phi, _psi_n, _psi_l, _psi_r)
     return tree2.dacc(_g_left, _g_right, 0, _phi_l, _phi_r, add, add)
+
+
+def depth(tree):
+    """Return the deepth of each node"""
+    return tree.dacc(_incr_left, _incr_left, 0, _zero, _zero, _incr, _incr)

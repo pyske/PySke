@@ -268,7 +268,7 @@ class Segment(__List, Generic[A, B]):
                     lc: A, rc: A) -> 'Segment[A, A]':
         lgth = self.length()
         assert lgth == seg2.length(), "uacc_update cannot needs to Segment of same size as input"
-        stack = [rc, lc]
+        stack = []
         d = MINUS_INFINITY
         res = Segment.init(lambda idx: None, lgth)
         for i in reversed(range(lgth)):
@@ -294,12 +294,8 @@ class Segment(__List, Generic[A, B]):
                     stack.append(val2)
                     d -= 1
             else:
-                if len(stack) < 2:
-                    raise IllFormedError(
-                        "uacc_update cannot be applied if there is a node that does not have two children "
-                        "in the current instance")
-                lv = stack.pop()
-                rv = stack.pop()
+                lv = lc
+                rv = rc
                 val = k(lv, val1, rv)
                 res[i] = (val, tag1)
                 stack.append(val)
@@ -392,7 +388,7 @@ class LTree(__List, interface.BinTree, Generic[A, B]):
     @staticmethod
     def init(value_at: Callable[[int], Any], size: int):
         assert size >= 0
-        return LTree([value_at(i) for i in range(0, size)])
+        return LTree(Segment([value_at(i) for i in range(0, size)]))
 
 
     def __str__(self):
