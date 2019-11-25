@@ -32,6 +32,9 @@ TAG_COMM_DACC_2 = int(TAG_BASE + "32")  # pylint: disable=invalid-name
 TAG_COMM_MERGE = int(TAG_BASE + "00")  # pylint: disable=invalid-name
 TAG_TO_SEQ = int(TAG_BASE + "01")  # pylint: disable=invalid-name
 
+LEFT = 0
+RIGHT = 1
+
 _PID: int = parallel.PID
 _NPROCS: int = parallel.NPROCS
 _COMM = parallel.COMM
@@ -46,7 +49,8 @@ class PTree(interface.BinTree, Generic[A, B]):
     Methods from interface BinTree:
         init_from_bt,
         size, map, zip, map2,
-        reduce, uacc, dacc
+        reduce, uacc, dacc,
+        getchl, getchr
 
     Methods:
         init_from_seq, to_seq
@@ -245,7 +249,6 @@ class PTree(interface.BinTree, Generic[A, B]):
             return self
         gt = Segment.init(fun.none, self.__nb_segs)
         lt2 = SList.init(fun.none, self.__nb_segs)
-
         # Step 1 : Local Upwards Accumulation
         i = 0
         for (start, offset) in self.__local_index:
@@ -253,7 +256,6 @@ class PTree(interface.BinTree, Generic[A, B]):
             i += 1
         # Step 2 : Gather local Results
         gt = PTree.gather_gt(gt)
-
         # Step 3 : Global Upward Accumulation
         gt2 = None
         if _PID is 0:
@@ -264,10 +266,8 @@ class PTree(interface.BinTree, Generic[A, B]):
                     val_left, _ = gt2.get_left(i)
                     val_right, _ = gt2.get_right(i)
                     gt2[i] = (val_left, val_right), TAG_NODE
-
         # Step 4 : Distributing Global Result
         gt2 = PTree.scatter_gt(gt2, self.__distribution)
-
         # Step 5 : Local Updates
         new_content = SList.init(fun.none, self.__content.length())
         for i in range(len(self.__local_index)):
@@ -298,20 +298,64 @@ class PTree(interface.BinTree, Generic[A, B]):
                 val, _ = seg[0]
                 gt[i] = (val, TAG_LEAF)
             i += 1
-        
         # Step 2 : Gather Local Results
         gt = PTree.gather_gt(gt)
-
         # Step 3 : Global Downward Accumulation
         gt2 = gt.dacc_global(psi_d, c) if _PID == 0 else None
-
         # Step 4 : Distributing Global Result
         gt2 = PTree.scatter_gt(gt2, self.__distribution)
-
         # Step 5 : Local Downward Accumulation
         new_content = SList.init(fun.none, self.__content.length())
         for i in range(len(self.__local_index)):
             start, offset = self.__local_index[i]
             val, _ = gt2[i]
             new_content[start:start + offset] = Segment(self.__content[start:start + offset]).dacc_local(gl, gr, val)
+        return PTree.init(self, new_content)
+
+
+    def getchl(self: 'PTree[A, A]', c: A) -> 'PTree[A, A]':
+        if len(self.__content) == 0:
+            return self
+        tops_c = Segment.init(fun.none, self.__nb_segs)
+        lt2 = SList.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__local_index:
+            tops_c[i], lt2[i] = Segment(self.__content[start:start + offset]).getch_local(c, side=LEFT)
+            i += 1
+        tops_c = PTree.allgather_gt(tops_c)
+        new_content = SList.init(fun.none, self.__content.length())
+        for i in range(len(self.__local_index)):
+            start, offset = self.__local_index[i]
+            i_glob = self.__start_index + i
+            val, tag = gt[i_glob]
+            if tag is TAG_NODE:
+                val_l, _ = tops_c.get_left(i_glob)
+                val = Segment(lt2[i]).getch_update(val_l)
+            else:
+                val = Segment(lt2[i])
+            new_content[start:start + offset] = val
+        return PTree.init(self, new_content)
+
+
+    def getchr(self: 'PTree[A, A]', c: A) -> 'PTree[A, A]':
+        if len(self.__content) == 0:
+            return self
+        tops_c = Segment.init(fun.none, self.__nb_segs)
+        lt2 = SList.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__local_index:
+            tops_c[i], lt2[i] = Segment(self.__content[start:start + offset]).getch_local(c, side=RIGHT)
+            i += 1
+        tops_c = PTree.allgather_gt(tops_c)
+        new_content = SList.init(fun.none, self.__content.length())
+        for i in range(len(self.__local_index)):
+            start, offset = self.__local_index[i]
+            i_glob = self.__start_index + i
+            val, tag = tops_c[i_glob]
+            if tag is TAG_NODE:
+                val_l, _ = tops_c.get_right(i_glob)
+                val = Segment(lt2[i]).getch_update(val_l)
+            else:
+                val = Segment(lt2[i])
+            new_content[start:start + offset] = val
         return PTree.init(self, new_content)

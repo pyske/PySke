@@ -12,6 +12,9 @@ __all__ = ['Segment', 'LTree']
 
 MINUS_INFINITY = int((-sys.maxsize - 1) / 2)
 
+LEFT = 0
+RIGHT = 1
+
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
@@ -48,7 +51,8 @@ class Segment(__List, Generic[A, B]):
         map_local, zip_local, map2_local,
         reduce_local, reduce_global,
         uacc_local, uacc_global, uacc_update,
-        dacc_path, dacc_global, dacc_local
+        dacc_path, dacc_global, dacc_local,
+        getch_local, getch_update
     """
 
     def __eq__(self: 'Segment[A, B]', other: Any) -> bool:
@@ -364,6 +368,41 @@ class Segment(__List, Generic[A, B]):
         return res
     # </editor-fold>
 
+    # <editor-fold desc="getchl and getchr functions">
+    def getch_local(self: 'Segment[A, A]', c: A, side: int) -> Tuple[Tuple[A, int], 'Segment[A, A]']:
+        lgth = self.length()
+        res = Segment.init(lambda idx: None, lgth)
+        crit = False
+        d = 1 # Left:0; Right:1; init: right
+        stack = []
+        for i in reversed(range(lgth)):
+            (val, tag) = self[i]
+            if tag is TAG_LEAF:
+                res[i] = (c, tag)
+            if tag is TAG_NODE:
+                new_val = stack.pop()
+                res[i] = (new_val, tag)
+            if tag is TAG_CRITICAL:
+                crit = True
+                res[i] = (None, tag)
+            if d == side or i == 0:
+                stack.append(val)
+            d = (d + 1) % 2
+        top = (stack.pop(), TAG_NODE if crit else TAG_LEAF)
+        return top, res
+
+    def getch_update(self: 'Segment[A, A]', c: A) -> 'Segment[A, A]':
+        lgth = self.length()
+        res = Segment.init(lambda idx: None, lgth)
+        for i in reversed(range(lgth)):
+            (val, tag) = self[i]
+            if tag is TAG_CRITICAL:
+                res[i] = (c, tag)
+            else:
+                res[i] = self[i]
+        return res
+    # </editor-fold>
+
 
 class LTree(__List, interface.BinTree, Generic[A, B]):
     # pylint: disable=too-many-public-methods
@@ -377,7 +416,8 @@ class LTree(__List, interface.BinTree, Generic[A, B]):
     Methods from interface BinTree:
         init_from_bt
         size, map, zip, map2,
-        reduce, uacc, dacc
+        reduce, uacc, dacc,
+        getchl, getchr
 
     Methods:
         deserialization
@@ -489,6 +529,41 @@ class LTree(__List, interface.BinTree, Generic[A, B]):
             val_c, _ = gt2[i]
             res[i] = self[i].dacc_local(gl, gr, val_c)
         return res
+
+    def getchl(self: 'LTree[A, A]', c: A) -> 'LTree[A, A]':
+        assert not self.empty(), "getchl cannot be applied to an empty linearized tree"
+        lgth = self.length()
+        gt = Segment.init(lambda idx: None, lgth)
+        lt2 = LTree([None] * lgth)
+        res = LTree([None] * lgth)
+        for i in range(lgth):
+            gt[i], lt2[i] = self[i].getch_local(c, side=LEFT)
+        for i in range(gt.length()):
+            _, tag = gt[i]
+            if tag is TAG_NODE:
+                val_l, _ = gt.get_left(i)
+                res[i] = lt2[i].getch_update(val_l)
+            else:
+                res[i] = lt2[i]
+        return res
+
+    def getchr(self: 'LTree[A, A]', c:A) -> 'LTree[A, A]':
+        assert not self.empty(), "getchr cannot be applied to an empty linearized tree"
+        lgth = self.length()
+        gt = Segment.init(lambda idx: None, lgth)
+        lt2 = LTree([None] * lgth)
+        res = LTree([None] * lgth)
+        for i in range(lgth):
+            gt[i], lt2[i] = self[i].getch_local(c, side=RIGHT)
+        for i in range(gt.length()):
+            _, tag = gt[i]
+            if tag is TAG_NODE:
+                val_l, _ = gt.get_right(i)
+                res[i] = lt2[i].getch_update(val_l)
+            else:
+                res[i] = lt2[i]
+        return res
+
 
     @staticmethod
     def init_from_bt(bt: 'BTree[A, B]', m: int = 1, ftag = Tag.mbridge) -> 'LTree[A, B]':

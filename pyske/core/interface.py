@@ -724,4 +724,18 @@ class BinTree(ABC, Generic[A, B]):
         :return:
         """
 
+    @abstractmethod
+    def getchl(self: 'BTree[A, A]', c: A) -> 'BTree[A, A]':
+        """
+        TODO
 
+        :param c:
+        """
+        
+    @abstractmethod
+    def getchr(self: 'BTree[A, A]', c: A) -> 'BTree[A, A]':
+        """
+        TODO
+
+        :param c:
+        """

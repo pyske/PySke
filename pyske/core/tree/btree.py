@@ -48,8 +48,6 @@ class Leaf(BTree):
 
     Methods from abstract BTree:
         is_leaf, is_node
-
-    Methods:
         getchl, getchr
     """
 
@@ -138,12 +136,10 @@ class Node(BTree):
         init_from_btree,
         size, right, left, map, zip, map2,
         reduce, uacc, dacc
+        getchl, getchr
 
     Methods from abstract BTree:
         is_leaf, is_node
-
-    Methods:
-        getchl, getchr
     """
 
     def __init__(self, b: B, left: 'Node[A, B]', right: 'Node[A, B]'):
