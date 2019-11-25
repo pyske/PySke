@@ -119,9 +119,9 @@ class PTree(interface.BinTree, Generic[A, B]):
         return p_tree
 
     @staticmethod
-    def gather_gt(gt):
+    def gather_gt(gt, root=0):
         res = None
-        data = _COMM.gather(gt, root=0)
+        data = _COMM.gather(gt, root=root)
         if _PID is 0:
             prime_gt = Segment()
             for g in data: 
@@ -138,7 +138,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         return res
 
     @staticmethod
-    def scatter_gt(gt, distribution):
+    def scatter_gt(gt, distribution, root=0):
         start = 0
         if _PID is 0:
             gts = [None] * len(distribution)
@@ -149,7 +149,7 @@ class PTree(interface.BinTree, Generic[A, B]):
                 acc_gt_size += dist
         else:
             gts = None
-        return _COMM.scatter(gts, root=0)
+        return _COMM.scatter(gts, root=root)
 
     def __get_full_index(self):
         def f(x, y):
@@ -245,7 +245,7 @@ class PTree(interface.BinTree, Generic[A, B]):
             return self
         gt = Segment.init(fun.none, self.__nb_segs)
         lt2 = SList.init(fun.none, self.__nb_segs)
-        
+
         # Step 1 : Local Upwards Accumulation
         i = 0
         for (start, offset) in self.__local_index:
