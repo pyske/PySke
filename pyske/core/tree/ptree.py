@@ -69,14 +69,14 @@ class PTree(interface.BinTree, Generic[A, B]):
                "  distribution: " + str(self.__distribution) + "\n" + \
                "  nb_segs: " + str(self.__nb_segs) + "\n" + \
                "  start_index: " + str(self.__start_index) + "\n" + \
-               "  content: " + self.str_content() + "\n" + \
+               "  content: " + self.str_content(print_pid = False) + "\n" + \
                "  local_size: " + str(self.__local_size) + "\n" + \
                "  global_size: " + str(self.__global_size) + "\n"
 
-    def str_content(self):
+    def str_content(self, print_pid = True):
         """Browse the linearized distributed tree contained in the current processor
         """
-        res = "PID[" + str(_PID) + "]: ["
+        res = "PID[" + str(_PID) + "]: [" if print_pid else ""
         for i in range(len(self.__local_index)):
             (start, offset) = self.__global_index[i]
             seg = Segment(self.__content[start:start + offset])
@@ -117,6 +117,39 @@ class PTree(interface.BinTree, Generic[A, B]):
             p_tree.__local_size += len(lt[i_seg])
         p_tree.__local_index = p_tree.__get_local_index()
         return p_tree
+
+    @staticmethod
+    def gather_gt(gt):
+        res = None
+        data = _COMM.gather(gt, root=0)
+        if _PID is 0:
+            prime_gt = Segment()
+            for g in data: 
+                prime_gt.extend(g)
+            res = prime_gt
+        return res
+
+    @staticmethod
+    def allgather_gt(gt):
+        gt2 = _COMM.allgather(gt)
+        res = gt2[0]
+        for i_seg in range(1, len(gt2)):
+            res.extend(gt2[i_seg])
+        return res
+
+    @staticmethod
+    def scatter_gt(gt, distribution):
+        start = 0
+        if _PID is 0:
+            gts = [None] * len(distribution)
+            acc_gt_size = 0
+            for i in range(len(distribution)):
+                dist = distribution[i]
+                gts[i] = Segment(gt[acc_gt_size : acc_gt_size + dist])
+                acc_gt_size += dist
+        else:
+            gts = None
+        return _COMM.scatter(gts, root=0)
 
     def __get_full_index(self):
         def f(x, y):
@@ -199,12 +232,8 @@ class PTree(interface.BinTree, Generic[A, B]):
         for (start, offset) in self.__local_index:
             gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
             i += 1
-        gt2 = _COMM.allgather(gt)
-        prime_gt = gt2[0]
-        for i_seg in range(1, len(gt2)):
-            prime_gt.extend(gt2[i_seg])
-
-        return prime_gt.reduce_global(psi_n) 
+        gt = PTree.allgather_gt(gt)
+        return gt.reduce_global(psi_n) 
 
     def uacc(self: 'PTree[A, B]', k: Callable[[A, B, A], A],
              phi: Callable[[B], C] = fun.idt,
@@ -216,17 +245,15 @@ class PTree(interface.BinTree, Generic[A, B]):
             return self
         gt = Segment.init(fun.none, self.__nb_segs)
         lt2 = SList.init(fun.none, self.__nb_segs)
+        
         # Step 1 : Local Upwards Accumulation
         i = 0
         for (start, offset) in self.__local_index:
             gt[i], lt2[i] = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
             i += 1
         # Step 2 : Gather local Results
-        if _PID is 0:
-            for i in range(1, _NPROCS):
-                gt.extend(_COMM.recv(source=i, tag=TAG_COMM_UACC_1)['c'])
-        else:
-            _COMM.send({'c': gt}, dest=0, tag=TAG_COMM_UACC_1)
+        gt = PTree.gather_gt(gt)
+
         # Step 3 : Global Upward Accumulation
         gt2 = None
         if _PID is 0:
@@ -237,21 +264,15 @@ class PTree(interface.BinTree, Generic[A, B]):
                     val_left, _ = gt2.get_left(i)
                     val_right, _ = gt2.get_right(i)
                     gt2[i] = (val_left, val_right), TAG_NODE
+
         # Step 4 : Distributing Global Result
-        start = 0
-        if _PID is 0:
-            for iproc in range(_NPROCS):
-                iproc_off = self.__distribution[iproc]
-                if iproc != 0:
-                    _COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_UACC_2)
-                start = start + iproc_off
-        else:
-            gt2 = _COMM.recv(source=0, tag=TAG_COMM_UACC_2)['g']
+        gt2 = PTree.scatter_gt(gt2, self.__distribution)
+
         # Step 5 : Local Updates
         new_content = SList.init(fun.none, self.__content.length())
         for i in range(len(self.__local_index)):
             start, offset = self.__local_index[i]
-            _, tag = gt[i]
+            _, tag = gt2[i]
             if tag is TAG_NODE:
                 (lc, rc), _ = gt2[i]
                 val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
@@ -277,24 +298,16 @@ class PTree(interface.BinTree, Generic[A, B]):
                 val, _ = seg[0]
                 gt[i] = (val, TAG_LEAF)
             i += 1
+        
         # Step 2 : Gather Local Results
-        if _PID is 0:
-            for iproc in range(1, _NPROCS):
-                gt.extend(_COMM.recv(source=iproc, tag=TAG_COMM_DACC_1)['c'])
-        else:
-            _COMM.send({'c': gt}, dest=0, tag=TAG_COMM_DACC_1)
+        gt = PTree.gather_gt(gt)
+
         # Step 3 : Global Downward Accumulation
         gt2 = gt.dacc_global(psi_d, c) if _PID == 0 else None
+
         # Step 4 : Distributing Global Result
-        if _PID is 0:
-            start = 0
-            for iproc in range(_NPROCS):
-                iproc_off = self.__distribution[iproc]
-                if iproc != 0:
-                    _COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_DACC_2)
-                start = start + iproc_off
-        else:
-            gt2 = _COMM.recv(source=0, tag=TAG_COMM_DACC_2)['g']
+        gt2 = PTree.scatter_gt(gt2, self.__distribution)
+
         # Step 5 : Local Downward Accumulation
         new_content = SList.init(fun.none, self.__content.length())
         for i in range(len(self.__local_index)):
