@@ -1,60 +1,69 @@
-from typing import Generic, TypeVar, Callable, Any, Tuple
-
 from pyske.core.list.slist import SList
-from pyske.core.tree.btree import Node, Leaf, BTree
+from pyske.core import interface
+
+from typing import TypeVar, Callable, Generic, Any, Tuple
+
+__all__ = ['RTree']
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 
 
-class RNode (Generic[A]):
+class RTree(interface.RoseTree, Generic[A]):
+    # pylint: disable=too-many-public-methods
+    """
+    PySke rose trees (interface)
 
-    def __init__(self, value, ts=None):
-        self.__value = value
-        if ts is None:
-            self.__children = SList([])
-        else:
-            self.__children = SList(ts)
+    Methods from interface RoseTree:
+        from_rt, to_rt
+        size, map, zip, map2,
+        reduce, uacc, dacc,
+        lacc, racc
+
+    Methods:
+        is_leaf, is_node
+    """
+
+    def __init__(self, val, ch: SList = None):
+        self.__value = val
+        self.__children = ch if ch is not None else SList()
+        self.__size = 1
+        for c in self.__children:
+            self.__size += c.size
 
     @property
-    def value(self) -> A:
+    def is_leaf(self: 'RTree[A]') -> bool:
+        """ Indicates if the RTree is a leaf
+        """
+        return self.__children == SList()
+
+    @property
+    def is_node(self: 'RTree[A]') -> bool:
+        """ Indicates if the RTree is a node
+        """
+        return self.__children != SList()
+
+    @property
+    def value(self: 'RTree[A]') -> A:
+        """
+        :return: the top value of the current tree
+        """
         return self.__value
 
     @property
-    def children(self) -> SList['RNode[A]']:
+    def children(self: 'RTree[A]') -> 'SList[RTree[A]]':
+        """
+        :return: the childrens of the current tree
+        """
         return self.__children
 
-    @staticmethod
-    def init_from_bt(bt: 'BTree[A, A]') -> 'RNode[A]':
+    @property
+    def size(self: 'RTree[A]') -> int:
+        return self.__size
 
-        def __aux(btree: 'BTree[A, A]') -> 'SList[RNode[A]]':
-            if btree.is_leaf:
-                if btree.value is None:
-                    return SList()
-                else:
-                    return SList([RNode(btree.value)])
-            else:
-                res_l = __aux(btree.left)
-                res_r = __aux(btree.right)
-                res_head = RNode(btree.value, res_l)
-                res_r.insert(0, res_head)
-                return res_r
-
-        return __aux(bt).head()
-
-    def __str__(self: 'RNode[A]') -> str:
-        res = "rnode " + str(self.value) + "["
-        ch = self.children
-        for i in range(0, ch.length()):
-            if i == ch.length() - 1:
-                res = res + str(ch[i])
-            else:
-                res = res + str(ch[i]) + ", "
-        return res + "]"
-
-    def __eq__(self: 'RNode[A]', other: Any) -> bool:
-        if isinstance(other, RNode):
+    def __eq__(self: 'RTree[A]', other: Any) -> bool:
+        if isinstance(other, RTree):
             ch1 = self.children
             ch2 = other.children
             if ch1.length() != ch2.length():
@@ -65,93 +74,105 @@ class RNode (Generic[A]):
             return self.value == other.value
         return False
 
-    def is_leaf(self: 'RNode[A]') -> bool:
-        return len(self.children) == 0
+    def _get_string(self: 'RTree[A]', depth=0):
+        res = ("  " * depth) + "rnode(" + str(self.value)
+        if self.is_leaf:
+            return res + ")"
+        res = res + "\n"
+        for i in range(self.children.length()):
+            c = self.children[i]
+            res = res + c._get_string(depth=depth + 1) + ("\n" if i != self.children.length()-1 else "")
+        return res + ")"
 
-    def is_node(self: 'RNode[A]') -> bool:
-        return len(self.children) != 0
+    def __str__(self: 'RTree[A]') -> str:
+        return self._get_string(depth=0)
 
-    def map(self: 'RNode[A]', f: Callable[[A], B]) -> 'RNode[B]':
-        v = f(self.value)
-        ch = self.children.map(lambda x: x.map(f))
-        return RNode(v, ch)
+    @staticmethod
+    def from_rt(rt: 'RTree[A]') -> Any:
+        new_ch = SList.init(lambda x: None, rt.children.length())
+        for i in range(rt.children.length()):
+            new_ch[i] = RTree.init_from_rt(rt.children[i])
+        return RTree(rt.value, new_ch)
 
-    def reduce(self: 'RNode[A]', f: Callable[[A, B], B], g: Callable[[B, B], B]) -> B:
-        if self.children.empty():
+    def to_rt(self: 'RTree[A]') -> 'RTree[A]':
+        new_ch = SList.init(lambda x: None, self.children.length())
+        for i in range(self.children.length()):
+            new_ch[i] = RTree.init_from_rt(self.children[i])
+        return RTree(self.value, new_ch)
+
+    def map(self: 'RTree[A]', k: Callable[[A], B]) -> 'RTree[B]':
+        v = k(self.value)
+        ch = self.children.map(lambda x: x.map(k))
+        return RTree(v, ch)
+
+    def zip(self: 'RTree[A]',
+            a_rosetree: 'RTree[B]') -> 'RTree[Tuple[A, B]]':
+        ch1 = self.children
+        ch2 = a_rosetree.children
+        assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
+        new_ch = SList.init(lambda x: None, ch1.length())
+        for i in range(0, ch1.length()):
+            new_ch[i] = ch1[i].zip(ch2[i])
+        v = (self.value, a_rosetree.value)
+        return RTree(v, new_ch)
+
+    def map2(self: 'RTree[A]', k: Callable[[A, B], C],
+             a_rosetree: 'RTree[B]') -> 'RTree[C]':
+        ch1 = self.children
+        ch2 = a_rosetree.children
+        assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
+        new_ch = SList.init(lambda x: None, ch1.length())
+        for i in range(0, ch1.length()):
+            new_ch[i] = ch1[i].map2(k, ch2[i])
+        v = k(self.value, a_rosetree.value)
+        return RTree(v, new_ch)
+
+    def reduce(self: 'RTree[A]',
+               oplus: Callable[[A, B], B], unit_plus: B,
+               otimes: Callable[[B, B], B], unit_otimes: B = None) -> B:
+        if self.is_leaf:
             return self.value
-        # We calculate the reduction of each childen
-        reductions = self.children.map(lambda x: x.reduce(f, g))
-        # We combine every sub reductions using g
-        red = reductions[0]
-        for i in range(1, reductions.length()):
-            red = g(red, reductions[i])
-        # The final reduction is the result of the combination of sub reductions and the value of the current instance
-        return f(self.value, red)
+        reductions = self.children.map(lambda x: x.reduce(oplus, unit_plus,
+                                                          otimes, unit_otimes)
+                                       )
+        red = reductions.reduce(otimes)
+        return oplus(self.value, red)
 
-    def uacc(self: 'RNode[A]', f: Callable[[A, B], B], g: Callable[[B, B], B]) -> 'RNode[B]':
-        v = self.reduce(f, g)
-        ch = self.children.map(lambda x: x.uacc(f, g))
-        return RNode(v, ch)
+    def uacc(self: 'RTree[A]',
+             oplus: Callable[[A, B], B], unit_oplus: B,
+             otimes: Callable[[B, B], B], unit_times: B) -> 'RTree[B]':
+        if self.is_leaf:
+            return RTree(self.value)
+        new_ch = self.children.map(lambda x: x.uacc(oplus, unit_oplus,
+                                                    otimes, unit_times))
+        red = new_ch[0].value
+        for i in range(1, len(new_ch)):
+            red = otimes(red, new_ch[i].value)
+        return RTree(oplus(self.value, red), new_ch)
 
-    def dacc(self: 'RNode[A]', f: Callable[[A, A], A], unit_f: A) -> 'RNode[A]':
+    def dacc(self: 'RTree[A]', oplus: Callable[[A, A], A],
+             unit: A) -> 'RTree[A]':
         def __dacc_aux(t, fct, c):
-            # Auxiliary function to make an accumulation with an arbitrary accumulator
-            return RNode(c, t.children.map(lambda x: __dacc_aux(x, fct, fct(c, t.value))))
-        # Since the accumulator changes at each iteration, we need to use a changing parameter, not defined in dacc.
-        # Use of an auxiliary function, with as a first accumulator, unit_f
-        return __dacc_aux(self, f, unit_f)
+            new_ch = t.children.map(lambda x: __dacc_aux(x, fct, fct(c, t.value)))
+            return RTree(c, new_ch)
+        return __dacc_aux(self, oplus, unit)
 
-    def zip(self: 'RNode[A]', rt: 'RNode[B]') -> 'RNode[Tuple[A, B]]':
-        ch1 = self.children
-        ch2 = rt.children
-        assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
-        ch = SList([])
-        for i in range(0, ch1.length()):
-            ch.append(ch1[i].zip(ch2[i]))
-        v = (self.value, rt.value)
-        return RNode(v, ch)
-
-    def map2(self: 'RNode[A]', f: Callable[[A, B], C], rt: 'RNode[B]') -> 'RNode[C]':
-        ch1 = self.children
-        ch2 = rt.children
-        assert ch1.length() == ch2.length(), "The rose trees cannot be zipped (not the same shape)"
-        ch = SList([])
-        for i in range(0, ch1.length()):
-            ch.append(ch1[i].map2(f, ch2[i]))
-        v = f(self.value, rt.value)
-        return RNode(v, ch)
-
-    def racc(self: 'RNode[A]', f: Callable[[A, A], A], unit_f: A) -> 'RNode[A]':
+    def lacc(self: 'RTree[A]', oplus: Callable[[A, A], A],
+             unit: A) -> 'RTree[A]':
         rv = self.children.map(lambda x: x.value)
-        rs = rv.scanl(f, unit_f)
-        ch = SList()
+        rs = rv.scanp(oplus, unit)
         ch0 = self.children
+        new_ch = SList.init(lambda x: None, ch0.length())
         for i in range(ch0.length()):
-            ch.append(RNode(rs[i], ch0[i].racc(f, unit_f).children))
-        return RNode(unit_f, ch)
+            new_ch[i] = RTree(rs[i], ch0[i].lacc(oplus, unit).children)
+        return RTree(unit, new_ch)
 
-    def lacc(self: 'RNode[A]', f: Callable[[A, A], A], unit_f: A) -> 'RNode[A]':
+    def racc(self: 'RTree[A]', oplus: Callable[[A, A], A],
+             unit: A) -> 'RTree[A]':
         rv = self.children.map(lambda x: x.value)
-        rs = rv.scanp(f, unit_f)
-        ch = SList()
+        rs = rv.scanl(oplus, unit)
         ch0 = self.children
+        new_ch = SList.init(lambda x: None, ch0.length())
         for i in range(ch0.length()):
-            ch.append(RNode(rs[i], ch0[i].lacc(f, unit_f).children))
-        return RNode(unit_f, ch)
-
-    def r2b(self: 'RNode[A]') -> BTree[A, B]:
-
-        def r2b1(t, ss):
-            left = r2b2(t.children)
-            right = r2b2(ss)
-            return Node(t.value, left, right)
-
-        def r2b2(ts):
-            if ts.empty():
-                return Leaf(None)
-            else:
-                h = ts.head()
-                t = ts.tail()
-                return r2b1(h, t)
-
-        return r2b1(self, SList())
+            new_ch[i] = RTree(rs[i], ch0[i].racc(oplus, unit).children)
+        return RTree(unit, new_ch)

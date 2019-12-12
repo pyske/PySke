@@ -42,7 +42,7 @@ def _main():
         btr = balanced_btree(_randint, size)
     if type_bt == ILL:
         btr = ill_balanced_btree(_randint, size)
-    LTree.init_from_bt(btr, num_m).write_file(filename)
+    LTree.from_bt(btr, num_m).write_file(filename)
 
 
 _main()

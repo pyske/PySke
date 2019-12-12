@@ -25,7 +25,7 @@ def _test(bin_tree):
     print(bin_tree)
     par.at_root(lambda: print("-----"))
     m_bridge_param = 3
-    linear_tree = LTree.init_from_bt(bin_tree, m_bridge_param)
+    linear_tree = LTree.from_bt(bin_tree, m_bridge_param)
     parallel_tree = PTree(linear_tree)
     par.at_root(lambda: print(linear_tree))
     print(parallel_tree)

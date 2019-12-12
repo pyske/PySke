@@ -16,6 +16,7 @@ A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
+E = TypeVar('E')  # pylint: disable=invalid-name
 
 
 class Distribution(ABC, list):
@@ -612,60 +613,233 @@ class BinTree(ABC, Generic[A, B]):
     PySke binary trees (interface)
 
     Methods:
-        init_from_bt,
+        from_bt, to_bt
         size, map, zip, map2,
-        reduce, uacc, dacc
+        reduce, uacc, dacc,
+        getchl, getchr
     """
 
     @staticmethod
     @abstractmethod
-    def init_from_bt(bt: 'BTree[A, B]', m: int = 1) -> Any:
+    def from_bt(bt, m: int = 1) -> Any:
         """
-        TODO
+        Return a binary tree built from a recursive and sequential binary tree at processor 0.
 
-        :param m:
-        :return:
+        Examples::
+            
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> bt
+            Node(1,
+                Node(2,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)    
+                )
+            >>> LTree.from_bt(bt, m).to_bt()
+            Node(1,
+                Node(2,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)    
+                )
+            >>> PTree.from_bt(bt, m).map(lambda x: 1, lambda x: 1).to_bt().reduce(lambda x, y, z: x + y + z)
+            5
+
+        :param bt: a binary tree (at processor 0)
+        :param m: parameters for defining m-critcial nodes
+        :return: an instance of the current class
+        """
+
+    @abstractmethod
+    def to_bt(self: 'BinTree[A, B]') -> 'BinTree[A, B]':
+        """
+        Return a sequential binary tree made by construction with the same content
+
+        Example::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> bt.to_bt()
+            Node(1,
+                Node(2,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)    
+                )
+            >>> LTree.from_bt(bt, m).to_bt()
+            Node(1,
+                Node(2,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)    
+                )
+            >>> PTree.from_bt(bt, m).to_bt()
+             Node(1,
+                Node(2,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)    
+                )
+
+        :return: a binary tree (by construction)
         """
 
     @abstractmethod
     def size(self: 'BinTree[A, B]') -> int:
         """
-        TODO
+        Return the size of the whole binary tree
 
-        :return:
-        """
+        :return: the global size of the instance
+        """ 
 
     @abstractmethod
     def map(self: 'BinTree[A, B]', kl: Callable[[A], C], kn: Callable[[B], D]) -> 'BinTree[C, D]':
         """
-        TODO
+        Apply a corresponding function to all the elements.
 
-        :param kl:
-        :param kn:
-        :return:
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> bt.map(lambda x: x + 1, lambda x: x - 1)
+            Node(0,
+                Node(1,
+                    Leaf(4),
+                    Leaf(5),
+                    ),
+                Leaf(6)    
+                )
+            >>> LTree.from_bt(bt, m).map(lambda x: x + 1, lambda x - 1).to_bt()
+            Node(0,
+                Node(1,
+                    Leaf(4),
+                    Leaf(5),
+                    ),
+                Leaf(6)    
+                )
+            >>> PTree.from_bt(bt, m).map(lambda x: x + 1, lambda x - 1).to_bt()
+            Node(0,
+                Node(1,
+                    Leaf(4),
+                    Leaf(5),
+                    ),
+                Leaf(6)    
+                )
+
+        :param kl: function to apply to each leaf value.
+        :param kn: function to apply to each node value.
+        :return: a new binary tree.
         """
 
     @abstractmethod
     def zip(self: 'BinTree[A, B]',
             a_bintree: 'BinTree[C, D]') -> 'BinTree[Tuple[A, C], Tuple[B, D]]':
         """
-        TODO
+        Create a binary tree of pairs.
 
-        :param binary_op:
-        :param a_bintree:
-        :return:
+        The returned binary tree has the same shpae (same size, same distribution)
+        than the initial binary trees.
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt0 = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> bt1 = Node(6, Node(7, Leaf(8), Leaf(9)), Leaf(10))
+            >>> m = 1
+            >>> bt.zip(bt1)
+            Node((1,6),
+                Node((2,7),
+                    Leaf((3,8)),
+                    Leaf((4,9)),
+                    ),
+                Leaf((5,10))    
+                )
+            >>> LTree.from_bt(bt0, m).zip(LTree.from_bt(bt1, m)).to_bt()
+            Node((1,6),
+                Node((2,7),
+                    Leaf((3,8)),
+                    Leaf((4,9)),
+                    ),
+                Leaf((5,10))    
+                )
+            >>> PTree.from_bt(bt0, m).zip(PTree.from_bt(bt1, m)).to_bt()
+            Node((1,6),
+                Node((2,7),
+                    Leaf((3,8)),
+                    Leaf((4,9)),
+                    ),
+                Leaf((5,10))    
+                )
+
+        :param a_bintree: a binary tree of the same shape than ``self``.
+        :return: a binary tree of pairs
         """
 
     @abstractmethod
     def map2(self: 'BinTree[A, B]', kl: Callable[[A, C], U], kn: Callable[[B, D], V],
              a_bintree: 'BinTree[C, D]') -> 'BinTree[U, V]':
         """
-        TODO
+        Apply a corresponding function to all the elements of ``self`` and ``a_bintree``.
 
-        :param kl:
-        :param kn:
-        :param a_bintree:
-        :return:
+        The returned binary tree has the same shpae (same size, same distribution)
+        than the initial binary trees.
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt0 = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> bt1 = Node(6, Node(7, Leaf(8), Leaf(9)), Leaf(10))
+            >>> m = 1
+            >>> sum2 = lambda x, y: x + y
+            >>> sub2 = lambda x, y: x - y
+            >>> bt.map2(sum2, sub2, bt1)
+            Node(-5,
+                Node(-5,
+                    Leaf(11),
+                    Leaf(13),
+                    ),
+                Leaf(15)    
+                )
+            >>> LTree.from_bt(bt0, m).map2(sum2, sub2, LTree.from_bt(bt1, m)).to_bt()
+            Node(-5,
+                Node(-5,
+                    Leaf(11),
+                    Leaf(13),
+                    ),
+                Leaf(15)    
+                )
+            >>> PTree.from_bt(bt0, m).map2(sum2, sub2, PTree.from_bt(bt1, m)).to_bt()
+            Node(-5,
+                Node(-5,
+                    Leaf(11),
+                    Leaf(13),
+                    ),
+                Leaf(15)    
+                )
+
+        :param kl: function to apply to each pair of elements on leaves.
+        :param kn: function to apply to each pair of elements on nodes.
+        :param a_bintree: a binary tree of the same shape than ``self``.
+        :return: a new binary tree
         """
 
     @abstractmethod
@@ -676,42 +850,204 @@ class BinTree(ABC, Generic[A, B]):
                psi_r: Callable[[A, C, C], C] = None
                ) -> A:
         """
-        TODO
+        Reduce a binary tree to one value.
 
-        :param k:
-        :param phi:
-        :param psi_n:
-        :param psi_l:
-        :param psi_r:
-        :return:
+        The parameters must respect the following closure property on k:
+        forall b, x, y, l, r,
+            k(l, b, r) == psi_n(l, phi(b), r)
+            psi_n(psi_n(x, l, y), b, r) == psi_n(x, psi_l(l, b, r), y)
+            psi_n(l, b, psi_n(x, r, y)) == psi_n(x, psi_r(l, b, r), y)
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> fun_add = lambda x, y, z: x + y + z
+            >>> bt.reduce(fun_add)
+            15
+            >>> LTree.from_bt(bt, m)\
+                    .reduce(fun_add, lambda x: x, fun_add, fun_add, fun_add)
+            15
+            >>> PTree.from_bt(bt, m)\
+                    .reduce(fun_add, lambda x: x, fun_add, fun_add, fun_add)
+            15
+
+        :param k: an operator (with arity three) respecting a closure property.
+        :param phi: a unary opertor to encapsulate partial values involved in a partial results
+        :param psi_n: an operator (with arity three) handling with partial results 
+        :param psi_l: an operator (with arity three) for partial on left reduction
+        :param psi_r: an operator (with arity three) for partial on right reduction
+        :return: a value
+        """
+
+    @abstractmethod
+    def map_reduce(self: 'BinTree[A, B]', kl: Callable[[A], C], kn: Callable[[B], D],
+                   k: Callable[[C, D, C], C],
+                   phi: Callable[[D], E] = None,
+                   psi_n: Callable[[C, E, C], C] = None,
+                   psi_l: Callable[[E, E, C], E] = None,
+                   psi_r: Callable[[C, E, E], E] = None
+                   ) -> 'BinTree[C, C]':
+        """
+        Combination of a map and a reduce.
+
+        The parameters must respect the following closure property on k:
+        forall b, x, y, l, r,
+            k(l, b, r) == psi_n(l, phi(b), r)
+            psi_n(psi_n(x, l, y), b, r) == psi_n(x, psi_l(l, b, r), y)
+            psi_n(l, b, psi_n(x, r, y)) == psi_n(x, psi_r(l, b, r), y)
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> fun_add = lambda x, y, z: x + y + z
+            >>> bt.map_reduce(lambda x: 1, lambda x: 1, fun_add)
+            5
+            >>> LTree.from_bt(bt, m)\
+                    .map_reduce(lambda x: 1, lambda x: 1, fun_add, lambda x: x, fun_add, fun_add, fun_add)
+            5
+            >>> PTree.from_bt(bt, m)\
+                    .map_reduce(lambda x: 1, lambda x: 1, fun_add, lambda x: x, fun_add, fun_add, fun_add)
+            5
+
+        :param kl: function to apply to each pair of elements on leaves.
+        :param kn: function to apply to each pair of elements on nodes.
+        :param k: an operator (with arity three) respecting a closure property.
+        :param phi: a unary opertor to encapsulate partial values involved in a partial results
+        :param psi_n: an operator (with arity three) handling with partial results
+        :param psi_l: an operator (with arity three) for partial on left reduction
+        :param psi_r: an operator (with arity three) for partial on right reduction
+        :return: a value.
         """
 
     @abstractmethod
     def uacc(self: 'BinTree[A, B]', k: Callable[[A, B, A], A],
-               phi: Callable[[B], C] = None,
-               psi_n: Callable[[A, C, A], A] = None,
-               psi_l: Callable[[C, C, A], C] = None,
-               psi_r: Callable[[A, C, C], C] = None
-               ) -> 'BinTree[A, A]':
+             phi: Callable[[B], C] = None,
+             psi_n: Callable[[A, C, A], A] = None,
+             psi_l: Callable[[C, C, A], C] = None,
+             psi_r: Callable[[A, C, C], C] = None
+             ) -> 'BinTree[A, A]':
         """
-        TODO
+        Return the prefix-sum from bottom-to-top.
 
-        :param k:
-        :param phi:
-        :param psi_n:
-        :param psi_l:
-        :param psi_r:
-        :return:
+        The returned binary tree has the same shape (same length, same distribution)
+        than the initial binary tree.
+        
+        The parameters must respect the following closure property on k:
+        forall b, x, y, l, r,
+            k(l, b, r) == psi_n(l, phi(b), r)
+            psi_n(psi_n(x, l, y), b, r) == psi_n(x, psi_l(l, b, r), y)
+            psi_n(l, b, psi_n(x, r, y)) == psi_n(x, psi_r(l, b, r), y)
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> fun_add = lambda x, y, z: x + y + z
+            >>> bt.uacc(fun_add).to_bt()
+            Node(15,
+                Node(9,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)   
+                )
+            >>> LTree.from_bt(bt, m)\
+                    .uacc(fun_add, lambda x: x, fun_add, fun_add, fun_add)\
+                    .to_bt()
+            Node(15,
+                Node(9,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)   
+                )
+            >>> PTree.from_bt(bt, m)\
+                    .uacc(fun_add, lambda x: x, fun_add, fun_add, fun_add)\
+                    .to_bt()
+            Node(15,
+                Node(9,
+                    Leaf(3),
+                    Leaf(4),
+                    ),
+                Leaf(5)   
+                )
+
+        :param k: an operator (with arity three) respecting a closure property.
+        :param phi: a unary opertor to encapsulate partial values involved in a partial results
+        :param psi_n: an operator (with arity three) handling with partial results 
+        :param psi_l: an operator (with arity three) for partial on left reduction
+        :param psi_r: an operator (with arity three) for partial on right reduction
+        :return: a new binary tree
         """
 
     @abstractmethod
     def dacc(self: 'BinTree[A, B]', gl: Callable[[C, B], C], gr: Callable[[C, B], C], c: C,
-               phi_l: Callable[[B], D] = None,
-               phi_r: Callable[[B], D] = None,
-               psi_u: Callable[[C, D], D] = None,
-               psi_d: Callable[[C, D], C] = None
-               ) -> 'BinTree [C, C]':
+             phi_l: Callable[[B], D] = None,
+             phi_r: Callable[[B], D] = None,
+             psi_u: Callable[[C, D], D] = None,
+             psi_d: Callable[[C, D], C] = None
+             ) -> 'BinTree [C, C]':
         """
+        Return the prefix-sum from top-to-bottom.
+
+        The returned binary tree has the same shape (same length, same distribution)
+        than the initial binary tree.
+        
+        The parameters must respect the following closure property on k:
+        forall c, n, m,
+            gl(c, n) == psi_d(c, phi_l(n))
+            gr(c, n) == psi_d(c, phi_r(n))
+            psi_d(psi_d(c, n), m) == psi_d(c, psi_u(n, m))
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> incr = lambda x, y: x + y + 1
+            >>> incr_left = lambda x, y: x + 1
+            >>> zero = lambda x: 0
+            >>> bt.dacc(incr_left, incr_left, 0)
+            Node(0,
+                Node(1,
+                    Leaf(2),
+                    Leaf(2),
+                    ),
+                Leaf(1)   
+                )
+            >>> LTree.from_bt(bt, m)\
+                    .dacc(incr_left, incr_left, 0, zero, zero, incr)\
+                    .to_bt()
+            Node(0,
+                Node(1,
+                    Leaf(2),
+                    Leaf(2),
+                    ),
+                Leaf(1)   
+                )
+            >>> PTree.from_bt(bt, m)\
+                    .dacc(incr_left, incr_left, 0, zero, zero, incr)\
+                    .to_bt()
+            Node(0,
+                Node(1,
+                    Leaf(2),
+                    Leaf(2),
+                    ),
+                Leaf(1)   
+                )
+
         TODO
 
         :param gl:
@@ -725,17 +1061,217 @@ class BinTree(ABC, Generic[A, B]):
         """
 
     @abstractmethod
-    def getchl(self: 'BTree[A, A]', c: A) -> 'BTree[A, A]':
+    def getchl(self: 'BinTree[A, A]', c: A) -> 'BinTree[A, A]':
         """
-        TODO
+        Shift the values on left with an upward maneer.
 
-        :param c:
+        The returned binary tree has the same shape (same length, same distribution)
+        than the initial binary tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> bt.getchl(-1)
+            Node(2,
+                Node(3,
+                    Leaf(-1),
+                    Leaf(-1),
+                    ),
+                Leaf(-1)   
+                )
+            >>> LTree.from_bt(bt, m)\
+                    .getchl(-1).to_bt()
+            Node(2,
+                Node(3,
+                    Leaf(-1),
+                    Leaf(-1),
+                    ),
+                Leaf(-1)   
+                )
+            >>> PTree.from_bt(bt, m)\
+                    .getchl(-1).to_bt()
+            Node(2,
+                Node(3,
+                    Leaf(-1),
+                    Leaf(-1),
+                    ),
+                Leaf(-1)   
+                )
+
+        :param c: a value for leaves
+        :return: a new binary tree
         """
-        
+
     @abstractmethod
-    def getchr(self: 'BTree[A, A]', c: A) -> 'BTree[A, A]':
+    def getchr(self: 'BinTree[A, A]', c: A) -> 'BinTree[A, A]':
+        """
+        Shift the values on right with an upward maneer.
+
+        The returned binary tree has the same shape (same length, same distribution)
+        than the initial binary tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> bt = Node(1, Node(2, Leaf(3), Leaf(4)), Leaf(5))
+            >>> m = 1
+            >>> bt.getchr(-1)
+            Node(5,
+                Node(4,
+                    Leaf(-1),
+                    Leaf(-1),
+                    ),
+                Leaf(-1)   
+                )
+            >>> LTree.from_bt(bt, m)\
+                    .getchr(-1).to_bt()
+            Node(5,
+                Node(4,
+                    Leaf(-1),
+                    Leaf(-1),
+                    ),
+                Leaf(-1)   
+                )
+            >>> PTree.from_bt(bt, m)\
+                    .getchr(-1).to_bt()
+            Node(5,
+                Node(4,
+                    Leaf(-1),
+                    Leaf(-1),
+                    ),
+                Leaf(-1)   
+                )
+                
+        :param c: a value for leaves
+        :return: a new binary tree
+        """
+
+
+class RoseTree(ABC, Generic[A]):
+    # pylint: disable=too-many-public-methods
+    """
+    PySke rose trees (interface)
+
+    Methods:
+        size, map, zip, map2,
+        reduce, uacc, dacc
+    """
+
+    @staticmethod
+    @abstractmethod
+    def from_rt(rt) -> Any:
         """
         TODO
 
-        :param c:
+        :param rt:
+        :return:
+        """
+
+    @abstractmethod
+    def to_rt(self: 'RoseTree[A]') -> 'RoseTree[A]':
+        """
+        TODO
+
+        :return:
+        """
+
+    @abstractmethod
+    def size(self: 'RoseTree[A]') -> int:
+        """
+        TODO
+
+        :return:
+        """
+
+    @abstractmethod
+    def map(self: 'RoseTree[A]', k: Callable[[A], B]) -> 'RoseTree[B]':
+        """
+        TODO
+
+        :param k:
+        :return:
+        """
+
+    @abstractmethod
+    def zip(self: 'RoseTree[A]',
+            a_rosetree: 'RoseTree[B]') -> 'RoseTree[Tuple[A, B]]':
+        """
+        TODO
+
+        :param a_rosetree:
+        :return:
+        """
+
+    @abstractmethod
+    def map2(self: 'RoseTree[A]', k: Callable[[A, B], C],
+             a_rosetree: 'RoseTree[B]') -> 'RoseTree[C]':
+        """
+        TODO
+
+        :param k:
+        :param a_rosetree:
+        :return:
+        """
+
+    @abstractmethod
+    def reduce(self: 'RoseTree[A]',
+               oplus: Callable[[A, B], B], unit_oplus: B,
+               otimes: Callable[[B, B], B], unit_otimes: B) -> B:
+        """
+        TODO
+
+        :param oplus:
+        :param unit_oplus:
+        :param otimes:
+        :param unit_otimes:
+        :return:
+        """
+
+    @abstractmethod
+    def uacc(self: 'RoseTree[A]', oplus: Callable[[A, B], B], unit_oplus: B,
+             otimes: Callable[[B, B], B], unit_otimes: B) -> 'RoseTree[B]':
+        """
+        TODO
+
+        :param oplus:
+        :param unit_oplus:
+        :param otimes:
+        :param unit_otimes:
+        :return:
+        """
+
+    @abstractmethod
+    def dacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+        """
+        TODO
+
+        :param oplus:
+        :param unit:
+        :return:
+        """
+
+    @abstractmethod
+    def lacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+        """
+        TODO
+
+        :param oplus:
+        :param unit:
+        :return:
+        """
+
+    @abstractmethod
+    def racc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+        """
+        TODO
+
+        :param oplus:
+        :param unit:
+        :return:
         """

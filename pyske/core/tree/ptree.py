@@ -2,7 +2,8 @@ from typing import Generic, TypeVar, Callable, Tuple
 
 from pyske.core import interface, SList
 from pyske.core.tree.distribution import Distribution
-from pyske.core.tree.ltree import LTree, Segment
+from pyske.core.tree.ltree import LTree
+from pyske.core.tree.segment import Segment
 from pyske.core.tree.btree import BTree
 
 from pyske.core.tree.tag import TAG_NODE, TAG_LEAF
@@ -11,8 +12,6 @@ from pyske.core.util import fun
 
 from pyske.core.support import parallel
 
-import itertools
-
 __all__ = ['PTree']
 
 # <editor-fold desc="constants">
@@ -20,6 +19,7 @@ A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
+E = TypeVar('E')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
@@ -47,13 +47,13 @@ class PTree(interface.BinTree, Generic[A, B]):
     PySke distributed binary trees
 
     Methods from interface BinTree:
-        init_from_bt,
+        from_bt, to_bt
         size, map, zip, map2,
         reduce, uacc, dacc,
         getchl, getchr
 
     Methods:
-        init_from_seq, to_seq
+        from_seq, to_seq
     """
 
     def __init__(self):
@@ -84,7 +84,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         for i in range(len(self.__local_index)):
             (start, offset) = self.__global_index[i]
             seg = Segment(self.__content[start:start + offset])
-            res = res + str(seg)+ (',' if i != len(self.__local_index) - 1 else '')
+            res = res + str(seg) + (',' if i != len(self.__local_index) - 1 else '')
         return res+"]"
 
     def __eq__(self, other):
@@ -101,14 +101,9 @@ class PTree(interface.BinTree, Generic[A, B]):
             return False
 
     @staticmethod
-    def init_from_bt(bt: 'BTree[A, B]', m: int = 1) -> 'PTree[A, B]':
-        lt = LTree.init_from_bt(bt, m)
-        return PTree.from_seq(lt)
-
-    @staticmethod
     def from_seq(lt: 'LTree[A, B]') -> 'PTree[A, B]':
         p_tree = PTree()
-        sizes = [len(lt[i]) for i in range(len(lt))]
+        sizes = [lt[i].length for i in range(lt.length)]
         (distribution, global_index) = Distribution.balanced_tree(sizes)
         p_tree.__distribution = distribution
         p_tree.__global_index = SList(global_index)
@@ -118,9 +113,31 @@ class PTree(interface.BinTree, Generic[A, B]):
         p_tree.__local_size = 0
         for i_seg in range(p_tree.__start_index, p_tree.__start_index + p_tree.__nb_segs):
             p_tree.__content.extend(lt[i_seg])
-            p_tree.__local_size += len(lt[i_seg])
+            p_tree.__local_size += lt[i_seg].length
         p_tree.__local_index = p_tree.__get_local_index()
         return p_tree
+
+    def to_seq(self):
+        full_content = []
+        full_index = self.__get_full_index()
+        res = LTree.init(fun.none, full_index.length())
+        full_content.extend(self.__content)
+        content2 = _COMM.allgather(full_content)
+        prime_content = content2[0]
+        for i_seg in range(1, len(content2)):
+            prime_content.extend(content2[i_seg])
+        for i in range(full_index.length()):
+            (start, offset) = full_index[i]
+            res[i] = Segment(prime_content[start:start + offset])
+        return res
+
+    @staticmethod
+    def from_bt(bt: 'BTree[A, B]', m: int = 1) -> 'PTree[A, B]':
+        lt = LTree.from_bt(bt, m)
+        return PTree.from_seq(lt)
+
+    def to_bt(self: 'PTree[A, B]') -> 'BTree[A, B]':
+        return self.to_seq().to_bt()
 
     @staticmethod
     def gather_gt(gt, root=0):
@@ -149,7 +166,7 @@ class PTree(interface.BinTree, Generic[A, B]):
             acc_gt_size = 0
             for i in range(len(distribution)):
                 dist = distribution[i]
-                gts[i] = Segment(gt[acc_gt_size : acc_gt_size + dist])
+                gts[i] = Segment(gt[acc_gt_size: acc_gt_size + dist])
                 acc_gt_size += dist
         else:
             gts = None
@@ -164,20 +181,6 @@ class PTree(interface.BinTree, Generic[A, B]):
 
     def __get_local_index(self: 'PTree[A, B]'):
         return self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]
-
-    def to_seq(self):
-        full_content = []
-        full_index = self.__get_full_index()
-        res = LTree.init(fun.none, full_index.length())
-        full_content.extend(self.__content)
-        content2 = _COMM.allgather(full_content)
-        prime_content = content2[0]
-        for i_seg in range(1, len(content2)):
-            prime_content.extend(content2[i_seg])
-        for i in range(full_index.length()):
-            (start, offset) = full_index[i]
-            res[i] = Segment(prime_content[start:start + offset])
-        return res
 
     @staticmethod
     def init(pt, new_content):
@@ -237,7 +240,22 @@ class PTree(interface.BinTree, Generic[A, B]):
             gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
             i += 1
         gt = PTree.allgather_gt(gt)
-        return gt.reduce_global(psi_n) 
+        return gt.reduce_global(psi_n)
+
+    def map_reduce(self: 'PTree[A, B]', kl: Callable[[A], C], kn: Callable[[B], D],
+                   k: Callable[[C, D, C], C],
+                   phi: Callable[[D], E] = None,
+                   psi_n: Callable[[C, E, C], C] = None,
+                   psi_l: Callable[[E, E, C], E] = None,
+                   psi_r: Callable[[C, E, E], E] = None
+                   ):
+        gt = Segment.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__local_index:
+            gt[i] = Segment(self.__content[start:start + offset]).map_reduce_local(kl, kn, k, phi, psi_l, psi_r)
+            i += 1
+        gt = PTree.allgather_gt(gt)
+        return gt.reduce_global(psi_n)
 
     def uacc(self: 'PTree[A, B]', k: Callable[[A, B, A], A],
              phi: Callable[[B], C] = fun.idt,
@@ -260,7 +278,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         gt2 = None
         if _PID is 0:
             gt2 = gt.uacc_global(psi_n)
-            for i in range(len(gt2)):
+            for i in range(gt2.length):
                 _, tag = gt2[i]
                 if tag is TAG_NODE:
                     val_left, _ = gt2.get_left(i)
@@ -312,9 +330,8 @@ class PTree(interface.BinTree, Generic[A, B]):
             new_content[start:start + offset] = Segment(self.__content[start:start + offset]).dacc_local(gl, gr, val)
         return PTree.init(self, new_content)
 
-
     def getchl(self: 'PTree[A, A]', c: A) -> 'PTree[A, A]':
-        if len(self.__content) == 0:
+        if self.__content.empty():
             return self
         tops_c = Segment.init(fun.none, self.__nb_segs)
         lt2 = SList.init(fun.none, self.__nb_segs)
@@ -327,7 +344,7 @@ class PTree(interface.BinTree, Generic[A, B]):
         for i in range(len(self.__local_index)):
             start, offset = self.__local_index[i]
             i_glob = self.__start_index + i
-            val, tag = gt[i_glob]
+            val, tag = tops_c[i_glob]
             if tag is TAG_NODE:
                 val_l, _ = tops_c.get_left(i_glob)
                 val = Segment(lt2[i]).getch_update(val_l)
@@ -336,9 +353,8 @@ class PTree(interface.BinTree, Generic[A, B]):
             new_content[start:start + offset] = val
         return PTree.init(self, new_content)
 
-
     def getchr(self: 'PTree[A, A]', c: A) -> 'PTree[A, A]':
-        if len(self.__content) == 0:
+        if self.__content.empty():
             return self
         tops_c = Segment.init(fun.none, self.__nb_segs)
         lt2 = SList.init(fun.none, self.__nb_segs)
