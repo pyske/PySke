@@ -1,7 +1,3 @@
-import operator
-
-import pytest
-
 from pyske.core.support.errors import IllFormedError
 from pyske.core.support.parallel import PID
 from pyske.core.tree.btree import Node, Leaf
@@ -10,8 +6,12 @@ from pyske.core.tree.ltree import *
 from pyske.core.tree.ptree import *
 from pyske.core.tree.segment import *
 from pyske.core.util import fun
+from pyske.examples.tree.tree_functions import *
+from pyske.core.support.generate import *
 
-
+import operator
+import pytest
+from random import randint
 # -------------------------- #
 
 def test_map_leaf():
@@ -204,3 +204,32 @@ def test_zipwith_node_leaf():
     bt2 = Leaf(2)
     with pytest.raises(AssertionError):
         PTree.from_bt(bt1, m).map2(fun.add, fun.add, PTree.from_bt(bt2, m))
+
+# -------------------------- #
+
+
+def test_prefix():
+    m = 1
+    bt = balanced_btree(lambda: randint(0, 10), 20)
+    lt = LTree.from_bt(bt, m)
+    res = prefix(lt).to_bt()
+    exp = prefix(bt)
+    assert exp == res
+
+
+def test_depth():
+    m = 1
+    bt = balanced_btree(lambda: randint(0, 10), 20)
+    lt = LTree.from_bt(bt, m)
+    res = depth(lt).to_bt()
+    exp = depth(bt)
+    assert exp == res
+
+
+def test_ancestors():
+    m = 1
+    bt = balanced_btree(lambda: randint(0, 10), 20)
+    lt = LTree.from_bt(bt, m)
+    res = ancestors(lt).to_bt()
+    exp = ancestors(bt)
+    assert exp == res
