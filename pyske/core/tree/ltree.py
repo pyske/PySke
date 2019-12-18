@@ -12,6 +12,10 @@ __all__ = ['LTree']
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
+A1 = TypeVar('A1')  # pylint: disable=invalid-name
+B1 = TypeVar('B1')  # pylint: disable=invalid-name
+A2 = TypeVar('A2')  # pylint: disable=invalid-name
+B2 = TypeVar('B2')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
 E = TypeVar('E')  # pylint: disable=invalid-name
@@ -234,6 +238,32 @@ class LTree(interface.BinTree, Generic[A, B]):
         tops = Segment.init(lambda idx: None, self.length)
         for i in range(self.length):
             tops[i] = self[i].map_reduce_local(kl, kn, k, phi, psi_l, psi_r)
+        return tops.reduce_global(psi_n)
+
+    def zip_reduce(self: 'LTree[A, B]', a_ltree: 'LTree[C, D]',
+                   k: Callable[[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
+                   phi: Callable[[Tuple[B, D]], D] = None,
+                   psi_n: Callable[[Tuple[A, C], D, Tuple[A , C]], Tuple[A, C]] = None,
+                   psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
+                   psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[A, C]:
+        assert not (self.empty() or a_ltree.empty()), "zip_reduce cannot be applied to an empty linearized tree"
+        assert self.length == a_ltree.length, "The linearized trees have not the same shape"
+        tops = Segment.init(lambda idx: None, self.length)
+        for i in range(self.length):
+            tops[i] = self[i].zip_reduce_local(a_ltree[i], k, phi, psi_l, psi_r)
+        return tops.reduce_global(psi_n)
+
+    def map2_reduce(self: 'BTree[A1, B1]',
+                    kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
+                    a_ltree: 'BTree[A2, B2]', k: Callable[[A, B, A], A],
+                    phi: Callable[[B], C] = None, psi_n: Callable[[A, C, A], A] = None,
+                    psi_l: Callable[[C, C, A], C] = None, psi_r: Callable[[A, C, C], C] = None
+                    ) -> A:
+        assert not (self.empty() or a_ltree.empty()), "zip_reduce cannot be applied to an empty linearized tree"
+        assert self.length == a_ltree.length, "The linearized trees have not the same shape"
+        tops = Segment.init(lambda idx: None, self.length)
+        for i in range(self.length):
+            tops[i] = self[i].map2_reduce_local(kl, kn, a_ltree[i], k, phi, psi_l, psi_r)
         return tops.reduce_global(psi_n)
 
     def uacc(self: 'LTree[A, B]', k: Callable[[A, B, A], A],

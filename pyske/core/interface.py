@@ -11,9 +11,12 @@ __all__ = ['List', 'Distribution', 'BinTree']
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
-
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
+A1 = TypeVar('A1')  # pylint: disable=invalid-name
+B1 = TypeVar('B1')  # pylint: disable=invalid-name
+A2 = TypeVar('A2')  # pylint: disable=invalid-name
+B2 = TypeVar('B2')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
 E = TypeVar('E')  # pylint: disable=invalid-name
@@ -623,7 +626,7 @@ class BinTree(ABC, Generic[A, B]):
     @abstractmethod
     def from_bt(bt, m: int = 1) -> Any:
         """
-        Return a binary tree built from a recursive and sequential binary tree at processor 0.
+        Return a binary tree built from a BTree at processor 0.
 
         Examples::
             
@@ -651,7 +654,7 @@ class BinTree(ABC, Generic[A, B]):
             >>> PTree.from_bt(bt, m).map(lambda x: 1, lambda x: 1).to_bt().reduce(lambda x, y, z: x + y + z)
             5
 
-        :param bt: a binary tree (at processor 0)
+        :param bt: a BTree (at processor 0)
         :param m: parameters for defining m-critcial nodes
         :return: an instance of the current class
         """
@@ -752,7 +755,7 @@ class BinTree(ABC, Generic[A, B]):
         """
         Create a binary tree of pairs.
 
-        The returned binary tree has the same shpae (same size, same distribution)
+        The returned binary tree has the same shape (same size, same distribution)
         than the initial binary trees.
 
         Examples::
@@ -798,7 +801,7 @@ class BinTree(ABC, Generic[A, B]):
         """
         Apply a corresponding function to all the elements of ``self`` and ``a_bintree``.
 
-        The returned binary tree has the same shpae (same size, same distribution)
+        The returned binary tree has the same shape (same size, same distribution)
         than the initial binary trees.
 
         Examples::
@@ -927,6 +930,64 @@ class BinTree(ABC, Generic[A, B]):
         """
 
     @abstractmethod
+    def zip_reduce(self: 'BinTree[A, B]', a_bintree: 'BinTree[C, D]',
+                   k: Callable[[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
+                   phi: Callable[[Tuple[B, D]], D] = None,
+                   psi_n: Callable[[Tuple[A, C], D, Tuple[A, C]], Tuple[A, C]] = None,
+                   psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
+                   psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[A, C]:
+        """
+        Combination of a zip and a reduce.
+
+        The parameters must respect the following closure property on k:
+        forall b, x, y, l, r,
+            k(l, b, r) == psi_n(l, phi(b), r)
+            psi_n(psi_n(x, l, y), b, r) == psi_n(x, psi_l(l, b, r), y)
+            psi_n(l, b, psi_n(x, r, y)) == psi_n(x, psi_r(l, b, r), y)
+
+        Examples::
+            TODO
+
+        :param a_bintree: a binary tree of the same shape than ``self``.
+        :param k: an operator (with arity three) respecting a closure property.
+        :param phi: a unary opertor to encapsulate partial values involved in a partial result
+        :param psi_n: an operator (with arity three) handling with partial results
+        :param psi_l: an operator (with arity three) for partial on left reduction
+        :param psi_r: an operator (with arity three) for partial on right reduction
+        :return: a value.
+        """
+
+    @abstractmethod
+    def map2_reduce(self: 'BinTree[A1, B1]',
+                    kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
+                    a_bintree: 'BinTree[A2, B2]', k: Callable[[A, B, A], A],
+                    phi: Callable[[B], C] = None, psi_n: Callable[[A, C, A], A] = None,
+                    psi_l: Callable[[C, C, A], C] = None, psi_r: Callable[[A, C, C], C] = None
+                    ) -> A:
+        """
+        Combination of a map2 and a reduce.
+
+        The parameters must respect the following closure property on k:
+        forall b, x, y, l, r,
+            k(l, b, r) == psi_n(l, phi(b), r)
+            psi_n(psi_n(x, l, y), b, r) == psi_n(x, psi_l(l, b, r), y)
+            psi_n(l, b, psi_n(x, r, y)) == psi_n(x, psi_r(l, b, r), y)
+
+        Examples::
+            TODO
+
+        :param a_bintree: a binary tree of the same shape than ``self``.
+        :param kl: function to apply to each pair of elements on leaves.
+        :param kn: function to apply to each pair of elements on nodes.
+        :param k: an operator (with arity three) respecting a closure property.
+        :param phi: a unary opertor to encapsulate partial values involved in a partial result
+        :param psi_n: an operator (with arity three) handling with partial results
+        :param psi_l: an operator (with arity three) for partial on left reduction
+        :param psi_r: an operator (with arity three) for partial on right reduction
+        :return: a value.
+        """
+
+    @abstractmethod
     def uacc(self: 'BinTree[A, B]', k: Callable[[A, B, A], A],
              phi: Callable[[B], C] = None,
              psi_n: Callable[[A, C, A], A] = None,
@@ -936,7 +997,7 @@ class BinTree(ABC, Generic[A, B]):
         """
         Return the prefix-sum from bottom-to-top.
 
-        The returned binary tree has the same shape (same length, same distribution)
+        The returned binary tree has the same shape (same size, same distribution)
         than the initial binary tree.
         
         The parameters must respect the following closure property on k:
@@ -983,7 +1044,7 @@ class BinTree(ABC, Generic[A, B]):
                 )
 
         :param k: an operator (with arity three) respecting a closure property.
-        :param phi: a unary opertor to encapsulate partial values involved in a partial results
+        :param phi: a unary operator to encapsulate partial values involved in a partial result
         :param psi_n: an operator (with arity three) handling with partial results 
         :param psi_l: an operator (with arity three) for partial on left reduction
         :param psi_r: an operator (with arity three) for partial on right reduction
@@ -1000,7 +1061,7 @@ class BinTree(ABC, Generic[A, B]):
         """
         Return the prefix-sum from top-to-bottom.
 
-        The returned binary tree has the same shape (same length, same distribution)
+        The returned binary tree has the same shape (same size, same distribution)
         than the initial binary tree.
         
         The parameters must respect the following closure property on k:
@@ -1048,16 +1109,14 @@ class BinTree(ABC, Generic[A, B]):
                 Leaf(1)   
                 )
 
-        TODO
-
-        :param gl:
-        :param gr:
-        :param c:
-        :param phi_l:
-        :param phi_r:
-        :param psi_u:
-        :param psi_d:
-        :return:
+        :param gl: an operator (arity two) for accumulation of values to the left
+        :param gr: an operator (arity two) for accumulation of values to the right
+        :param c: initial accumulator
+        :param phi_l: a unary operator encapsulating partial values involved in a partial result in a left accumulation
+        :param phi_r: a unary operator encapsulating partial values involved in a partial result in a right accumulation
+        :param psi_u: an operator to calculate local values to pass to other segments
+        :param psi_d: an operator to calculate global values from local values to pass to other segments
+        :return: a new binary tree
         """
 
     @abstractmethod
@@ -1160,63 +1219,113 @@ class RoseTree(ABC, Generic[A]):
 
     Methods:
         size, map, zip, map2,
-        reduce, uacc, dacc
+        reduce, uacc, dacc, lacc, racc
     """
 
     @staticmethod
     @abstractmethod
     def from_rt(rt) -> Any:
         """
-        TODO
+        Return a rose tree built from a RTree at processor 0.
 
-        :param rt:
-        :return:
+        :param rt: a RTree (at processor 0)
+        :return: a rose tree
         """
 
     @abstractmethod
     def to_rt(self: 'RoseTree[A]') -> 'RoseTree[A]':
         """
-        TODO
+        Return a sequential RTree with the same content
 
-        :return:
+        :return: a RTree
         """
 
     @abstractmethod
     def size(self: 'RoseTree[A]') -> int:
         """
-        TODO
+        Return the size of the whole rose tree
 
-        :return:
+        :return: the global size of the instance
         """
 
     @abstractmethod
     def map(self: 'RoseTree[A]', k: Callable[[A], B]) -> 'RoseTree[B]':
         """
-        TODO
+        Apply a function to all the elements.
 
-        :param k:
-        :return:
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(15, [RTree(24), RTree(32, [RTree(56), RTree(63)]), RTree(41)])
+            >>> rt.map(lambda x: x/2)
+            Node(7.5,
+                Leaf(12.0)
+                Node(16.0
+                    Leaf(28.0)
+                    Leaf(31.5)
+                )
+                Leaf(20.5)
+            )
+
+        :param k: function to apply
+        :return: a new rose tree
         """
 
     @abstractmethod
     def zip(self: 'RoseTree[A]',
             a_rosetree: 'RoseTree[B]') -> 'RoseTree[Tuple[A, B]]':
         """
-        TODO
+        Create a rose tree of pairs.
 
-        :param a_rosetree:
-        :return:
+        The returned rose tree has the same shape (same size,, same distribution)
+        than the initial rose trees.
+
+        Examples::
+
+            >>>from pyske.core.tree.rtree import RTree
+            >>> rt0 = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt1 = RTree(7, [RTree(8), RTree(9, [RTree(11), RTree(12)]), RTree(10)])
+            >>> rt0.zip(rt1)
+            Node((1,7),
+                Leaf((2,8))
+                Node((3,9)
+                    Leaf((5,11))
+                    Leaf((6,12))
+                )
+                Leaf((4,10))
+            )
+
+        :param a_rosetree:  a rose tree of the same shape than ``self``.
+        :return: a rose tree of pairs.
         """
 
     @abstractmethod
     def map2(self: 'RoseTree[A]', k: Callable[[A, B], C],
              a_rosetree: 'RoseTree[B]') -> 'RoseTree[C]':
         """
-        TODO
+        Apply a function to all the elements of ``self`` and ``a_rosetree``.
 
-        :param k:
-        :param a_rosetree:
-        :return:
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose trees.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt0 = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt1 = RTree(7, [RTree(8), RTree(9, [RTree(11), RTree(12)]), RTree(10)])
+            >>> rt0.map2(lambda x, y: x+y, rt1)
+            Node(9,
+                Leaf(10)
+                Node(12
+                    Leaf(16)
+                    Leaf(18)
+                )
+                Leaf(14)
+            )
+
+        :param k: function to apply to each pair of elements
+        :param a_rosetree: a rose tree of the same shape than ``self``.
+        :return: a rose tree of pairs.
         """
 
     @abstractmethod
@@ -1224,54 +1333,127 @@ class RoseTree(ABC, Generic[A]):
                oplus: Callable[[A, B], B], unit_oplus: B,
                otimes: Callable[[B, B], B], unit_otimes: B) -> B:
         """
-        TODO
+        Reduce a rose tree to one value.
 
-        :param oplus:
-        :param unit_oplus:
-        :param otimes:
-        :param unit_otimes:
-        :return:
+        Examples::
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.reduce(fun.add, 0, fun.mul, 1)
+            264
+
+        :param oplus: operator for reducing sub-reductions from children with the node value
+        :param unit_oplus: unit element of the operator oplus
+        :param otimes: operator for reducing sub-reductions from children of a node
+        :param unit_otimes: unit element of the operator otimes
+        :return: a value
         """
 
     @abstractmethod
     def uacc(self: 'RoseTree[A]', oplus: Callable[[A, B], B], unit_oplus: B,
              otimes: Callable[[B, B], B], unit_otimes: B) -> 'RoseTree[B]':
         """
-        TODO
+        Return the prefix-sum from bottom-to-top.
 
-        :param oplus:
-        :param unit_oplus:
-        :param otimes:
-        :param unit_otimes:
-        :return:
+        The returned rose tree has the same shape (same size,, same distribution)
+        than the initial rose tree.
+
+        Examples::
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.uacc(fun.add, 0, fun.mul, 1)
+            Node(264
+                Leaf(2
+                Node(33
+                    Leaf(5)
+                    Leaf(6)
+                )
+                Leaf(4)
+            )
+
+        :param oplus: operator for reducing sub-accumulations from children with the node value
+        :param unit_oplus: unit element of the operator oplus
+        :param otimes: operator for reducing sub-accumulations from children of a node
+        :param unit_otimes: unit element of the operator otimes
+        :return: a new rose tree
         """
 
     @abstractmethod
     def dacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
         """
-        TODO
+        Return the prefix-sum from top-to-bottom.
 
-        :param oplus:
-        :param unit:
-        :return:
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.dacc(fun.add, 0)
+            Node(0
+                Leaf(1
+                Node(1
+                    Leaf(4)
+                    Leaf(4)
+                )
+                Leaf(1)
+            )
+
+        :param oplus: operator for downward accumulation of values
+        :param unit: first value for the accumulator that must be the unit element of the operator oplus
+        :return: a new rose tree
         """
 
     @abstractmethod
     def lacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
         """
-        TODO
+        Return the prefix-sum from left-to-right.
 
-        :param oplus:
-        :param unit:
-        :return:
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.lacc(fun.add, 0)
+            Node(0
+                Leaf(7
+                Node(4
+                    Leaf(6)
+                    Leaf(0)
+                )
+                Leaf(0)
+            )
+
+        :param oplus: operator for leftward accumulation of values
+        :param unit: unit element of the operator oplus
+        :return: a new rose tree
         """
 
     @abstractmethod
     def racc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
         """
-        TODO
+        Return the prefix-sum from right-to-left.
 
-        :param oplus:
-        :param unit:
-        :return:
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.racc(fun.add, 0)
+            Node(0
+                Leaf(0
+                Node(2
+                    Leaf(0)
+                    Leaf(5)
+                )
+                Leaf(5)
+            )
+
+        :param oplus: operator for rightward accumulation of values
+        :param unit: unit element of the operator oplus
+        :return: a new rose tree
         """

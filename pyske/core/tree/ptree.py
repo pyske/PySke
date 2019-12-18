@@ -17,6 +17,10 @@ __all__ = ['PTree']
 # <editor-fold desc="constants">
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
+A1 = TypeVar('A1')  # pylint: disable=invalid-name
+B1 = TypeVar('B1')  # pylint: disable=invalid-name
+A2 = TypeVar('A2')  # pylint: disable=invalid-name
+B2 = TypeVar('B2')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
 E = TypeVar('E')  # pylint: disable=invalid-name
@@ -73,11 +77,11 @@ class PTree(interface.BinTree, Generic[A, B]):
                "  distribution: " + str(self.__distribution) + "\n" + \
                "  nb_segs: " + str(self.__nb_segs) + "\n" + \
                "  start_index: " + str(self.__start_index) + "\n" + \
-               "  content: " + self.str_content(print_pid = False) + "\n" + \
+               "  content: " + self.str_content(print_pid=False) + "\n" + \
                "  local_size: " + str(self.__local_size) + "\n" + \
                "  global_size: " + str(self.__global_size) + "\n"
 
-    def str_content(self, print_pid = True):
+    def str_content(self, print_pid=True):
         """Browse the linearized distributed tree contained in the current processor
         """
         res = "PID[" + str(_PID) + "]: [" if print_pid else ""
@@ -160,7 +164,6 @@ class PTree(interface.BinTree, Generic[A, B]):
 
     @staticmethod
     def scatter_gt(gt, distribution, root=0):
-        start = 0
         if _PID is 0:
             gts = [None] * len(distribution)
             acc_gt_size = 0
@@ -253,6 +256,36 @@ class PTree(interface.BinTree, Generic[A, B]):
         i = 0
         for (start, offset) in self.__local_index:
             gt[i] = Segment(self.__content[start:start + offset]).map_reduce_local(kl, kn, k, phi, psi_l, psi_r)
+            i += 1
+        gt = PTree.allgather_gt(gt)
+        return gt.reduce_global(psi_n)
+
+    def zip_reduce(self: 'PTree[A, B]', a_bintree: 'PTree[C, D]',
+                   k: Callable[[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
+                   phi: Callable[[Tuple[B, D]], D] = None,
+                   psi_n: Callable[[Tuple[A, C], D, Tuple[A, C]], Tuple[A, C]] = None,
+                   psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
+                   psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[A, C]:
+        gt = Segment.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__local_index:
+            gt[i] = Segment(self.__content[start:start + offset])\
+                .zip_reduce_local(Segment(a_bintree.__content[start:start + offset]), k, phi, psi_l, psi_r)
+            i += 1
+        gt = PTree.allgather_gt(gt)
+        return gt.reduce_global(psi_n)
+
+    def map2_reduce(self: 'BTree[A1, B1]',
+                    kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
+                    a_ptree: 'BTree[A2, B2]', k: Callable[[A, B, A], A],
+                    phi: Callable[[B], C] = None, psi_n: Callable[[A, C, A], A] = None,
+                    psi_l: Callable[[C, C, A], C] = None, psi_r: Callable[[A, C, C], C] = None
+                    ) -> A:
+        gt = Segment.init(fun.none, self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__local_index:
+            gt[i] = Segment(self.__content[start:start + offset])\
+                .map2_reduce_local(kl, kn, Segment(a_ptree.__content[start:start + offset]), k, phi, psi_l, psi_r)
             i += 1
         gt = PTree.allgather_gt(gt)
         return gt.reduce_global(psi_n)

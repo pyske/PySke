@@ -6,6 +6,10 @@ __all__ = ['BTree', 'Node', 'Leaf']
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
+A1 = TypeVar('A1')  # pylint: disable=invalid-name
+B1 = TypeVar('B1')  # pylint: disable=invalid-name
+A2 = TypeVar('A2')  # pylint: disable=invalid-name
+B2 = TypeVar('B2')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
 E = TypeVar('E')  # pylint: disable=invalid-name
@@ -122,6 +126,24 @@ class Leaf(BTree):
                    ):
         return kl(self.value)
 
+    def zip_reduce(self: 'BTree[A, B]', a_bintree: 'BTree[C, D]',
+                   k: Callable[[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
+                   phi: Callable[[Tuple[B, D]], D] = None,
+                   psi_n: Callable[[Tuple[A, C], D, Tuple[A, C]], Tuple[A, C]] = None,
+                   psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
+                   psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[A, C]:
+        assert a_bintree.is_leaf, "A leaf can only be zipped with another leaf"
+        return self.value, a_bintree.value
+
+    def map2_reduce(self: 'BTree[A1, B1]',
+                    kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
+                    a_bintree: 'BTree[A2, B2]', k: Callable[[A, B, A], A],
+                    phi: Callable[[B], C] = None, psi_n: Callable[[A, C, A], A] = None,
+                    psi_l: Callable[[C, C, A], C] = None, psi_r: Callable[[A, C, C], C] = None
+                    ) -> A:
+        assert a_bintree.is_leaf, "A leaf can only be zipped with another leaf"
+        return kl(self.value, a_bintree.value)
+
     def uacc(self: 'BTree[A, B]', k: Callable[[A, B, A], A],
              phi: Callable[[B], C] = None,
              psi_n: Callable[[A, C, A], A] = None,
@@ -153,7 +175,7 @@ class Node(BTree):
     Methods from interface BinTree:
         from_btree,
         size, right, left, map, zip, map2,
-        map_reduce,
+        map_reduce, zip_reduce
         reduce, uacc, dacc
         getchl, getchr
 
@@ -254,6 +276,28 @@ class Node(BTree):
         lr = self.left.map_reduce(kl, kn, k, phi, psi_n, psi_l, psi_r)
         rr = self.right.map_reduce(kl, kn, k, phi, psi_n, psi_l, psi_r)
         return k(lr, kn(self.value), rr)
+
+    def zip_reduce(self: 'BTree[A, B]', a_bintree: 'BTree[C, D]',
+                   k: Callable[[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
+                   phi: Callable[[Tuple[B, D]], D] = None,
+                   psi_n: Callable[[Tuple[A, C], D, Tuple[A, C]], Tuple[A, C]] = None,
+                   psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
+                   psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[A, C]:
+        assert a_bintree.is_node, "A leaf can only be zipped with another leaf"
+        lr = self.left.zip_reduce(a_bintree.left, k)
+        rr = self.right.zip_reduce(a_bintree.right, k)
+        return k(lr, (self.value, a_bintree.value), rr)
+
+    def map2_reduce(self: 'BTree[A1, B1]',
+                    kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
+                    a_bintree: 'BTree[A2, B2]', k: Callable[[A, B, A], A],
+                    phi: Callable[[B], C] = None, psi_n: Callable[[A, C, A], A] = None,
+                    psi_l: Callable[[C, C, A], C] = None, psi_r: Callable[[A, C, C], C] = None
+                    ) -> A:
+        assert a_bintree.is_node, "A node can only be zipped with another node"
+        lr = self.left.map2_reduce(kl, kn, a_bintree.left, k)
+        rr = self.right.map2_reduce(kl, kn, a_bintree.right, k)
+        return k(lr, kn(self.value, a_bintree.value), rr)
 
     def uacc(self: 'BTree[A, B]', k: Callable[[A, B, A], A],
              phi: Callable[[B], C] = None,

@@ -9,6 +9,10 @@ __all__ = ['Segment']
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
+A1 = TypeVar('A1')  # pylint: disable=invalid-name
+B1 = TypeVar('B1')  # pylint: disable=invalid-name
+A2 = TypeVar('A2')  # pylint: disable=invalid-name
+B2 = TypeVar('B2')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
 D = TypeVar('D')  # pylint: disable=invalid-name
 E = TypeVar('E')  # pylint: disable=invalid-name
@@ -181,7 +185,7 @@ class Segment(Generic[A, B]):
             else:
                 stack.append(phi(val))
                 critic = True
-                d = 0
+                d = LEFT
         top = stack.pop()
         return top, TAG_NODE if critic else TAG_LEAF
 
@@ -205,17 +209,90 @@ class Segment(Generic[A, B]):
                         "reduce_local cannot be applied if there is a node that does not have"
                         "two children in the current instance")
                 lv, rv = stack.pop(), stack.pop()
-                if d == 0:
+                if d is LEFT:
                     stack.append(psi_l(lv, phi(kn(val)), rv))
-                elif d == 1:
+                elif d is RIGHT:
                     stack.append(psi_r(lv, phi(kn(val)), rv))
-                    d = 0
+                    d = LEFT
                 else:
                     stack.append(k(lv, kn(val), rv))
             else:
                 stack.append(phi(kn(val)))
                 critic = True
-                d = 0
+                d = LEFT
+        top = stack.pop()
+        return top, TAG_NODE if critic else TAG_LEAF
+
+    def zip_reduce_local(self: 'Segment[A, B]', a_segment: 'Segment[C, D]',
+                         k: [[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
+                         phi: Callable[[Tuple[B, D]], D] = None,
+                         psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
+                         psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[Union[Tuple[A, C], D], int]:
+        assert not (self.empty() or a_segment.empty()), "zip_reduce_local cannot be applied to an empty Segment"
+        assert self.length == a_segment.length, "the segments do not have the same shape"
+        stack = []
+        d = MINUS_INFINITY
+        critic = False
+        for i in reversed(range(len(self.__conternt))):
+            val, tag = self.__content[i]
+            val2, tag2 = a_segment.__content[i]
+            assert tag == tag2, "the segments do not have the same shape"
+            if tag is TAG_LEAF:
+                stack.append((val, val2))
+                d = d + 1
+            elif tag is TAG_NODE:
+                if len(stack) < 2:
+                    raise IllFormedError(
+                        "reduce_local cannot be applied if there is a node that does not have"
+                        "two children in the current instance")
+                lv, rv = stack.pop(), stack.pop()
+                if d is LEFT:
+                    stack.append(psi_l(lv, phi((val, val2)), rv))
+                elif d is RIGHT:
+                    stack.append(psi_r(lv, phi((val, val2)), rv))
+                    d = LEFT
+                else:
+                    stack.append(k(lv, (val, val2), rv))
+            else:
+                stack.append(phi((val, val2)))
+                critic = True
+                d = LEFT
+        top = stack.pop()
+        return top, TAG_NODE if critic else TAG_LEAF
+
+    def map2_reduce_local(self: 'Segment[A1, B1]',
+                          kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
+                          a_segment: 'Segment[A2, B2]',
+                          k: Callable[[C, D, C], C], phi: Callable[[D], E] = None,
+                          psi_l: Callable[[E, E, C], E] = None,
+                          psi_r: Callable[[C, E, E], E] = None) -> Tuple[Union[C, E], int]:
+        assert not self.empty(), "map_reduce_local cannot be applied to an empty Segment"
+        stack = []
+        d = MINUS_INFINITY
+        critic = False
+        for i in reversed(range(len(self.__content))):
+            val, tag = a_segment.__content[i]
+            val2, tag2 = self.__content[i]
+            if tag is TAG_LEAF:
+                stack.append(kl(val, val2))
+                d = d + 1
+            elif tag is TAG_NODE:
+                if len(stack) < 2:
+                    raise IllFormedError(
+                        "reduce_local cannot be applied if there is a node that does not have"
+                        "two children in the current instance")
+                lv, rv = stack.pop(), stack.pop()
+                if d is LEFT:
+                    stack.append(psi_l(lv, phi(kn(val, val2)), rv))
+                elif d is RIGHT:
+                    stack.append(psi_r(lv, phi(kn(val, val2)), rv))
+                    d = LEFT
+                else:
+                    stack.append(k(lv, kn(val, val2), rv))
+            else:
+                stack.append(phi(kn(val, val2)))
+                critic = True
+                d = LEFT
         top = stack.pop()
         return top, TAG_NODE if critic else TAG_LEAF
 
@@ -260,13 +337,13 @@ class Segment(Generic[A, B]):
                         "uacc_local cannot be applied if there is a node that does not have two children "
                         "in the current instance")
                 lv, rv = stack.pop(), stack.pop()
-                if d == 0:
+                if d is LEFT:
                     stack.append(psi_l(lv, phi(val), rv))
                     res[i] = (None, tag)
-                elif d == 1:
+                elif d is RIGHT:
                     stack.append(psi_r(lv, phi(val), rv))
                     res[i] = (None, tag)
-                    d = 0
+                    d = LEFT
                 else:
                     new_val = k(lv, val, rv)
                     res[i] = (new_val, tag)
@@ -274,7 +351,7 @@ class Segment(Generic[A, B]):
                     d = d - 1
             else:
                 stack.append(phi(val))
-                d = 0
+                d = LEFT
                 critic = True
                 res[i] = (None, tag)
         top = stack.pop()
@@ -317,11 +394,11 @@ class Segment(Generic[A, B]):
                         "uacc_update cannot be applied if there is a node that does not have two children "
                         "in the current instance")
                 lv, rv = stack.pop(), stack.pop()
-                if d == 0 or d == 1:
+                if d is LEFT or d is RIGHT:
                     val = k(lv, val1, rv)
                     res[i] = (val, tag1)
                     stack.append(val)
-                    d = 0
+                    d = LEFT
                 else:
                     res[i] = (val2, tag2)
                     stack.append(val2)
@@ -332,7 +409,7 @@ class Segment(Generic[A, B]):
                 val = k(lv, val1, rv)
                 res[i] = (val, tag1)
                 stack.append(val)
-                d = 0
+                d = LEFT
         return res
 
     # </editor-fold">
@@ -350,16 +427,16 @@ class Segment(Generic[A, B]):
             if tag is TAG_LEAF:
                 d = d + 1
             elif tag is TAG_NODE:
-                if d == 0 or d == 1:
+                if d is LEFT or d is RIGHT:
                     to_l = psi_u(phi_l(val), to_l)
                     to_r = psi_u(phi_l(val), to_r)
-                    d = 0
+                    d = LEFT
                 else:
                     d = d - 1
             else:
                 critic = True
                 to_l, to_r = phi_l(val), phi_r(val)
-                d = 0
+                d = LEFT
         if not critic:
             raise ApplicationError("dacc_path must be imperatively applied to a Segment which contains a critical node")
         return (to_l, to_r), TAG_NODE
@@ -402,7 +479,7 @@ class Segment(Generic[A, B]):
     def getch_local(self: 'Segment[A, A]', c: A, side: int) -> Tuple[Tuple[A, int], 'Segment[A, A]']:
         res = Segment.init(lambda idx: None, self.length)
         crit = False
-        d = 1  # Left:0; Right:1; init: right
+        d = RIGHT  # Left:0; Right:1; init: right
         stack = []
         for i in reversed(range(self.length)):
             (val, tag) = self[i]
