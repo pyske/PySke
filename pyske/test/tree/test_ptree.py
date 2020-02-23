@@ -233,3 +233,70 @@ def test_ancestors():
     res = ancestors(lt).to_bt()
     exp = ancestors(bt)
     assert exp == res
+
+# -------------------------- #
+
+def test_map_reduce_leaf():
+    bt = Leaf(1)
+    m = 1
+    lt = PTree.from_bt(bt, m)
+    exp = lt.map(lambda x: x + 1, lambda x: x - 1).reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    res = lt.map_reduce(lambda x: x + 1, lambda x: x - 1, fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    assert exp == res
+
+
+def test_map_reduce_node():
+    bt = Node(3, Node(4, Leaf(2), Leaf(6)), Leaf(2))
+    m = 1
+    lt = PTree.from_bt(bt, m)
+    exp = lt.map(lambda x: x + 1, lambda x: x - 1).reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    res = lt.map_reduce(lambda x: x + 1, lambda x: x - 1, fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    assert exp == res
+
+# -------------------------- #
+
+
+def test_zip_reduce_leaf():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Leaf(2)
+    lt1 = PTree.from_bt(bt1, m)
+    lt2 = PTree.from_bt(bt2, m)
+    exp = lt1.zip(lt2).reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    res = lt1.zip_reduce(lt2, fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    assert exp == res
+
+
+def test_zip_reduce_node():
+    m = 1
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Node(4, Leaf(5), Leaf(6))
+    lt1 = PTree.from_bt(bt1, m)
+    lt2 = PTree.from_bt(bt2, m)
+    exp = lt1.zip(lt2).reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    res = lt1.zip_reduce(lt2, fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    assert exp == res
+
+# -------------------------- #
+
+
+def test_map2_reduce_leaf():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Leaf(2)
+    lt1 = PTree.from_bt(bt1, m)
+    lt2 = PTree.from_bt(bt2, m)
+    exp = lt1.map2(fun.add, fun.add, lt2).reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    res = lt1.map2_reduce(fun.add, fun.add, lt2, fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    assert exp == res
+
+
+def test_map2_reduce_node():
+    m = 1
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Node(4, Leaf(5), Leaf(6))
+    lt1 = PTree.from_bt(bt1, m)
+    lt2 = PTree.from_bt(bt2, m)
+    exp = lt1.map2(fun.add, fun.add, lt2).reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    res = lt1.map2_reduce(fun.add, fun.add, lt2, fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
+    assert exp == res

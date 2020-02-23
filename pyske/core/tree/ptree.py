@@ -6,7 +6,7 @@ from pyske.core.tree.ltree import LTree
 from pyske.core.tree.segment import Segment
 from pyske.core.tree.btree import BTree
 
-from pyske.core.tree.tag import TAG_NODE, TAG_LEAF
+from pyske.core.tree.tag import TAG_NODE, TAG_LEAF, Tag
 
 from pyske.core.util import fun
 
@@ -136,8 +136,8 @@ class PTree(interface.BinTree, Generic[A, B]):
         return res
 
     @staticmethod
-    def from_bt(bt: 'BTree[A, B]', m: int = 1) -> 'PTree[A, B]':
-        lt = LTree.from_bt(bt, m)
+    def from_bt(bt: 'BTree[A, B]', m: int = 1, ftag=Tag.mbridge) -> 'PTree[A, B]':
+        lt = LTree.from_bt(bt, m, ftag)
         return PTree.from_seq(lt)
 
     def to_bt(self: 'PTree[A, B]') -> 'BTree[A, B]':
@@ -277,7 +277,7 @@ class PTree(interface.BinTree, Generic[A, B]):
 
     def map2_reduce(self: 'BTree[A1, B1]',
                     kl: Callable[[A1, A2], A], kn: Callable[[B1, B2], B],
-                    a_ptree: 'BTree[A2, B2]', k: Callable[[A, B, A], A],
+                    a_ptree: 'PTree[A2, B2]', k: Callable[[A, B, A], A],
                     phi: Callable[[B], C] = None, psi_n: Callable[[A, C, A], A] = None,
                     psi_l: Callable[[C, C, A], C] = None, psi_r: Callable[[A, C, C], C] = None
                     ) -> A:

@@ -219,3 +219,57 @@ def test_getchr_node_left():
     assert res == exp
 
 # -------------------------- #
+
+def test_map_reduce_leaf():
+    bt = Leaf(1)
+    exp = bt.map(lambda x: x + 1, lambda x: x - 1).reduce(fun.max3)
+    res = bt.map_reduce(lambda x: x + 1, lambda x: x - 1, fun.max3)
+    assert exp == res
+
+
+def test_map_reduce_node():
+    bt = Node(3, Node(4, Leaf(2), Leaf(6)), Leaf(2))
+    exp = bt.map(lambda x: x + 1, lambda x: x - 1).reduce(fun.max3)
+    res = bt.map_reduce(lambda x: x + 1, lambda x: x - 1, fun.max3)
+    assert exp == res
+
+# -------------------------- #
+
+
+def test_zip_reduce_leaf():
+    bt1 = Leaf(1)
+    bt2 = Leaf(2)
+    exp = bt1.zip(bt2).reduce(fun.max3)
+    res = bt1.zip_reduce(bt2, fun.max3)
+    assert exp == res
+
+
+def test_zip_reduce_node():
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Node(4, Leaf(5), Leaf(6))
+    exp = bt1.zip(bt2).reduce(fun.max3)
+    res = bt1.zip_reduce(bt2, fun.max3)
+    assert exp == res
+
+# -------------------------- #
+
+
+def test_map2_reduce_leaf():
+    m = 1
+    bt1 = Leaf(1)
+    bt2 = Leaf(2)
+    exp = bt1.map2(fun.add, fun.add, bt2).reduce(fun.max3)
+    res = bt1.map2_reduce(fun.add, fun.add, bt2, fun.max3)
+    assert exp == res
+
+
+def test_map2_reduce_node():
+    m = 1
+    bt1 = Node(1, Leaf(2), Leaf(3))
+    bt2 = Node(4, Leaf(5), Leaf(6))
+    exp = bt1.map2(fun.add, fun.add, bt2).reduce(fun.max3)
+    res = bt1.map2_reduce(fun.add, fun.add, bt2, fun.max3)
+    assert exp == res
+
+
+

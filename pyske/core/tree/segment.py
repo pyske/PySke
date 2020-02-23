@@ -233,7 +233,7 @@ class Segment(Generic[A, B]):
         stack = []
         d = MINUS_INFINITY
         critic = False
-        for i in reversed(range(len(self.__conternt))):
+        for i in reversed(range(len(self.__content))):
             val, tag = self.__content[i]
             val2, tag2 = a_segment.__content[i]
             assert tag == tag2, "the segments do not have the same shape"
