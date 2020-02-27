@@ -1,6 +1,7 @@
 from abc import abstractmethod
-from typing import TypeVar, Callable, Tuple, Generic, Union
-from pyske.core import interface
+from typing import TypeVar, Callable, Tuple, Generic, Union, Optional
+from pyske.core import interface, SList
+from pyske.core.support.constant import LEFT
 
 __all__ = ['BTree', 'Node', 'Leaf']
 
@@ -166,6 +167,24 @@ class Leaf(BTree):
     def getchr(self: 'BTree[A, A]', c: A) -> 'BTree[A, A]':
         return Leaf(c)
 
+    def get_first_node(self: 'BTree[A, B]', p: Callable[[B], bool], strategy=LEFT) -> Optional[B]:
+        return None
+
+    def get_all_nodes(self: 'BTree[A, B]', p: Callable[[B], bool], strategy=LEFT) -> SList[B]:
+        return SList()
+
+    def get_first_leaf(self: 'BTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        return self.value if p(self.value) else None
+
+    def get_all_leaves(self: 'BTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> interface.List[A]:
+        return SList([self.value]) if p(self.value) else SList()
+
+    def get_first(self: 'BTree[A, A]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        return self.get_first_leaf(p)
+
+    def get_all(self: 'BTree[A, A]', p: Callable[[A], bool], strategy=LEFT) -> interface.List[A]:
+        return self.get_all_leaves(p)
+
 
 class Node(BTree):
     # pylint: disable=too-many-public-methods
@@ -234,8 +253,8 @@ class Node(BTree):
         return Node(bt.value, li, ri)
 
     def to_bt(self: 'BTree[A, B]') -> 'BTree[A, B]':
-        li = BTree.to_bt(self.left)
-        ri = BTree.to_bt(self.right)
+        li = self.left.to_bt()
+        ri = self.right.to_bt()
         return Node(self.value, li, ri)
 
     def map(self: 'BTree[A, B]', kl: Callable[[A], C], kn: Callable[[B], D]) -> 'BTree[C, D]':
@@ -325,3 +344,78 @@ class Node(BTree):
 
     def getchr(self: 'BTree[A, A]', c: A) -> 'BTree[A, A]':
         return Node(self.right.value, self.left.getchr(c), self.right.getchr(c))
+
+    def get_first_node(self: 'BTree[A, B]', p: Callable[[B], bool], strategy=LEFT) -> Optional[B]:
+        if p(self.value):
+            return self.value
+        else:
+            res = (self.left.get_first_node(p, strategy)
+                   if strategy is LEFT
+                   else self.right.get_first_node(p, strategy))
+            return res if res is not None else \
+                (self.right.get_first_node(p, strategy)
+                    if strategy is LEFT
+                    else self.left.get_first_node(p, strategy))
+
+    def get_all_nodes(self: 'BTree[A, B]', p: Callable[[B], bool], strategy=LEFT) -> SList[B]:
+        res = SList([self.value]) if p(self.value) else SList()
+        if strategy is LEFT:
+            for r in self.left.get_all_nodes(p, strategy):
+                res.append(r)
+            for r in self.right.get_all_nodes(p, strategy):
+                res.append(r)
+        else:
+            for r in self.right.get_all_nodes(p, strategy):
+                res.append(r)
+            for r in self.left.get_all_nodes(p, strategy):
+                res.append(r)
+        return res
+
+    def get_first_leaf(self: 'BTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        res = (self.left.get_first_leaf(p, strategy)
+               if strategy is LEFT
+               else self.right.get_first_leaf(p, strategy))
+        return res if res is not None else \
+            (self.right.get_first_leaf(p, strategy)
+             if strategy is LEFT
+             else self.left.get_first_leaf(p, strategy))
+
+    def get_all_leaves(self: 'BTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> interface.List[A]:
+        res = SList()
+        if strategy is LEFT:
+            for r in self.left.get_all_leaves(p, strategy):
+                res.append(r)
+            for r in self.right.get_all_leaves(p, strategy):
+                res.append(r)
+        else:
+            for r in self.right.get_all_leaves(p, strategy):
+                res.append(r)
+            for r in self.left.get_all_leaves(p, strategy):
+                res.append(r)
+        return res
+
+    def get_one(self: 'BTree[A, A]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        if p(self.value):
+            return self.value
+        else:
+            res = (self.left.get_one(p, strategy)
+                   if strategy is LEFT
+                   else self.right.get_one(p, strategy))
+            return res if res is not None else \
+                (self.right.get_first(p, strategy)
+                    if strategy is LEFT
+                    else self.left.get_one(p, strategy))
+
+    def get_all(self: 'BTree[A, A]', p: Callable[[A], bool], strategy=LEFT) -> interface.List[A]:
+        res = SList([self.value]) if p(self.value) else SList()
+        if strategy is LEFT:
+            for r in self.left.get_all(p, strategy):
+                res.append(r)
+            for r in self.right.get_all(p, strategy):
+                res.append(r)
+        else:
+            for r in self.right.get_all(p, strategy):
+                res.append(r)
+            for r in self.left.get_all(p, strategy):
+                res.append(r)
+        return res

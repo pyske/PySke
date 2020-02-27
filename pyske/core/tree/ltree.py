@@ -1,4 +1,5 @@
 from pyske.core import interface, SList
+from pyske.core.support.constant import LEFT
 from pyske.core.util import fun
 from pyske.core.support import constant
 from pyske.core.tree.btree import BTree, Node, Leaf
@@ -6,7 +7,7 @@ from pyske.core.tree.tag import Tag, TAG_LEAF, TAG_NODE, TAG_CRITICAL
 from pyske.core.tree.segment import Segment
 from pyske.core.support.errors import IllFormedError
 
-from typing import Generic, TypeVar, Callable, Tuple, Any
+from typing import Generic, TypeVar, Callable, Tuple, Any, Optional
 
 __all__ = ['LTree']
 
@@ -343,4 +344,46 @@ class LTree(interface.BinTree, Generic[A, B]):
                 res[i] = lt2[i].getch_update(val_l)
             else:
                 res[i] = lt2[i]
+        return res
+
+    def get_one_node(self: 'LTree[A, B]', p: Callable[[B], bool]) -> Optional[B]:
+        for s in self.__content:
+            r = s.get_first_node(p)
+            if r is not None:
+                return r
+        return None
+
+    def get_all_nodes(self: 'LTree[A, B]', p: Callable[[B], bool]) -> SList[B]:
+        res = SList()
+        for s in self.__content:
+            for r in s.get_all_nodes(p):
+                res.append(r)
+        return res
+
+    def get_one_leaf(self: 'LTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        for s in self.__content if strategy is LEFT else reversed(self.__content):
+            r = s.get_first_leaf(p, strategy)
+            if r is not None:
+                return r
+        return None
+
+    def get_all_leaves(self: 'LTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> SList[A]:
+        res = SList()
+        for s in self.__content if strategy is LEFT else reversed(self.__content):
+            for r in s.get_all_leaves(p, strategy):
+                res.append(r)
+        return res
+
+    def get_one(self: 'LTree[A, A]', p: Callable[[A], bool]) -> Optional[A]:
+        for s in self.__content:
+            r = s.get_first(p)
+            if r is not None:
+                return r
+        return None
+
+    def get_all(self: 'LTree[A, A]', p: Callable[[A], bool]) -> SList[A]:
+        res = SList()
+        for s in self.__content:
+            for r in s.get_all(p):
+                res.append(r)
         return res

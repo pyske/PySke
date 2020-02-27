@@ -1,4 +1,6 @@
 from typing import Generic, TypeVar, Callable, Union, Tuple, Optional, Any
+
+from pyske.core import SList
 from pyske.core.tree.tag import TAG_LEAF, TAG_NODE, TAG_CRITICAL
 from pyske.core.support.constant import MINUS_INFINITY
 from pyske.core.support.errors import IllFormedError, ApplicationError, NotSameTagError
@@ -32,7 +34,7 @@ class Segment(Generic[A, B]):
     Methods:
         has_critical, get_left, get_right,
         map_local, zip_local, map2_local,
-        map_reduce_local,
+        map_reduce_local, zip_reduce_local, map2_reduce_local,
         reduce_local, reduce_global,
         uacc_local, uacc_global, uacc_update,
         dacc_path, dacc_global, dacc_local,
@@ -507,3 +509,52 @@ class Segment(Generic[A, B]):
                 res[i] = self[i]
         return res
     # </editor-fold>
+
+    # <editor-fold desc="access specific element functions">
+    def get_first_node(self: 'Segment[A, B]', p: Callable[[B], bool]) -> Optional[B]:
+        for s in self.__content:
+            val, tag = s
+            if tag is TAG_NODE and p(val):
+                return val
+        return None
+
+    def get_all_nodes(self: 'Segment[A, B]', p: Callable[[B], bool]) -> SList[B]:
+        res = SList()
+        for s in self.__content:
+            val, tag = s
+            if (tag is TAG_NODE or tag is TAG_CRITICAL) and p(val):
+                res.append(val)
+        return res
+
+    def get_first_leaf(self: 'Segment[A, B]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        for s in self.__content if strategy is LEFT else reversed(self.__content):
+            val, tag = s
+            if tag is (tag is TAG_NODE or tag is TAG_CRITICAL) and p(val):
+                return val
+        return None
+
+    def get_all_leaves(self: 'Segment[A, B]', p: Callable[[A], bool], strategy=LEFT) -> SList[A]:
+        res = SList()
+        for s in self.__content if strategy is LEFT else reversed(self.__content):
+            val, tag = s
+            if tag is TAG_LEAF and p(val):
+                res.append(val)
+        return res
+
+    def get_first(self: 'Segment[A, A]', p: Callable[[A], bool]) -> Optional[A]:
+        for s in self.__content:
+            val, tag = s
+            if p(val):
+                return val
+        return None
+
+    def get_all(self: 'Segment[A, A]', p: Callable[[A], bool]) -> SList[A]:
+        res = SList()
+        for s in self.__content:
+            val, tag = s
+            if p(val):
+                res.append(val)
+        return res
+    # </editor-fold>
+
+

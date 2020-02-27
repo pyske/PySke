@@ -48,19 +48,19 @@ def balanced_btree(frdm, size):
 
 def __insert_values_btree(val1, val2, btr):
     # pylint disable=missing-docstring
-    if btr.is_leaf():
-        return Node(btr.get_value(), Leaf(val1), Leaf(val2))
+    if btr.is_leaf:
+        return Node(btr.value, Leaf(val1), Leaf(val2))
     # btr.is_node()
     rdm = random.randint(1, 101)
     if rdm > 50:
         # insert left
-        left = __insert_values_btree(val1, val2, btr.get_left())
-        right = btr.get_right()
-        return Node(btr.get_value(), left, right)
+        left = __insert_values_btree(val1, val2, btr.left)
+        right = btr.right
+        return Node(btr.value, left, right)
     # insert right
-    left = btr.get_left()
-    right = __insert_values_btree(val1, val2, btr.get_right())
-    return Node(btr.get_value(), left, right)
+    left = btr.left
+    right = __insert_values_btree(val1, val2, btr.right)
+    return Node(btr.value, left, right)
 
 
 def random_btree(frdm, size):

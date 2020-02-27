@@ -1211,6 +1211,144 @@ class BinTree(ABC, Generic[A, B]):
         :return: a new binary tree
         """
 
+    def get_one_node(self: 'BinTree[A, B]', p: Callable[[B], bool]) -> Optional[B]:
+        """
+        Get the first node element respecting a given property.
+        Return None if there is any.
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> m = 1
+            >>> bt = Node((1,'a'), Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))), Leaf((5,'e')))
+            >>> bt.get_first_node(lambda x: x%2 == 0)
+            (2, 'b')
+            >>> LTree.from_bt(bt, m).get_first_node(lambda x: x%2 == 0)
+            (2, 'b')
+            >>> PTree.from_bt(bt, m).get_first_node(lambda x: x%2 == 0)
+            (2, 'b')
+
+        :param p: the output element satisfies this predicate.
+        :return: a single node value.
+        """
+
+    def get_all_nodes(self: 'BinTree[A, B]', p: Callable[[B], bool]) -> List[B]:
+        """
+        Get all the node elements respecting a given property.
+        Return None if there is any.
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> m = 1
+            >>> bt = Node((1,'a'),\
+                            Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))),\
+                            Node((5,'e'), Leaf((6,'f')), Leaf((7,'g'))))
+            >>> bt.get_all_nodes(lambda x: x%2 == 1)
+            [(2, 'b'), (5, 'e')]
+            >>> LTree.from_bt(bt, m).get_all_nodes(lambda x: x%2 == 1)
+            [(2, 'b'), (5, 'e')]
+            >>> PTree.from_bt(bt, m).get_all_nodes(lambda x: x%2 == 1)
+            [(2, 'b'), (5, 'e')]
+
+        :param p: the output element satisfies this predicate.
+        :return: a list of node values.
+        """
+
+    def get_one_leaf(self: 'BinTree[A, B]', p: Callable[[A], bool]) -> Optional[A]:
+        """
+        Get the first leaf element respecting a given property.
+        Return None if there is any.
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> m = 1
+            >>> bt = Node((1,'a'), Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))), Leaf((5,'e')))
+            >>> bt.get_first_leaf(lambda x: x%2 == 0)
+            (3, 'c')
+            >>> LTree.from_bt(bt, m).get_first_leaf(lambda x: x%2 == 0)
+            (3, 'c')
+            >>> PTree.from_bt(bt, m).get_first_leaf(lambda x: x%2 == 0)
+            (3, 'c')
+
+        :param p: the output element satisfies this predicate.
+        :return: a single leaf value.
+        """
+
+    def get_all_leaves(self: 'BinTree[A, B]', p: Callable[[A], bool]) -> List[A]:
+        """
+        Get all the leaf elements respecting a given property.
+        Return None if there is any.
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> m = 1
+            >>> bt = Node((1,'a'),\
+                            Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))),\
+                            Node((5,'e'), Leaf((6,'f')), Leaf((7,'g'))))
+            >>> bt.get_all_leaves(lambda x: x%2 == 1)
+            [(3, 'c'), (7, 'g')]
+            >>> LTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            [(3, 'c'), (7, 'g')]
+            >>> PTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            [(3, 'c'), (7, 'g')]
+
+        :param p: the output element satisfies this predicate.
+        :return: a list of leaf values.
+        """
+
+    def get_one(self: 'BinTree[A, A]', p: Callable[[A], bool]) -> Optional[A]:
+        """
+        Get the first element respecting a given property.
+        Return None if there is any.
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> m = 1
+            >>> bt = Node((1,'a'), Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))), Leaf((5,'e')))
+            >>> bt.get_first(lambda x: x%2 == 0)
+            (2, 'b')
+            >>> LTree.from_bt(bt, m).get_first(lambda x: x%2 == 0)
+            (2, 'b')
+            >>> PTree.from_bt(bt, m).get_first(lambda x: x%2 == 0)
+            (2, 'b')
+
+        :param p: the output element satisfies this predicate.
+        :return: a single value.
+        """
+
+    def get_all(self: 'BinTree[A, A]', p: Callable[[A], bool]) -> List[A]:
+        """
+        Get all the elements respecting a given property.
+        Return None if there is any.
+
+        Examples::
+            >>> from pyske.core.tree.btree import Leaf, Node
+            >>> from pyske.core.tree.ltree import LTree
+            >>> from pyske.core.tree.ptree import PTree
+            >>> m = 1
+            >>> bt = Node((1,'a'),\
+                            Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))),\
+                            Node((5,'e'), Leaf((6,'f')), Leaf((7,'g'))))
+            >>> bt.get_all_leaves(lambda x: x%2 == 1)
+            [(1, 'a'), (3, 'c'), (5, 'c') (7, 'g')]
+            >>> LTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            [(1, 'a'), (3, 'c'), (5, 'c') (7, 'g')]
+            >>> PTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            [(1, 'a'), (3, 'c'), (5, 'c') (7, 'g')]
+
+        :param p: the output element satisfies this predicate.
+        :return: a list of values.
+        """
+
 
 class RoseTree(ABC, Generic[A]):
     # pylint: disable=too-many-public-methods

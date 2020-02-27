@@ -4,11 +4,12 @@ Functions on trees
 from operator import add
 from pyske.core.util import fun
 
-__all__ = ['size', 'size_by_node', 'sum_values', 'prefix', 'ancestors', 'depth']
+__all__ = ['size', 'size_by_node', 'sum_values', 'prefix', 'ancestors', 'depth', 'lca']
 
 
 def _incr(num1, num2):
     return num1 + num2 + 1
+
 
 def _incr_left(num1, num2):
     return num1 + 1
@@ -48,7 +49,7 @@ def _psi_n(left, node_value, right):
     (nv0, nv1, nv2, nv3) = node_value
     (__, right) = right
     res_1 = nv0 * left + nv1 * (left + right + 1) + nv2
-    res_2 = left +  right + nv3
+    res_2 = left + right + nv3
     return res_1, res_2
 
 
@@ -114,3 +115,32 @@ def prefix(tree):
 def depth(tree):
     """Return the deepth of each node"""
     return tree.dacc(_incr_left, _incr_left, 0, _zero, _zero, _incr, _incr)
+
+
+def lca(t, a, b):
+    """Lowest common ancestor"""
+    pg = lambda x: (x == a or x == b, x)
+    pg2 = lambda x: x[0] == a or x[0] == b
+    tree = t.map(pg, pg)
+
+    def flca(l, n, r):
+        return (n[0] or l[0] or r[0]), n[1]
+
+    def fpath(c, x):
+        return c + [x[1]] if x[0] else []
+
+    def unif(b1, b2):
+        return [b1[1], b2[1]] if b1[0] and b2[0] else []
+
+    tree = tree.uacc(flca, fun.idt, flca, flca, flca)
+    res = t.zip(tree.dacc(fpath, fpath, [], fun.idt, fun.idt, fpath, unif))
+    res = res.get_all(pg2)
+
+    if res.length() > 2:
+        raise Exception("IDs are not unique")
+    if res.length() < 2:
+        raise Exception("given IDs are not available")
+    return [i for i, j in zip(res[0][1], res[1][1]) if i == j][0]
+
+    # return (tree.dacc(fpath, fpath, [], fun.idt, fun.idt, fpath, unif))
+    # return tree

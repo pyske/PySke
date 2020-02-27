@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Callable, Tuple
+from typing import Generic, TypeVar, Callable, Tuple, Optional
 
 from pyske.core import interface, SList
 from pyske.core.tree.distribution import Distribution
@@ -408,3 +408,59 @@ class PTree(interface.BinTree, Generic[A, B]):
                 val = Segment(lt2[i])
             new_content[start:start + offset] = val
         return PTree.init(self, new_content)
+
+    def get_one_node(self: 'PTree[A, B]', p: Callable[[B], bool]) -> Optional[B]:
+        local_res = None
+        for (start, offset) in self.__local_index:
+            local_res = Segment(self.__content[start:start + offset]).get_first_node(p)
+            if local_res is not None:
+                break
+        all_l = SList(_COMM.allgather(local_res)).filter(lambda x: x is not None)
+        return None if all_l.length() == 0 else all_l[0]
+
+    def get_all_nodes(self: 'PTree[A, B]', p: Callable[[B], bool]) -> SList[B]:
+        res = SList()
+        local_res = SList()
+        for (start, offset) in self.__local_index:
+            local_res.extend(Segment(self.__content[start:start + offset]).get_all_nodes(p))
+        for an in _COMM.allgather(local_res.filter(lambda x: x is not None)):
+            res.extend(an)
+        return res
+
+    def get_one_leaf(self: 'PTree[A, B]', p: Callable[[A], bool], strategy=LEFT) -> Optional[A]:
+        local_res = None
+        for (start, offset) in (self.__local_index if strategy is LEFT else reversed(self.__local_index)):
+            local_res = Segment(self.__content[start:start + offset]).get_first_leaf(p, strategy)
+            if local_res is not None:
+                break
+        all_l = SList(_COMM.allgather(local_res)).filter(lambda x: x is not None)
+        return None if all_l.length() == 0 else all_l[0 if strategy is LEFT else (all_l.length() - 1)]
+
+    def get_all_leaves(self: 'PTree[A, B]', p: Callable[[B], bool], strategy=LEFT) -> SList[B]:
+        res = SList()
+        for (start, offset) in (self.__local_index if strategy is LEFT else reversed(self.__local_index)):
+            local_res = Segment(self.__content[start:start + offset]).get_all_leaves(p, strategy)
+        for an in reversed(_COMM.allgather(local_res)):
+            res.extend(an)
+        return res
+
+    def get_one(self: 'PTree[A, A]', p: Callable[[A], bool]) -> Optional[A]:
+        local_res = None
+        for (start, offset) in self.__local_index:
+            local_res = Segment(self.__content[start:start + offset]).get_first(p)
+            if local_res is not None:
+                break
+        all_l = SList(_COMM.allgather(local_res)).filter(lambda x: x is not None)
+        return None if all_l.length() == 0 else all_l[0]
+
+    def get_all(self: 'PTree[A, A]', p: Callable[[A], bool]) -> SList[A]:
+        res = SList()
+        local_res = SList()
+        for (start, offset) in self.__local_index:
+            local_res.extend(Segment(self.__content[start:start + offset]).get_all(p))
+        for an in _COMM.allgather(local_res.filter(lambda x: x is not None)):
+            res.extend(an)
+        return res
+
+
+
