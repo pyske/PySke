@@ -139,7 +139,7 @@ class RTree(interface.RoseTree, Generic[A]):
         reductions = self.children.map(lambda x: x.reduce(oplus, unit_plus,
                                                           otimes, unit_otimes)
                                        )
-        red = reductions.reduce(otimes)
+        red = reductions.reduce(otimes, unit_otimes)
         return oplus(self.value, red)
 
     def uacc(self: 'RTree[A]',

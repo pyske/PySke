@@ -1458,26 +1458,26 @@ class RoseTree(ABC, Generic[A]):
         :return: a rose tree of pairs.
         """
 
-    # @abstractmethod
-    # def reduce(self: 'RoseTree[A]',
-    #            oplus: Callable[[A, B], B], unit_oplus: B,
-    #            otimes: Callable[[B, B], B], unit_otimes: B) -> B:
-    #     """
-    #     Reduce a rose tree to one value.
-    #
-    #     Examples::
-    #         >>> from pyske.core.tree.rtree import RTree
-    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-    #         >>> rt.reduce(fun.add, 0, fun.mul, 1)
-    #         264
-    #
-    #     :param oplus: operator for reducing sub-reductions from children with the node value
-    #     :param unit_oplus: unit element of the operator oplus
-    #     :param otimes: operator for reducing sub-reductions from children of a node
-    #     :param unit_otimes: unit element of the operator otimes
-    #     :return: a value
-    #     """
-    #
+    @abstractmethod
+    def reduce(self: 'RoseTree[A]',
+               oplus: Callable[[A, B], B], unit_oplus: B,
+               otimes: Callable[[B, B], B], unit_otimes: B) -> B:
+        """
+        Reduce a rose tree to one value.
+
+        Examples::
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.reduce(fun.add, 0, fun.mul, 1)
+            264
+
+        :param oplus: operator for reducing sub-reductions from children with the node value
+        :param unit_oplus: unit element of the operator oplus
+        :param otimes: operator for reducing sub-reductions from children of a node
+        :param unit_otimes: unit element of the operator otimes
+        :return: a value
+        """
+
     # @abstractmethod
     # def uacc(self: 'RoseTree[A]', oplus: Callable[[A, B], B], unit_oplus: B,
     #          otimes: Callable[[B, B], B], unit_otimes: B) -> 'RoseTree[B]':

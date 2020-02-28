@@ -112,6 +112,17 @@ def add(*args):
     return functools.reduce(operator.add, args, 0)
 
 
+def mult(*args):
+    """
+    Generalized multiplication.
+
+    :param args: list
+        A list of numbers
+    :return: number
+    """
+    return functools.reduce(operator.mul, args, 1)
+
+
 def incr(num):
     """
     Increment its argument by 1.
