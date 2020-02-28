@@ -27,10 +27,14 @@ class RTree(interface.RoseTree, Generic[A]):
 
     def __init__(self, val, ch: SList = None):
         self.__value = val
-        self.__children = ch if ch is not None else SList()
+        if ch is None:
+            ch = SList()
+        if not isinstance(ch, SList):
+            ch = SList(ch)
+        self.__children = ch
         self.__size = 1
-        for c in self.__children:
-            self.__size += c.size
+        # for c in ch:
+        #     self.__size += c.size
 
     @property
     def is_leaf(self: 'RTree[A]') -> bool:
@@ -75,14 +79,14 @@ class RTree(interface.RoseTree, Generic[A]):
         return False
 
     def _get_string(self: 'RTree[A]', depth=0):
-        res = ("  " * depth) + "rnode(" + str(self.value)
+        res = ("  " * depth) + ("Leaf(" if self.is_leaf else "Node(") + str(self.value)
         if self.is_leaf:
-            return res + ")"
-        res = res + "\n"
+            return ("  " * depth) + "Leaf(" + str(self.value) + ")"
+        res = ("  " * depth) + "Node(" + str(self.value) + "\n"
         for i in range(self.children.length()):
             c = self.children[i]
             res = res + c._get_string(depth=depth + 1) + ("\n" if i != self.children.length()-1 else "")
-        return res + ")"
+        return res + "\n" + ("  " * depth) + ")"
 
     def __str__(self: 'RTree[A]') -> str:
         return self._get_string(depth=0)
@@ -91,13 +95,13 @@ class RTree(interface.RoseTree, Generic[A]):
     def from_rt(rt: 'RTree[A]') -> Any:
         new_ch = SList.init(lambda x: None, rt.children.length())
         for i in range(rt.children.length()):
-            new_ch[i] = RTree.init_from_rt(rt.children[i])
+            new_ch[i] = RTree.from_rt(rt.children[i])
         return RTree(rt.value, new_ch)
 
     def to_rt(self: 'RTree[A]') -> 'RTree[A]':
         new_ch = SList.init(lambda x: None, self.children.length())
         for i in range(self.children.length()):
-            new_ch[i] = RTree.init_from_rt(self.children[i])
+            new_ch[i] = RTree.from_rt(self.children[i])
         return RTree(self.value, new_ch)
 
     def map(self: 'RTree[A]', k: Callable[[A], B]) -> 'RTree[B]':
