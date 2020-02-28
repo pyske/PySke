@@ -118,15 +118,5 @@ _MAP2_REDUCE = \
          name='map2_reduce',
          type=_BinTree)
 
-_MAP2_MAP = \
-    Rule(left=Term('map', [Term('map2', [Var('PT1'), Var('gl'), Var('gn'), Var('PT2')]),
-                           Var('fl'), Var('fn')], False),
-         right= Term('map2', [Var('PT1'),
-                              compose(Var('fl'), Var('gl')),
-                              compose(Var('fn'), Var('gn')),
-                              Var('PT2')],
-                     False),
-         name="map2 map",
-         type=_BinTree)
 
-RULES_DB.extend([_MAP_MAP, _ZIP_MAP, _MAP_REDUCE, _ZIP_REDUCE, _MAP2_REDUCE, _MAP2_MAP])
+RULES_DB.extend([_MAP_MAP, _ZIP_MAP, _MAP_REDUCE, _ZIP_REDUCE, _MAP2_REDUCE])
