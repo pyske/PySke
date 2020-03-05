@@ -134,8 +134,8 @@ class RTree(interface.RoseTree, Generic[A]):
     def reduce(self: 'RTree[A]',
                oplus: Callable[[A, B], B], unit_plus: B,
                otimes: Callable[[B, B], B], unit_otimes: B = None) -> B:
-        if self.is_leaf:
-            return self.value
+        # if self.is_leaf:
+        #     return self.value
         reductions = self.children.map(lambda x: x.reduce(oplus, unit_plus,
                                                           otimes, unit_otimes)
                                        )
@@ -145,14 +145,9 @@ class RTree(interface.RoseTree, Generic[A]):
     def uacc(self: 'RTree[A]',
              oplus: Callable[[A, B], B], unit_oplus: B,
              otimes: Callable[[B, B], B], unit_times: B) -> 'RTree[B]':
-        if self.is_leaf:
-            return RTree(self.value)
-        new_ch = self.children.map(lambda x: x.uacc(oplus, unit_oplus,
-                                                    otimes, unit_times))
-        red = new_ch[0].value
-        for i in range(1, len(new_ch)):
-            red = otimes(red, new_ch[i].value)
-        return RTree(oplus(self.value, red), new_ch)
+        val = self.reduce(oplus, unit_oplus, otimes, unit_times)
+        new_ch = self.children.map(lambda x: x.uacc(oplus, unit_oplus, otimes, unit_times))
+        return RTree(val, new_ch)
 
     def dacc(self: 'RTree[A]', oplus: Callable[[A, A], A],
              unit: A) -> 'RTree[A]':

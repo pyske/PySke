@@ -1478,112 +1478,112 @@ class RoseTree(ABC, Generic[A]):
         :return: a value
         """
 
-    # @abstractmethod
-    # def uacc(self: 'RoseTree[A]', oplus: Callable[[A, B], B], unit_oplus: B,
-    #          otimes: Callable[[B, B], B], unit_otimes: B) -> 'RoseTree[B]':
-    #     """
-    #     Return the prefix-sum from bottom-to-top.
-    #
-    #     The returned rose tree has the same shape (same size,, same distribution)
-    #     than the initial rose tree.
-    #
-    #     Examples::
-    #         >>> from pyske.core.tree.rtree import RTree
-    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-    #         >>> rt.uacc(fun.add, 0, fun.mul, 1)
-    #         Node(264
-    #             Leaf(2
-    #             Node(33
-    #                 Leaf(5)
-    #                 Leaf(6)
-    #             )
-    #             Leaf(4)
-    #         )
-    #
-    #     :param oplus: operator for reducing sub-accumulations from children with the node value
-    #     :param unit_oplus: unit element of the operator oplus
-    #     :param otimes: operator for reducing sub-accumulations from children of a node
-    #     :param unit_otimes: unit element of the operator otimes
-    #     :return: a new rose tree
-    #     """
-    #
-    # @abstractmethod
-    # def dacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
-    #     """
-    #     Return the prefix-sum from top-to-bottom.
-    #
-    #     The returned rose tree has the same shape (same size, same distribution)
-    #     than the initial rose tree.
-    #
-    #     Examples::
-    #
-    #         >>> from pyske.core.tree.rtree import RTree
-    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-    #         >>> rt.dacc(fun.add, 0)
-    #         Node(0
-    #             Leaf(1
-    #             Node(1
-    #                 Leaf(4)
-    #                 Leaf(4)
-    #             )
-    #             Leaf(1)
-    #         )
-    #
-    #     :param oplus: operator for downward accumulation of values
-    #     :param unit: first value for the accumulator that must be the unit element of the operator oplus
-    #     :return: a new rose tree
-    #     """
-    #
-    # @abstractmethod
-    # def lacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
-    #     """
-    #     Return the prefix-sum from left-to-right.
-    #
-    #     The returned rose tree has the same shape (same size, same distribution)
-    #     than the initial rose tree.
-    #
-    #     Examples::
-    #
-    #         >>> from pyske.core.tree.rtree import RTree
-    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-    #         >>> rt.lacc(fun.add, 0)
-    #         Node(0
-    #             Leaf(7
-    #             Node(4
-    #                 Leaf(6)
-    #                 Leaf(0)
-    #             )
-    #             Leaf(0)
-    #         )
-    #
-    #     :param oplus: operator for leftward accumulation of values
-    #     :param unit: unit element of the operator oplus
-    #     :return: a new rose tree
-    #     """
-    #
-    # @abstractmethod
-    # def racc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
-    #     """
-    #     Return the prefix-sum from right-to-left.
-    #
-    #     The returned rose tree has the same shape (same size, same distribution)
-    #     than the initial rose tree.
-    #
-    #     Examples::
-    #
-    #         >>> from pyske.core.tree.rtree import RTree
-    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-    #         >>> rt.racc(fun.add, 0)
-    #         Node(0
-    #             Leaf(0
-    #             Node(2
-    #                 Leaf(0)
-    #                 Leaf(5)
-    #             )
-    #             Leaf(5)
-    #         )
-    #
-    #     :param oplus: operator for rightward accumulation of values
-    #     :param unit: unit element of the operator oplus
-    #     :return: a new rose tree
-    #     """
+    @abstractmethod
+    def uacc(self: 'RoseTree[A]', oplus: Callable[[A, B], B], unit_oplus: B,
+             otimes: Callable[[B, B], B], unit_otimes: B) -> 'RoseTree[B]':
+        """
+        Return the prefix-sum from bottom-to-top.
+
+        The returned rose tree has the same shape (same size,, same distribution)
+        than the initial rose tree.
+
+        Examples::
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.uacc(fun.add, 0, fun.mul, 1)
+            Node(264
+                Leaf(2
+                Node(33
+                    Leaf(5)
+                    Leaf(6)
+                )
+                Leaf(4)
+            )
+
+        :param oplus: operator for reducing sub-accumulations from children with the node value
+        :param unit_oplus: unit element of the operator oplus
+        :param otimes: operator for reducing sub-accumulations from children of a node
+        :param unit_otimes: unit element of the operator otimes
+        :return: a new rose tree
+        """
+
+    @abstractmethod
+    def dacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+        """
+        Return the prefix-sum from top-to-bottom.
+
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.dacc(fun.add, 0)
+            Node(0
+                Leaf(1
+                Node(1
+                    Leaf(4)
+                    Leaf(4)
+                )
+                Leaf(1)
+            )
+
+        :param oplus: operator for downward accumulation of values
+        :param unit: first value for the accumulator that must be the unit element of the operator oplus
+        :return: a new rose tree
+        """
+
+    @abstractmethod
+    def lacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+        """
+        Return the prefix-sum from left-to-right.
+
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.lacc(fun.add, 0)
+            Node(0
+                Leaf(7
+                Node(4
+                    Leaf(6)
+                    Leaf(0)
+                )
+                Leaf(0)
+            )
+
+        :param oplus: operator for leftward accumulation of values
+        :param unit: unit element of the operator oplus
+        :return: a new rose tree
+        """
+
+    @abstractmethod
+    def racc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+        """
+        Return the prefix-sum from right-to-left.
+
+        The returned rose tree has the same shape (same size, same distribution)
+        than the initial rose tree.
+
+        Examples::
+
+            >>> from pyske.core.tree.rtree import RTree
+            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+            >>> rt.racc(fun.add, 0)
+            Node(0
+                Leaf(0
+                Node(2
+                    Leaf(0)
+                    Leaf(5)
+                )
+                Leaf(5)
+            )
+
+        :param oplus: operator for rightward accumulation of values
+        :param unit: unit element of the operator oplus
+        :return: a new rose tree
+        """

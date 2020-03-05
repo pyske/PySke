@@ -33,7 +33,7 @@ def test_reduce():
                           RTree(41)])
                )
     res = rt.reduce(operator.add, 0, operator.mul, 1)
-    exp = 3503055
+    exp = 3864015
     assert res == exp
 
 
@@ -46,12 +46,12 @@ def test_uacc():
                           RTree(41)])
                )
     res = rt.uacc(operator.add, 0, operator.mul, 1)
-    exp = RTree(3503055, SList([RTree(24),
-                                RTree(3560, SList([RTree(56),
-                                                   RTree(63)]
+    exp = RTree(3864015, SList([RTree(25),
+                                RTree(3680, SList([RTree(57),
+                                                   RTree(64)]
                                                   )
                                       ),
-                                RTree(41)])
+                                RTree(42)])
                 )
     assert res == exp
 
