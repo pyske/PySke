@@ -1,7 +1,8 @@
 import sys
 
 from pyske.core.list.slist import SList
-from pyske.core.support.errors import EmptyError, UnknownTypeError, IllFormedError, ApplicationError, NotSameTagError
+from pyske.core.support.errors \
+    import EmptyError, UnknownTypeError, IllFormedError, ApplicationError, NotSameTagError
 from pyske.core.tree.btree import Leaf, Node
 
 MINUS_INFINITY = int((-sys.maxsize - 1) / 2)
@@ -91,8 +92,8 @@ class TaggedValue:
                 return "C"
             if tag == TAG_LEAF:
                 return "L"
-            if tag == TAG_NODE:
-                return "N"
+            # tag == TAG_NODE:
+            return "N"
 
         return LEFT_TV + str(self.val) + SEPARATOR_TV + tag2str(self.tag) + RIGHT_TV
 
@@ -275,9 +276,8 @@ class Segment(__List):
         if has_critical:
             # The current instance represented a node in the global structure of a linearized tree
             return TaggedValue(top, "N")
-        else:
             # The current instance represented a leaf in the global structure of a linearized tree
-            return TaggedValue(top, "L")
+        return TaggedValue(top, "L")
 
     def reduce_global(self, psi_n):
         """Makes a global reduction using local reductions of Segments
@@ -491,7 +491,7 @@ class Segment(__List):
                 # We need two sub accumulation values to process the accumulation of a node
                 lv = stack.pop()
                 rv = stack.pop()
-                if d == 0 or d == 1:
+                if d in (0, 1):
                     # We met a critical value before, so the accumulation is not completed yet
                     val = k(lv, v1.get_value(), rv)
                     res[i] = TaggedValue(val, v1.get_tag())
@@ -698,8 +698,7 @@ class Segment(__List):
         def get_right_index(gt, idx):
             if gt[idx + 1].is_leaf():
                 return idx + 2
-            else:
-                return 1 + get_right_index(gt, idx + 1)
+            return 1 + get_right_index(gt, idx + 1)
 
         j = get_right_index(self, i)
         return self[j]
@@ -881,7 +880,7 @@ class LTree(__List):
                                lambda x, y, z: TAG_CRITICAL
                                if up_div(x, m) > up_div(y.get_value(), m) and up_div(x, m) > up_div(z.get_value(), m)
                                else TAG_NODE)
-        bt_val = bt.map2(lambda x, y: TaggedValue(x, y), bt_tags)
+        bt_val = bt.map2(TaggedValue, bt_tags)
         return LTree(__tv2lv(bt_val))
 
     @staticmethod
@@ -1132,7 +1131,7 @@ class LTree(__List):
         def __lv2ibt(segment):
             stack = []
             has_crit_b = False
-            if segment.empty():
+            if not segment:
                 raise EmptyError("An empty Segment cannot be transformed into a BTree")
             for i in range(segment.length() - 1, -1, -1):
                 v = segment[i]

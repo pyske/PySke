@@ -23,62 +23,6 @@ def parser_tuple(string):
 
 # -------------------------- #
 
-
-def test_head_empty():
-    # pylint: disable=missing-docstring
-    slst = SList()
-    exp = None
-    res = slst.head()
-    assert res == exp
-
-
-def test_head_one():
-    # pylint: disable=missing-docstring
-    slst = SList()
-    exp = 1
-    slst.append(exp)
-    res = slst.head()
-    assert res == exp
-
-
-def test_head_several():
-    # pylint: disable=missing-docstring
-    slst = SList()
-    exp = 1
-    slst.append(exp)
-    slst.append(exp + 1)
-    res = slst.head()
-    assert res == exp
-
-
-# -------------------------- #
-
-def test_tail_empty():
-    # pylint: disable=missing-docstring
-    slst = SList()
-    exp = SList()
-    res = slst.tail()
-    assert res == exp
-
-
-def test_tail_one():
-    # pylint: disable=missing-docstring
-    slst = SList([1])
-    exp = SList()
-    res = slst.tail()
-    assert res == exp
-
-
-def test_tail_several():
-    # pylint: disable=missing-docstring
-    slst = SList([1, 2, 3])
-    exp = SList([2, 3])
-    res = slst.tail()
-    assert res == exp
-
-
-# -------------------------- #
-
 def test_length_nil():
     # pylint: disable=missing-docstring
     slst = SList()
@@ -103,24 +47,6 @@ def test_filter():
     res = slst.filter(lambda val: val % 2 == 0)
     for value in res:
         assert value % 2 == 0
-
-
-# -------------------------- #
-
-def test_empty_true():
-    # pylint: disable=missing-docstring
-    slst = SList()
-    exp = True
-    res = slst.empty()
-    assert res == exp
-
-
-def test_empty_false():
-    # pylint: disable=missing-docstring
-    slst = SList([1, 2, 3])
-    exp = False
-    res = slst.empty()
-    assert res == exp
 
 
 # -------------------------- #

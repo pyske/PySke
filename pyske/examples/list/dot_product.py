@@ -2,6 +2,9 @@
 Dot product of two vectors implemented as parallel lists
 """
 
+import random
+import argparse
+import gc
 from operator import add, mul
 from pyske.core import fun, par, Timing, PList as DPList
 from pyske.core.opt import fun as opt
@@ -28,11 +31,9 @@ def dot_product(vector1, vector2, uncurry=None):
 
 
 # -------------- Execution -----------------
+from pyske.examples.list.util import rand_list, print_experiment
 
 def __main():
-    import argparse
-    import gc
-    from pyske.examples.list.util import rand_list, print_experiment
 
     def __compute():
         if test == _DIRECT:
@@ -55,6 +56,7 @@ def __main():
     test = args.test
 
     # Creation of input lists
+    random.seed(42)
     pl1 = rand_list(DPList, size)
     pl2 = rand_list(DPList, size)
 

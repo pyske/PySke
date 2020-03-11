@@ -78,7 +78,7 @@ def _firsts(distr):
 
 
 def _lasts(distr):
-    return SList(scan(distr, add, 0)).tail().map(lambda x: x - 1)
+    return SList(scan(distr, add, 0)[1:]).map(lambda x: x - 1)
 
 
 def bounds(distr):

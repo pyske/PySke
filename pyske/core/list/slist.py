@@ -37,7 +37,6 @@ class SList(list, interface.List, Generic[T]):
         from_str.
 
     Methods:
-        head, tail, empty,
         scanp.
     """
 
@@ -64,20 +63,6 @@ class SList(list, interface.List, Generic[T]):
             res.append(parser(val))
         return res
 
-    def head(self):
-        """Gives the first element of the current instance"""
-        if self.empty():
-            return None
-        return self[0]
-
-    def tail(self):
-        """Gives the the current instance without its first element"""
-        return SList(self[1:])
-
-    def empty(self):
-        """Indicates if a list is empty"""
-        return self.length() == 0
-
     @staticmethod
     def init(value_at: Callable[[int], T], size: int) -> 'SList[T]':
         assert size >= 0
@@ -97,7 +82,7 @@ class SList(list, interface.List, Generic[T]):
 
     def map_reduce(self: 'SList[T]', unary_op: Callable[[T], R],
                    binary_op: Callable[[R, R], R], neutral: Optional[T] = None) -> R:
-        if self.empty():
+        if not self:
             return neutral
         if neutral is None:
             return functools.reduce(binary_op, map(unary_op, self))

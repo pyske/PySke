@@ -83,7 +83,7 @@ class RNode:
                 res_r.insert(0, res_head)
                 return res_r
 
-        return aux(bt).head()
+        return aux(bt)[0]
 
     def __str__(self):
         res = "rnode " + str(self.value) + "["
@@ -171,7 +171,7 @@ class RNode:
         g : callable
             A binary operator to combine the value of the current instance with the intermediate reduction
         """
-        if self.children.empty():
+        if not self.children:
             return self.get_value()
         # We calculate the reduction of each childen
         reductions = self.children.map(lambda x: x.reduce(f, g))
@@ -321,11 +321,11 @@ class RNode:
             return Node(a, left, right)
 
         def r2b2(ts):
-            if ts.empty():
+            if not ts:
                 return Leaf(None)
             else:
-                h = ts.head()
-                t = ts.tail()
+                h = ts[0]
+                t = ts[1:]
                 return r2b1(h, t)
 
         return r2b1(self, SList())
