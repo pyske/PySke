@@ -244,7 +244,7 @@ class LTree(interface.BinTree, Generic[A, B]):
     def zip_reduce(self: 'LTree[A, B]', a_ltree: 'LTree[C, D]',
                    k: Callable[[Tuple[A, C], Tuple[B, D], Tuple[A, C]], Tuple[A, C]],
                    phi: Callable[[Tuple[B, D]], D] = None,
-                   psi_n: Callable[[Tuple[A, C], D, Tuple[A , C]], Tuple[A, C]] = None,
+                   psi_n: Callable[[Tuple[A, C], D, Tuple[A, C]], Tuple[A, C]] = None,
                    psi_l: Callable[[D, D, Tuple[A, C]], D] = None,
                    psi_r: Callable[[Tuple[A, C], D, D], D] = None) -> Tuple[A, C]:
         assert not (self.empty() or a_ltree.empty()), "zip_reduce cannot be applied to an empty linearized tree"
@@ -337,7 +337,7 @@ class LTree(interface.BinTree, Generic[A, B]):
         res = LTree([None] * self.length)
         for i in range(self.length):
             gt[i], lt2[i] = self[i].getch_local(c, side=constant.RIGHT)
-        for i in range(gt.length()):
+        for i in range(gt.length):
             _, tag = gt[i]
             if tag is TAG_NODE:
                 val_l, _ = gt.get_right(i)

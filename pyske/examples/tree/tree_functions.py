@@ -4,7 +4,7 @@ Functions on trees
 from operator import add
 from pyske.core.util import fun
 
-__all__ = ['size', 'size_by_node', 'sum_values', 'prefix', 'ancestors', 'depth', 'lca']
+__all__ = ['size', 'size_by_node', 'sum_values', 'prefix', 'ancestors', 'depth', 'lca', 'l_ancestors', 'lca2']
 
 
 def _incr(num1, num2):
@@ -19,6 +19,13 @@ def ancestors(tree):
     """Compute the number of ancestors in a tree."""
     return tree.map(fun.zero, fun.zero) \
         .dacc(_incr, _incr, 0, fun.idt, fun.idt, _incr, _incr)
+
+
+def diameter(tree):
+    """Compute the size of the longest path in a tree, also called diameter"""
+    return tree.map(fun.zero, fun.zero) \
+        .dacc(_incr, _incr, 0, fun.idt, fun.idt, _incr, _incr) \
+        .reduce(fun.max3, fun.idt, fun.max3, fun.max3, fun.max3)
 
 
 def size(tree):
@@ -142,5 +149,23 @@ def lca(t, a, b):
         raise Exception("given IDs are not available")
     return [i for i, j in zip(res[0][1], res[1][1]) if i == j][0]
 
-    # return (tree.dacc(fpath, fpath, [], fun.idt, fun.idt, fpath, unif))
-    # return tree
+
+def l_ancestors(t):
+
+    def fpath(anc, v):
+        return anc + [v]
+
+    ances = t.dacc(fpath, fpath, [], fun.idt, fun.idt, fpath, fpath)
+    return t.zip(ances)
+
+
+def lca2(t, a, b):
+    """Lowest common ancestor, more costly version"""
+    res = l_ancestors(t).get_all(lambda x: x[0] == a or x[0] == b)
+
+    # if res.length() > 2:
+    #     raise Exception("IDs are not unique")
+    # if res.length() < 2:
+    #     raise Exception("given IDs are not available")
+
+    return [i for i, j in zip(res[0][1], res[1][1]) if i == j][0]

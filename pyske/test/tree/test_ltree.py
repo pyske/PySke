@@ -250,6 +250,15 @@ def test_ancestors():
     exp = ancestors(bt)
     assert exp == res
 
+
+def test_l_ancestors():
+    m = 1
+    bt = balanced_btree(lambda: randint(0, 10), 20)
+    lt = LTree.from_bt(bt, m)
+    res = l_ancestors(lt).to_bt()
+    exp = l_ancestors(bt)
+    assert exp == res
+
 # -------------------------- #
 
 def test_map_reduce_leaf():

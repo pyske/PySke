@@ -78,6 +78,9 @@ class Segment(Generic[A, B]):
     def __setitem__(self, key, value):
         self.__content[key] = value
 
+    def __len__(self):
+        return len(self.__content)
+
     def extend(self, c):
         self.__content.extend(c)
         self.__length += c.length
@@ -429,9 +432,12 @@ class Segment(Generic[A, B]):
             if tag is TAG_LEAF:
                 d = d + 1
             elif tag is TAG_NODE:
-                if d is LEFT or d is RIGHT:
+                if d is LEFT:
                     to_l = psi_u(phi_l(val), to_l)
                     to_r = psi_u(phi_l(val), to_r)
+                elif d is RIGHT:
+                    to_l = psi_u(phi_r(val), to_l)
+                    to_r = psi_u(phi_r(val), to_r)
                     d = LEFT
                 else:
                     d = d - 1
@@ -556,5 +562,3 @@ class Segment(Generic[A, B]):
                 res.append(val)
         return res
     # </editor-fold>
-
-

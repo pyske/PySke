@@ -11,6 +11,7 @@ TAG_CRITICAL = 3
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 
+
 class Tag:
 
     @staticmethod
@@ -35,17 +36,20 @@ class Tag:
     @staticmethod
     def avg(bt: 'BTree[A, B]', m: int = 1):
         avg_size = bt.size / m
+
         def _k(l, b, r):
             (acc_size_left, _, has_crit_left) = l
             (acc_size_right, _, has_crit_right) = r
 
             acc_size = 1 + acc_size_left + acc_size_right
 
-            is_crit = (has_crit_left and has_crit_right) or (dist_euclidean(acc_size, avg_size) > dist_euclidean(acc_size_left, avg_size) or dist_euclidean(acc_size, avg_size) >  dist_euclidean(acc_size_right, avg_size)) 
+            is_crit = (has_crit_left and has_crit_right) \
+                      or dist_euclidean(acc_size, avg_size) > dist_euclidean(acc_size_left, avg_size) \
+                      or dist_euclidean(acc_size, avg_size) > dist_euclidean(acc_size_right, avg_size)
             has_crit = has_crit_left or has_crit_right or is_crit
-            return (acc_size, is_crit, has_crit)
+            return acc_size, is_crit, has_crit
 
-        def _kl(x):
+        def _kl(_):
             return TAG_LEAF
 
         def _kn(x):

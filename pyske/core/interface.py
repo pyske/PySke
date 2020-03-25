@@ -1222,11 +1222,11 @@ class BinTree(ABC, Generic[A, B]):
             >>> from pyske.core.tree.ptree import PTree
             >>> m = 1
             >>> bt = Node((1,'a'), Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))), Leaf((5,'e')))
-            >>> bt.get_first_node(lambda x: x%2 == 0)
+            >>> bt.get_first_node(lambda x: x[0]%2 == 0)
             (2, 'b')
-            >>> LTree.from_bt(bt, m).get_first_node(lambda x: x%2 == 0)
+            >>> LTree.from_bt(bt, m).get_first_node(lambda x: x[0]%2 == 0)
             (2, 'b')
-            >>> PTree.from_bt(bt, m).get_first_node(lambda x: x%2 == 0)
+            >>> PTree.from_bt(bt, m).get_first_node(lambda x: x[0]%2 == 0)
             (2, 'b')
 
         :param p: the output element satisfies this predicate.
@@ -1246,11 +1246,11 @@ class BinTree(ABC, Generic[A, B]):
             >>> bt = Node((1,'a'),\
                             Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))),\
                             Node((5,'e'), Leaf((6,'f')), Leaf((7,'g'))))
-            >>> bt.get_all_nodes(lambda x: x%2 == 1)
+            >>> bt.get_all_nodes(lambda x: x[0]%2 == 1)
             [(2, 'b'), (5, 'e')]
-            >>> LTree.from_bt(bt, m).get_all_nodes(lambda x: x%2 == 1)
+            >>> LTree.from_bt(bt, m).get_all_nodes(lambda x: x[0]%2 == 1)
             [(2, 'b'), (5, 'e')]
-            >>> PTree.from_bt(bt, m).get_all_nodes(lambda x: x%2 == 1)
+            >>> PTree.from_bt(bt, m).get_all_nodes(lambda x: x[0]%2 == 1)
             [(2, 'b'), (5, 'e')]
 
         :param p: the output element satisfies this predicate.
@@ -1268,11 +1268,11 @@ class BinTree(ABC, Generic[A, B]):
             >>> from pyske.core.tree.ptree import PTree
             >>> m = 1
             >>> bt = Node((1,'a'), Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))), Leaf((5,'e')))
-            >>> bt.get_first_leaf(lambda x: x%2 == 0)
+            >>> bt.get_first_leaf(lambda x: x[0]%2 == 0)
             (3, 'c')
-            >>> LTree.from_bt(bt, m).get_first_leaf(lambda x: x%2 == 0)
+            >>> LTree.from_bt(bt, m).get_first_leaf(lambda x: x[0]%2 == 0)
             (3, 'c')
-            >>> PTree.from_bt(bt, m).get_first_leaf(lambda x: x%2 == 0)
+            >>> PTree.from_bt(bt, m).get_first_leaf(lambda x: x[0]%2 == 0)
             (3, 'c')
 
         :param p: the output element satisfies this predicate.
@@ -1292,11 +1292,11 @@ class BinTree(ABC, Generic[A, B]):
             >>> bt = Node((1,'a'),\
                             Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))),\
                             Node((5,'e'), Leaf((6,'f')), Leaf((7,'g'))))
-            >>> bt.get_all_leaves(lambda x: x%2 == 1)
+            >>> bt.get_all_leaves(lambda x: x[0]%2 == 1)
             [(3, 'c'), (7, 'g')]
-            >>> LTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            >>> LTree.from_bt(bt, m).get_all_leaves(lambda x: x[0]%2 == 1)
             [(3, 'c'), (7, 'g')]
-            >>> PTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            >>> PTree.from_bt(bt, m).get_all_leaves(lambda x: x[0]%2 == 1)
             [(3, 'c'), (7, 'g')]
 
         :param p: the output element satisfies this predicate.
@@ -1314,11 +1314,11 @@ class BinTree(ABC, Generic[A, B]):
             >>> from pyske.core.tree.ptree import PTree
             >>> m = 1
             >>> bt = Node((1,'a'), Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))), Leaf((5,'e')))
-            >>> bt.get_first(lambda x: x%2 == 0)
+            >>> bt.get_first(lambda x: x[0]%2 == 0)
             (2, 'b')
-            >>> LTree.from_bt(bt, m).get_first(lambda x: x%2 == 0)
+            >>> LTree.from_bt(bt, m).get_first(lambda x: x[0]%2 == 0)
             (2, 'b')
-            >>> PTree.from_bt(bt, m).get_first(lambda x: x%2 == 0)
+            >>> PTree.from_bt(bt, m).get_first(lambda x: x[0]%2 == 0)
             (2, 'b')
 
         :param p: the output element satisfies this predicate.
@@ -1338,11 +1338,11 @@ class BinTree(ABC, Generic[A, B]):
             >>> bt = Node((1,'a'),\
                             Node((2,'b'), Leaf((3,'c')), Leaf((4,'d'))),\
                             Node((5,'e'), Leaf((6,'f')), Leaf((7,'g'))))
-            >>> bt.get_all_leaves(lambda x: x%2 == 1)
+            >>> bt.get_all(lambda x: x[0]%2 == 1)
             [(1, 'a'), (3, 'c'), (5, 'c') (7, 'g')]
-            >>> LTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            >>> LTree.from_bt(bt, m).get_all(lambda x: x[0]%2 == 1)
             [(1, 'a'), (3, 'c'), (5, 'c') (7, 'g')]
-            >>> PTree.from_bt(bt, m).get_all_leaves(lambda x: x%2 == 1)
+            >>> PTree.from_bt(bt, m).get_all(lambda x: x[0]%2 == 1)
             [(1, 'a'), (3, 'c'), (5, 'c') (7, 'g')]
 
         :param p: the output element satisfies this predicate.
@@ -1529,61 +1529,142 @@ class RoseTree(ABC, Generic[A]):
                 Leaf(1)
             )
 
-        :param oplus: operator for downward accumulation of values
+        :param oplus: binary associative operator for downward accumulation of values
         :param unit: first value for the accumulator that must be the unit element of the operator oplus
         :return: a new rose tree
         """
 
-    @abstractmethod
-    def lacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
-        """
-        Return the prefix-sum from left-to-right.
+    # TODO
+    # @abstractmethod
+    # def lacc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+    #     """
+    #     Return the prefix-sum from left-to-right.
+    #
+    #     The returned rose tree has the same shape (same size, same distribution)
+    #     than the initial rose tree.
+    #
+    #     Examples::
+    #
+    #         >>> from pyske.core.tree.rtree import RTree
+    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+    #         >>> rt.lacc(fun.add, 0)
+    #         Node(0
+    #             Leaf(7
+    #             Node(4
+    #                 Leaf(6)
+    #                 Leaf(0)
+    #             )
+    #             Leaf(0)
+    #         )
+    #
+    #     :param oplus: operator for leftward accumulation of values
+    #     :param unit: unit element of the operator oplus
+    #     :return: a new rose tree
+    #     """
 
-        The returned rose tree has the same shape (same size, same distribution)
-        than the initial rose tree.
+
+    # TODO
+    # @abstractmethod
+    # def racc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+    #     """
+    #     Return the prefix-sum from right-to-left.
+    #
+    #     The returned rose tree has the same shape (same size, same distribution)
+    #     than the initial rose tree.
+    #
+    #     Examples::
+    #
+    #         >>> from pyske.core.tree.rtree import RTree
+    #         >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
+    #         >>> rt.racc(fun.add, 0)
+    #         Node(0
+    #             Leaf(0
+    #             Node(2
+    #                 Leaf(0)
+    #                 Leaf(5)
+    #             )
+    #             Leaf(5)
+    #         )
+    #
+    #     :param oplus: operator for rightward accumulation of values
+    #     :param unit: unit element of the operator oplus
+    #     :return: a new rose tree
+    #     """
+
+    def get_one(self: 'RoseTree[A]', p: Callable[[A], bool]) -> Optional[A]:
+        """
+        Get the first element respecting a given property.
+        Return None if there is any.
 
         Examples::
-
             >>> from pyske.core.tree.rtree import RTree
-            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-            >>> rt.lacc(fun.add, 0)
-            Node(0
-                Leaf(7
-                Node(4
-                    Leaf(6)
-                    Leaf(0)
-                )
-                Leaf(0)
-            )
+            >>> rt = RTree((1,'a'), [RTree((2,'b')), RTree((3,'c'), [RTree((5,'e')), RTree((6,'f'))]), RTree((4,'d'))])
+            >>> rt.get_first(lambda x: x[0]%2 == 0)
+            [(2, 'b'),(6,'f'),(4,'d')]
 
-        :param oplus: operator for leftward accumulation of values
-        :param unit: unit element of the operator oplus
-        :return: a new rose tree
+        :param p: the output element satisfies this predicate.
+        :return: a single value.
         """
 
-    @abstractmethod
-    def racc(self: 'RoseTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RoseTree[A]':
+    def get_all(self: 'RoseTree[A]', p: Callable[[A], bool]) -> List[A]:
         """
-        Return the prefix-sum from right-to-left.
-
-        The returned rose tree has the same shape (same size, same distribution)
-        than the initial rose tree.
+        Get all the elements respecting a given property.
+        Return None if there is any.
 
         Examples::
-
             >>> from pyske.core.tree.rtree import RTree
-            >>> rt = RTree(1, [RTree(2), RTree(3, [RTree(5), RTree(6)]), RTree(4)])
-            >>> rt.racc(fun.add, 0)
-            Node(0
-                Leaf(0
-                Node(2
-                    Leaf(0)
-                    Leaf(5)
-                )
-                Leaf(5)
-            )
+            >>> rt = RTree((1,'a'), [RTree((2,'b')), RTree((3,'c'), [RTree((5,'e')), RTree((6,'f'))]), RTree((4,'d'))])
+            >>> rt.get_all(lambda x: x[0]%2 == 1)
+            [(2, 'b'), (6, 'f'), (4, 'd')]
 
-        :param oplus: operator for rightward accumulation of values
-        :param unit: unit element of the operator oplus
-        :return: a new rose tree
+        :param p: the output element satisfies this predicate.
+        :return: a list of values.
         """
+
+    @staticmethod
+    def _get_upward_closure(oplus: Callable[[A, B], B], unit_oplus: B, otimes: Callable[[B, B], B], unit_otimes: B):
+        def psi_n(l, n, r):
+            a, b, c = n
+            return otimes(otimes(oplus(a, l), oplus(b, r)), c)
+
+        def phi(n):
+            return n, unit_oplus, unit_otimes
+
+        def psi_l(l, n, r):
+            a1, b1, c1 = n
+            a2, b2, c2 = l
+            p1 = oplus(a1, a2)
+            p2 = oplus(a1, b2)
+            p3 = otimes(otimes(oplus(a1, c2), oplus(b1, r)), c1)
+            return p1, p2, p3
+
+        def psi_r(l, n, r):
+            a1, b1, c1 = n
+            a2, b2, c2 = r
+            p1 = oplus(b1, a2)
+            p2 = oplus(b1, b2)
+            p3 = otimes(otimes(oplus(a1, l), oplus(b1, c2)), c1)
+            return p1, p2, p3
+
+        return psi_n, phi, psi_l, psi_r
+
+    # @staticmethod
+    # def _get_leftward_closure(oplus: Callable[[A, B], B], unit_oplus: B):
+    #     def psi_n(l, n, r):
+    #         p, a, b = n
+    #         return oplus(a, r) if p else b
+    #
+    #     def phi(n):
+    #         return True, n, None
+    #
+    #     def psi_l(l, n, r):
+    #         p1, a1, b1 = n
+    #         p2, a2, b2 = l
+    #         return False, None, oplus(a1, r) if p1 else b1
+    #
+    #     def psi_r(l, n, r):
+    #         p1, a1, b1 = n
+    #         p2, a2, b2 = r
+    #         return p1 and p2, oplus(a1, a2), oplus(a1, b2) if p1 else b1
+    #
+    #     return psi_n, phi, psi_l, psi_r

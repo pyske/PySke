@@ -61,8 +61,7 @@ class PTree(interface.BinTree, Generic[A, B]):
     """
 
     def __init__(self):
-        self.__distribution = Distribution([0 for _ in range(_NPROCS)])
-        self.__global_index = SList()
+        self.__distribution = Distribution([0 for _ in range(_NPROCS)], SList())
         self.__start_index = 0
         self.__nb_segs = 0
         self.__content = SList()
@@ -72,21 +71,29 @@ class PTree(interface.BinTree, Generic[A, B]):
 
     def __str__(self):
         return "PID[" + str(_PID) + "]:\n" + \
-               "  global_index: " + str(self.__global_index) + "\n" + \
+               "  global_index: " + str(self.__distribution.global_index) + "\n" + \
                "  local_index: " + str(self.__local_index) + "\n" + \
-               "  distribution: " + str(self.__distribution) + "\n" + \
+               "  distribution: " + str(self.__distribution.distribution) + "\n" + \
                "  nb_segs: " + str(self.__nb_segs) + "\n" + \
                "  start_index: " + str(self.__start_index) + "\n" + \
                "  content: " + self.str_content(print_pid=False) + "\n" + \
                "  local_size: " + str(self.__local_size) + "\n" + \
                "  global_size: " + str(self.__global_size) + "\n"
 
+    @property
+    def distribution(self):
+        return self.__distribution
+
+    @property
+    def content(self):
+        return self.__content
+
     def str_content(self, print_pid=True):
         """Browse the linearized distributed tree contained in the current processor
         """
         res = "PID[" + str(_PID) + "]: [" if print_pid else ""
         for i in range(len(self.__local_index)):
-            (start, offset) = self.__global_index[i]
+            (start, offset) = self.__distribution.global_index[i]
             seg = Segment(self.__content[start:start + offset])
             res = res + str(seg) + (',' if i != len(self.__local_index) - 1 else '')
         return res+"]"
@@ -94,7 +101,6 @@ class PTree(interface.BinTree, Generic[A, B]):
     def __eq__(self, other):
         if isinstance(other, PTree):
             return self.__distribution == other.__distribution \
-                   and self.__global_index == other.__global_index\
                    and self.__local_index == other.__local_index\
                    and self.__start_index == other.__start_index \
                    and self.__nb_segs == other.__nb_segs \
@@ -108,9 +114,9 @@ class PTree(interface.BinTree, Generic[A, B]):
     def from_seq(lt: 'LTree[A, B]') -> 'PTree[A, B]':
         p_tree = PTree()
         sizes = [lt[i].length for i in range(lt.length)]
-        (distribution, global_index) = Distribution.balanced_tree(sizes)
-        p_tree.__distribution = distribution
-        p_tree.__global_index = SList(global_index)
+        dist = Distribution.balanced_tree(sizes)
+        distribution, global_index = dist.distribution, dist.global_index
+        p_tree.__distribution = dist
         p_tree.__start_index = SList(distribution).scanl(lambda x, y: x + y, 0)[_PID]
         p_tree.__nb_segs = distribution[_PID]
         p_tree.__global_size = lt.size()
@@ -165,10 +171,10 @@ class PTree(interface.BinTree, Generic[A, B]):
     @staticmethod
     def scatter_gt(gt, distribution, root=0):
         if _PID is 0:
-            gts = [None] * len(distribution)
+            gts = [None] * len(distribution.distribution)
             acc_gt_size = 0
-            for i in range(len(distribution)):
-                dist = distribution[i]
+            for i in range(len(distribution.distribution)):
+                dist = distribution.distribution[i]
                 gts[i] = Segment(gt[acc_gt_size: acc_gt_size + dist])
                 acc_gt_size += dist
         else:
@@ -180,22 +186,49 @@ class PTree(interface.BinTree, Generic[A, B]):
             (x1, y1) = x
             (x2, y2) = y
             return x1 + y1, y2
-        return SList(self.__global_index.scanr(f))
+        return SList(self.__distribution.global_index).scanr(f)
 
     def __get_local_index(self: 'PTree[A, B]'):
-        return self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]
+        return self.__distribution.global_index[self.__start_index: self.__start_index + self.__nb_segs]
 
     @staticmethod
     def init(pt, new_content):
         p = PTree()
         p.__distribution = pt.__distribution
-        p.__global_index = pt.__global_index
         p.__start_index = pt.__start_index
         p.__nb_segs = pt.__nb_segs
         p.__local_size = pt.__local_size
         p.__global_size = pt.__global_size
         p.__local_index = pt.__local_index
         p.__content = new_content
+        return p
+
+    @staticmethod
+    def init_from_dist(full_content, distribution):
+        p = PTree()
+        p.__distribution = distribution
+        p.__nb_segs = distribution.distribution[_PID]
+        p.__start_index = SList(distribution.distribution).scanl(lambda x, y: x + y, 0)[_PID]
+        temp_l = full_content[p.__start_index:p.__start_index + p.__nb_segs]
+        p.__content = [item for sublist in temp_l for item in sublist]
+        p.__global_size = full_content.size
+        p.__local_size = len(p.__content)
+        p.__local_index = p.__get_local_index()
+        return p
+
+    @staticmethod
+    def init_bis(content, distribution):
+        p = PTree()
+        p.__distribution = distribution
+        p.__content = content
+        dist_dist = distribution.distribution
+        dist_global_index = distribution.global_index
+        p.__start_index = SList(dist_dist).scanl(lambda x, y: x + y, 0)[_PID]
+        p.__nb_segs = dist_dist[_PID]
+        p.__global_size = SList(dist_global_index).map(lambda x: x[1]).reduce(lambda x, y: x + y, 0)
+        p.__content = content if isinstance(content, SList) else SList(content)
+        p.__local_size = len(content)
+        p.__local_index = p.__get_local_index()
         return p
 
     def size(self: 'PTree[A, B]') -> int:
