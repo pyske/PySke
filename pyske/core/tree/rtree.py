@@ -1,7 +1,7 @@
 from pyske.core.list.slist import SList
 from pyske.core import interface
 
-from typing import TypeVar, Callable, Generic, Any, Tuple
+from typing import TypeVar, Callable, Generic, Any, Tuple, Optional, List
 
 __all__ = ['RTree']
 
@@ -158,6 +158,7 @@ class RTree(interface.RoseTree, Generic[A]):
 
     def lacc(self: 'RTree[A]', oplus: Callable[[A, A], A],
              unit: A) -> 'RTree[A]':
+        # TODO add lacc to the interface RoseTree
         rv = self.children.map(lambda x: x.value)
         rs = rv.scanp(oplus, unit)
         ch0 = self.children
@@ -168,6 +169,7 @@ class RTree(interface.RoseTree, Generic[A]):
 
     def racc(self: 'RTree[A]', oplus: Callable[[A, A], A],
              unit: A) -> 'RTree[A]':
+        # TODO add racc to the interface RoseTree
         rv = self.children.map(lambda x: x.value)
         rs = rv.scanl(oplus, unit)
         ch0 = self.children
@@ -175,3 +177,21 @@ class RTree(interface.RoseTree, Generic[A]):
         for i in range(ch0.length()):
             new_ch[i] = RTree(rs[i], ch0[i].racc(oplus, unit).children)
         return RTree(unit, new_ch)
+
+    def get_one(self: 'RTree[A]', p: Callable[[A], bool]) -> Optional[A]:
+        if p(self.value):
+            return self.value
+        for i in self.children:
+            res = i.get_one(p)
+            if res is not None:
+                return res
+        return None
+
+    def get_all(self: 'RTree[A]', p: Callable[[A], bool]) -> List[A]:
+        res = []
+        if p(self.value):
+            res = [self.value]
+        for i in self.children:
+            res_i = i.get_all(p)
+            res = res + res_i
+        return res

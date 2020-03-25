@@ -3,11 +3,13 @@ from pyske.core.tree.rtree import RTree
 from pyske.core.util import fun
 
 from pyske.core.tree.btree import Node, Leaf
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Tuple
 
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 C = TypeVar('C')  # pylint: disable=invalid-name
+
+__all__ = ['RBTree']
 
 
 class RBTree(interface.RoseTree):
@@ -22,6 +24,10 @@ class RBTree(interface.RoseTree):
         if isinstance(other, RBTree):
             return self.__bt == other.__bt
         return False
+
+    @property
+    def bt(self):
+        return self.__bt
 
     @staticmethod
     def from_rt(rt: RTree[A]):
@@ -41,7 +47,7 @@ class RBTree(interface.RoseTree):
 
         return RBTree(r2b1(rt, SList()))
 
-    def to_rt(self):
+    def to_rt(self) -> 'RTree[A]':
 
         def b2r(t) -> SList:
             if t.is_node:
@@ -71,38 +77,38 @@ class RBTree(interface.RoseTree):
 
     def uacc(self: 'RBTree[A]',
              oplus: Callable[[A, B], B], unit_oplus: B,
-             otimes: Callable[[B, B], B], unit_otimes: B) -> B:
+             otimes: Callable[[B, B], B], unit_otimes: B) -> 'RBTree[A]':
         bt2 = self.__bt.map(lambda x: unit_otimes, fun.idt).uacc(lambda l, n, r: otimes(oplus(n, l), r))
         return RBTree(self.__bt.map2(lambda l, r: None, lambda l, r: oplus(l, r), bt2.getchl(None)))
 
     def dacc(self: 'RBTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RBTree[A]':
         return RBTree(self.__bt.dacc(lambda c, n: oplus(c, n), lambda c, n: c, unit))
 
-    def lacc(self: 'RBTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RBTree[A]':
-        bt = self.__bt.map(lambda x: unit, fun.idt)
-        return RBTree(bt.uacc(lambda l, n, r: oplus(n, r)).getchr(None))
-
-    def racc(self: 'RBTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RBTree[A]':
-
-        def otimes(t1, t2):
-            f1, p1, a1, b1 = t1
-            f2, p2, a2, b2 = t2
-            if f1 and f2:
-                return True, \
-                       p1 and p2, \
-                       oplus(a1, a2), \
-                       oplus(b1, a2) if p2 else b2
-            elif f1:
-                return t1
-            else:
-                return t2
-
-        def k(x):
-            f, p, a, b = x
-            return a if p else b
-
-        gl = lambda c, n: otimes(c, (True, False, n, unit))
-        gr = lambda c, n: otimes(c, (True, True, n, unit))
-        unit_otimes = False, True, unit, None
-
-        return RBTree(self.__bt.dacc(gl, gr, unit_otimes).map(lambda x: None, k))
+    # def lacc(self: 'RBTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RBTree[A]':
+    #     bt = self.__bt.map(lambda x: unit, fun.idt)
+    #     return RBTree(bt.uacc(lambda l, n, r: oplus(n, r)).getchr(None))
+    #
+    # def racc(self: 'RBTree[A]', oplus: Callable[[A, A], A], unit: A) -> 'RBTree[A]':
+    #
+    #     def otimes(t1, t2):
+    #         f1, p1, a1, b1 = t1
+    #         f2, p2, a2, b2 = t2
+    #         if f1 and f2:
+    #             return True, \
+    #                    p1 and p2, \
+    #                    oplus(a1, a2), \
+    #                    oplus(b1, a2) if p2 else b2
+    #         elif f1:
+    #             return t1
+    #         else:
+    #             return t2
+    #
+    #     def k(x):
+    #         f, p, a, b = x
+    #         return a if p else b
+    #
+    #     gl = lambda c, n: otimes(c, (True, False, n, unit))
+    #     gr = lambda c, n: otimes(c, (True, True, n, unit))
+    #     unit_otimes = False, True, unit, None
+    #
+    #     return RBTree(self.__bt.dacc(gl, gr, unit_otimes).map(lambda x: None, k))
