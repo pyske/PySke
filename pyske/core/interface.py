@@ -5,8 +5,9 @@ Interfaces: Distribution, List.
 """
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Callable, Optional, Sequence, Tuple, Any
+import os
 
-__all__ = ['List', 'Distribution', 'BinTree']
+__all__ = ['List', 'Distribution', 'BinTree', 'RoseTree', 'IOPySke']
 
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
@@ -1359,7 +1360,7 @@ class RoseTree(ABC, Generic[A]):
         size, map, zip, map2,
         reduce, uacc, dacc, lacc, racc
     """
-    #
+
     @staticmethod
     @abstractmethod
     def from_rt(rt) -> Any:
@@ -1668,3 +1669,33 @@ class RoseTree(ABC, Generic[A]):
     #         return p1 and p2, oplus(a1, a2), oplus(a1, b2) if p1 else b1
     #
     #     return psi_n, phi, psi_l, psi_r
+
+
+
+class IOPySke(ABC, Generic[T]):
+
+    @staticmethod
+    @abstractmethod
+    def read(filename) -> T:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def write(filename, t: T) -> Any:
+        pass
+
+    @staticmethod
+    def format_filename(filename, ext):
+        if filename[-(len(ext) + 1):] != "." + ext:
+            filename = filename + "." + ext
+        return filename
+
+    @staticmethod
+    def exists(filename, ext) -> bool:
+        filename = IOPySke.format_filename(filename, ext)
+        return os.path.exists(filename)
+
+    @staticmethod
+    def remove(filename, ext):
+        filename = IOPySke.format_filename(filename, ext)
+        os.remove(filename)

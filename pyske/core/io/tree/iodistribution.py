@@ -1,26 +1,18 @@
 from typing import Any
-import os
 
-from pyske.core.io.tree.ioltree import IOLTree
+from pyske.core.interface import IOPySke
 from pyske.core.tree.distribution import Distribution
 
 __all__ = ['IODistribution']
 
 
-class IODistribution:
+class IODistribution (IOPySke):
 
-    EXT_FILE = IOLTree.EXT_FILE + ".dist"
     SEPARATOR = ";;"
     SEPARATOR_PAIR = "^"
 
     @staticmethod
-    def format_filename(filename):
-        if filename[-(len(IODistribution.EXT_FILE) + 1):] != "." + IODistribution.EXT_FILE:
-            filename = filename + "." + IODistribution.EXT_FILE
-        return filename
-
-    @staticmethod
-    def write(filename, dist: 'Distribution') -> Any:
+    def write(filename, dist: 'Distribution', ext="dist") -> Any:
         distr, global_index = dist.distribution, dist.global_index
 
         str_distr = ""
@@ -36,14 +28,14 @@ class IODistribution:
 
         content = str_distr + "\n" + str_global_index
 
-        filename = IODistribution.format_filename(filename)
+        filename = IODistribution.format_filename(filename, ext)
         with open(filename, "w+") as f:
             f.write(content)
         f.close()
 
     @staticmethod
-    def read(filename) -> 'Distribution':
-        filename = IODistribution.format_filename(filename)
+    def read(filename, ext="dist") -> 'Distribution':
+        filename = IODistribution.format_filename(filename, ext)
         assert IODistribution.exists(filename), "Unknown file"
         res_dist = []
         res_gi = []
@@ -67,11 +59,13 @@ class IODistribution:
         return Distribution(res_dist, res_gi)
 
     @staticmethod
-    def remove(filename):
-        filename = IODistribution.format_filename(filename)
-        os.remove(filename)
+    def remove(filename, ext="dist"):
+        return super(IODistribution, IODistribution).remove(filename, ext)
 
     @staticmethod
-    def exists(filename):
-        filename = IODistribution.format_filename(filename)
-        return os.path.exists(filename)
+    def exists(filename, ext="dist"):
+        return super(IODistribution, IODistribution).exists(filename, ext)
+
+    @staticmethod
+    def format_filename(filename, ext="dist"):
+        return super(IODistribution, IODistribution).format_filename(filename, ext)

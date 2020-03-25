@@ -5,8 +5,10 @@ from pyske.core import SList
 from pyske.core.interface import IOPySke
 from pyske.core.io.tree.iodistribution import IODistribution
 from pyske.core.io.tree.ioltree import IOLTree
+from pyske.core.io.tree.iorltree import IORLTree
 from pyske.core.tree.distribution import Distribution
 from pyske.core.tree.ptree import PTree
+from pyske.core.tree.rptree import RPTree
 from pyske.core.support import parallel
 
 _PID: int = parallel.PID
@@ -14,21 +16,20 @@ _PID: int = parallel.PID
 A = TypeVar('A')  # pylint: disable=invalid-name
 B = TypeVar('B')  # pylint: disable=invalid-name
 
-__all__ = ['IOPTree']
+__all__ = ['IORPTree']
 
 
-class IOPTree (IOPySke):
+class IORPTree (IOPySke):
 
-    _EXT_BASE_PT = "pt"
-    EXT_FILE = _EXT_BASE_PT + "." + str(_PID)
-
+    _EXT_BASE_RPT = "rpt"
+    EXT_FILE = _EXT_BASE_RPT + "." + str(_PID)
 
     @staticmethod
     def split(filename_lt, filename_dist) -> Any:
         if _PID != 0:
             return None
 
-        filename_lt = IOLTree.format_filename(filename_lt)
+        filename_lt = IORLTree.format_filename(filename_lt)
         filename_dist = IODistribution.format_filename(filename_dist)
 
         distr = IODistribution.read(filename_dist)
@@ -53,8 +54,8 @@ class IOPTree (IOPySke):
 
                 if counter_segment == distr.distribution[pid]:
                     content = content_dist + "\n" + content[:-len(IOLTree.SEPARATOR_TV)]
-                    filename_pt = filename_lt[:-(len(IOLTree.EXT_FILE) + 1)] \
-                                  + "." + IOPTree._EXT_BASE_PT + "." + str(pid)
+                    filename_pt = filename_lt[:-(len(IORLTree.EXT_FILE) + 1)] \
+                                  + "." + IORPTree._EXT_BASE_RPT + "." + str(pid)
                     with open(filename_pt, "w+") as fpt:
                         fpt.write(content)
                     fpt.close()
@@ -65,8 +66,10 @@ class IOPTree (IOPySke):
         pass
 
     @staticmethod
-    def write(filename, pt: 'PTree[A, B]') -> Any:
-        filename = IOPTree.format_filename(filename)
+    def write(filename, rpt: 'RPTree[A, B]') -> Any:
+        filename = IORPTree.format_filename(filename)
+
+        pt = rpt.pt
 
         str_distr = ""
         for i in range(len(pt.distribution.distribution)):
@@ -82,8 +85,8 @@ class IOPTree (IOPySke):
         str_content = ""
         for i in range(len(pt.content)):
             val, tag = pt.content[i]
-            str_content += str(val) + IOLTree.SEPARATOR_TAG + IOLTree.str_tag(tag) + \
-                           (IOLTree.SEPARATOR_TV if i != len(pt.content) - 1 else "")
+            str_content += (IORLTree.NONE_SYMB if val is None else str(val)) + IOLTree.SEPARATOR_TAG \
+                           + IOLTree.str_tag(tag) + (IOLTree.SEPARATOR_TV if i != len(pt.content) - 1 else "")
 
         with open(filename, "w+") as f:
             content = str_distr + "\n" + str_global_index + "\n" + str_content
@@ -91,8 +94,8 @@ class IOPTree (IOPySke):
         f.close()
 
     @staticmethod
-    def read(filename, parser=int) -> 'PTree[A, B]':
-        filename = IOPTree.format_filename(filename)
+    def read(filename, parser=int) -> 'RPTree[A, B]':
+        filename = IORPTree.format_filename(filename)
         dist, global_index = [], []
 
         content = SList()
@@ -117,26 +120,29 @@ class IOPTree (IOPySke):
                     l_seg = line.replace("\n", "").split(IOLTree.SEPARATOR_TV)
                     for tv in l_seg:
                         tv_s = tv.split(IOLTree.SEPARATOR_TAG)
-                        content.append((parser(tv_s[0]), IOLTree.parser_tag(tv_s[1])))
+                        val = None if tv_s[0] == IORLTree.NONE_SYMB else parser(tv_s[0])
+                        tag = IOLTree.parser_tag(tv_s[1])
+                        content.append((val, tag))
         f.close()
-        return PTree.init_bis(content, Distribution(dist, global_index))
+        return RPTree(PTree.init_bis(content, Distribution(dist, global_index)))
 
     @staticmethod
     def removeall(filename):
-        if filename[-(len(IOPTree._EXT_BASE_PT) + 1):] != "." + IOPTree._EXT_BASE_PT:
-            filename = filename + "." + IOPTree._EXT_BASE_PT
+        if filename[-(len(IORPTree._EXT_BASE_RPT) + 1):] != "." + IORPTree._EXT_BASE_RPT:
+            filename = filename + "." + IORPTree._EXT_BASE_RPT
+
         for pid in range(parallel.NPROCS):
             filename_pt = filename + "." + str(pid)
             os.remove(filename_pt)
 
     @staticmethod
-    def remove(filename, ext="pt." + str(_PID)):
-        return super(IOPTree, IOPTree).remove(filename, ext)
+    def remove(filename, ext="rpt." + str(_PID)):
+        return super(IORPTree, IORPTree).remove(filename, ext)
 
     @staticmethod
-    def exists(filename, ext="pt." + str(_PID)):
-        return super(IOPTree, IOPTree).exists(filename, ext)
+    def exists(filename, ext="rpt." + str(_PID)):
+        return super(IORPTree, IORPTree).exists(filename, ext)
 
     @staticmethod
-    def format_filename(filename, ext="pt." + str(_PID)):
-        return super(IOPTree, IOPTree).format_filename(filename, ext)
+    def format_filename(filename, ext="rpt." + str(_PID)):
+        return super(IORPTree, IORPTree).format_filename(filename, ext)

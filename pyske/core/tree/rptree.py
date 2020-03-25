@@ -3,7 +3,6 @@ from pyske.core import interface
 from typing import TypeVar, Callable, Optional, List, Tuple
 
 from pyske.core.tree.ptree import PTree
-from pyske.core.tree.ltree import LTree
 from pyske.core.tree.rbtree import RBTree
 from pyske.core.tree.rltree import RLTree
 from pyske.core.tree.rtree import RTree
@@ -28,6 +27,10 @@ class RPTree(interface.RoseTree):
         if isinstance(other, RPTree):
             return self.__pt == other.__pt
         return False
+
+    @property
+    def pt(self):
+        return self.__pt
 
     @staticmethod
     def from_rt(rt: 'RTree[A]', m=1):

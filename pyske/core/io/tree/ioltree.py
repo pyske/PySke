@@ -1,5 +1,6 @@
 from typing import Any, TypeVar
-import os
+
+from pyske.core.interface import IOPySke
 from pyske.core.tree.ltree import *
 from pyske.core.tree.segment import Segment
 from pyske.core.tree.tag import TAG_LEAF, TAG_NODE, TAG_CRITICAL
@@ -9,7 +10,8 @@ B = TypeVar('B')  # pylint: disable=invalid-name
 
 __all__ = ['IOLTree']
 
-class IOLTree:
+
+class IOLTree (IOPySke):
 
     SEPARATOR_TAG = "^"
     SEPARATOR_TV = ";;"
@@ -34,15 +36,9 @@ class IOLTree:
             return "C"
 
     @staticmethod
-    def format_filename(filename):
-        if filename[-(len(IOLTree.EXT_FILE) + 1):] != "." + IOLTree.EXT_FILE:
-            filename = filename + "." + IOLTree.EXT_FILE
-        return filename
-
-    @staticmethod
     def write(filename, lt: 'LTree[A, B]') -> Any:
 
-        content = str(lt.size()) + "\n"
+        content = ""
 
         # String creation
         for i in range(lt.length):
@@ -69,14 +65,10 @@ class IOLTree:
         res = LTree()
 
         with open(filename, "r") as f:
-            count = 0
             for line in f:
                 if line.strip()[0] == '#':
                     continue
-                if count is 0:
-                    # size = int(line)
-                    count = 1
-                    continue
+
                 l_seg = line.replace("\n", "").split(IOLTree.SEPARATOR_TV)
 
                 seg = Segment()
@@ -88,11 +80,13 @@ class IOLTree:
         return res
 
     @staticmethod
-    def remove(filename):
-        filename = IOLTree.format_filename(filename)
-        os.remove(filename)
+    def remove(filename, ext="lt"):
+        return super(IOLTree, IOLTree).remove(filename, ext)
 
     @staticmethod
-    def exists(filename):
-        filename = IOLTree.format_filename(filename)
-        return os.path.exists(filename)
+    def exists(filename, ext="lt"):
+        return super(IOLTree, IOLTree).exists(filename, ext)
+
+    @staticmethod
+    def format_filename(filename, ext="lt"):
+        return super(IOLTree, IOLTree).format_filename(filename, ext)
