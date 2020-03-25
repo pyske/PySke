@@ -37,7 +37,7 @@ def test_split():
     IORLTree.write(filename, rlt)
 
     # TEST
-    IORPTree.split(filename, filename)
+    IORPTree.split(filename, filename, filename)
 
     # WRAP UP
     IODistribution.remove(filename)

@@ -25,7 +25,7 @@ class IORPTree (IOPySke):
     EXT_FILE = _EXT_BASE_RPT + "." + str(_PID)
 
     @staticmethod
-    def split(filename_lt, filename_dist) -> Any:
+    def split(filename, filename_lt, filename_dist) -> Any:
         if _PID != 0:
             return None
 
@@ -54,8 +54,7 @@ class IORPTree (IOPySke):
 
                 if counter_segment == distr.distribution[pid]:
                     content = content_dist + "\n" + content[:-len(IOLTree.SEPARATOR_TV)]
-                    filename_pt = filename_lt[:-(len(IORLTree.EXT_FILE) + 1)] \
-                                  + "." + IORPTree._EXT_BASE_RPT + "." + str(pid)
+                    filename_pt = filename + "." + IORPTree._EXT_BASE_RPT + "." + str(pid)
                     with open(filename_pt, "w+") as fpt:
                         fpt.write(content)
                     fpt.close()

@@ -31,7 +31,7 @@ def test_split():
     IODistribution.write(filename, dist)
     IOLTree.write(filename, lt)
 
-    IOPTree.split(filename, filename)
+    IOPTree.split(filename, filename, filename)
 
     IODistribution.remove(filename)
     IOLTree.remove(filename)
