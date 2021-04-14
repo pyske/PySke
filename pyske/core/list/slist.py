@@ -3,9 +3,10 @@ A module of sequential lists and associated primitives
 
 class SList: sequential lists.
 """
+import builtins
 import functools
 from operator import concat
-from typing import TypeVar, Callable, Sequence, Tuple, Optional, Generic
+from typing import TypeVar, Callable, Sequence, Tuple, Optional, Generic, Iterator
 from pyske.core import interface
 from pyske.core.support.list import scan
 
@@ -14,6 +15,7 @@ __all__ = ['SList']
 T = TypeVar('T')  # pylint: disable=invalid-name
 R = TypeVar('R')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
+V = TypeVar('V')  # pylint: disable=invalid-name
 
 
 class SList(list, interface.List, Generic[T]):
@@ -109,11 +111,11 @@ class SList(list, interface.List, Generic[T]):
             res[idx] = acc
         return SList(res)
 
-    def scanl_last(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R)\
+    def scanl_last(self: 'SList[T]', binary_op: Callable[[R, T], R], neutral: R) \
             -> 'Tuple[SList[R], R]':
         res = scan(self, binary_op, neutral)
         last: R = res.pop()
-        return res, last
+        return SList(res), last
 
     def scanp(self: 'SList[T]', binary_op, neutral):
         """
@@ -141,7 +143,7 @@ class SList(list, interface.List, Generic[T]):
 
     def zip(self: 'SList[T]', a_list: 'SList[U]') -> 'SList[Tuple[T, U]]':
         assert len(self) == len(a_list)
-        a_list: Sequence[Tuple[T, U]] = [(left, right) for (left, right) in zip(self, a_list)]
+        a_list: Iterator[Tuple[T, U]] = builtins.zip(self, a_list)
         return SList(a_list)
 
     def map2(self: 'SList[T]', binary_op: Callable[[T, U], R], a_list: 'SList[U]') -> 'SList[R]':
@@ -152,6 +154,13 @@ class SList(list, interface.List, Generic[T]):
               a_list: 'SList[U]') -> 'SList[R]':
         assert len(self) == len(a_list)
         return SList([ternary_op(i, self[i], a_list[i]) for i in range(0, len(self))])
+
+    def map3(self: 'SList[T]', ternary_op: 'Callable[[T, U, V], R]',
+             a_list: 'SList[U]', b_list: 'SList[V]') -> 'SList[R]':
+        assert len(self) == len(a_list)
+        assert len(self) == len(b_list)
+        return SList([ternary_op(val1, val2, val3)
+                      for (val1, val2, val3) in zip(self, a_list, b_list)])
 
     def get_partition(self: 'SList[T]') -> 'SList[SList[T]]':
         return SList([self])

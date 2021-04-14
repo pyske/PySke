@@ -11,6 +11,7 @@ __all__ = ['List', 'Distribution']
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
+R = TypeVar('R')  # pylint: disable=invalid-name
 
 
 class Distribution(ABC, list):
@@ -75,7 +76,7 @@ class List(ABC, Generic[T]):
     """
 
     @abstractmethod
-    def __init__(self: 'List[T]') -> 'List[T]':
+    def __init__(self: 'List[T]') -> None:
         """
         Return an empty list.
         """
@@ -285,6 +286,38 @@ class List(ABC, Generic[T]):
 
         :param a_list: a list of same shape than ``self``.
         :return: a list of pairs.
+        """
+
+    @abstractmethod
+    def map3(self: 'List[T]', ternary_op: 'Callable[[T, U, V], R]',
+             a_list: 'List[U]', b_list: 'List[V]') -> 'List[R]':
+        """
+        Apply a function to all the elements of ``self`` and ``a_list``,
+        and ```b_list``.
+
+        The returned list has the same shape (same length, same distribution)
+        than the initial lists.
+
+        Examples::
+
+            >>> from pyske.core.list.slist import SList
+            >>> from pyske.core.list.plist import PList
+
+            >>> l = SList.init(lambda x: 5 - x, 5)
+            >>> l2 = SList.init(lambda _: 2, 5)
+            >>> SList.init(lambda x: x, 5).map3(lambda x, y, z: (x + y) * z, l, l2)
+            [10, 10, 10, 10, 10]
+            >>> l = PList.init(lambda x: 5 - x, 5)
+            >>> l2 = PList.init(lambda _: 2, 5)
+            >>> PList.init(lambda x: x, 5).map3(lambda x, y, z: (x + y) * z, l, l2).to_seq()
+            [10, 10, 10, 10, 10]
+
+        :param ternary_op: function to apply to each pair of elements
+        :param a_list: the second list.
+            The length of ``a_list`` should be the same than the length of ``self``.
+        :param b_list: the third list.
+            The length of ``b_list`` should be the same than the length of ``self``.
+        :return: a new list.
         """
 
     @abstractmethod

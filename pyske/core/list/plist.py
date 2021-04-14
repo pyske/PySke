@@ -25,7 +25,7 @@ _COMM = parimpl.COMM
 T = TypeVar('T')  # pylint: disable=invalid-name
 U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
-
+R = TypeVar('R')  # pylint: disable=invalid-name
 
 def _group_by(a_list):
     dic = defaultdict(list)
@@ -136,6 +136,14 @@ class PList(interface.List, Generic[T]):
         res.__content = self.__content.map2i(lambda i, x, y:
                                              ternary_op(i + self.__start_index, x, y),
                                              a_list.__content)
+        return res
+
+    def map3(self: 'PList[T]', ternary_op: Callable[[T, U, V], R],
+             a_list: 'PList[U]', b_list: 'PList[V]') -> 'PList[R]':
+        assert self.__distribution == a_list.__distribution
+        assert self.__distribution == b_list.__distribution
+        res = self.__get_shape()
+        res.__content = self.__content.map3(ternary_op, a_list.__content, b_list.__content)
         return res
 
     def zip(self: 'PList[T]', a_list: 'PList[U]') -> 'PList[Tuple[T, U]]':
