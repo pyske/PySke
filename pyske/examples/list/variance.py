@@ -2,15 +2,13 @@
 Variance Example
 """
 from operator import add
-from pyske.core.interface import List
 
 __all__ = ['variance']
 
 
 # ------------------- Variance of a Random Variable ----------------------
 
-def variance(input_list: List[float]) -> float:
-    # pylint: disable=unsubscriptable-object
+def variance(input_list):
     """
     Return the variance of a random variable.
 
