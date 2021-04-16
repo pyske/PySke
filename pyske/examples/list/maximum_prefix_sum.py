@@ -3,7 +3,6 @@ Maximum Prefix Sum
 """
 
 from pyske.core.interface import List
-from pyske.examples.list.util import standard_main
 
 
 # ------- Maximum Prefix Sum ------------
@@ -37,10 +36,3 @@ def mps(input_list: List):
     """
     max_, _ = input_list.map(_max0_copy).reduce(_max_sum, (0, 0))
     return max_
-
-
-# -------------- Execution --------------
-
-
-if __name__ == '__main__':
-    standard_main(mps)

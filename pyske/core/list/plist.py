@@ -27,6 +27,7 @@ U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 R = TypeVar('R')  # pylint: disable=invalid-name
 
+
 def _group_by(a_list):
     dic = defaultdict(list)
     for key, val in a_list:
@@ -56,6 +57,7 @@ class PList(interface.List, Generic[T]):
 
     def __init__(self: 'PList[T]'):
         # pylint: disable=super-init-not-called
+        super().__init__()
         self.__content: 'SList[T]' = SList([])
         self.__global_size: int = 0
         self.__local_size: int = 0
