@@ -1,10 +1,16 @@
+"""
+PTree test module
+"""
 import pytest
 
-from pyske.core.tree.ltree import *
-from pyske.core.tree.ptree import *
+from pyske.core.tree.ltree import IllFormedError, LTree
+from pyske.core.tree.ptree import Segment, TaggedValue, PTree
+from pyske.core.support.parallel import PID
+from pyske.core.util import fun
 
 
 def illformed_ltree():
+    # pylint: disable=missing-docstring
     seg1 = Segment([TaggedValue(13, "C")])
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
     lt = LTree([seg1, seg3])
@@ -13,6 +19,7 @@ def illformed_ltree():
 
 
 def test_to_seq():
+    # pylint: disable=missing-docstring
     seg1 = Segment([TaggedValue(13, "C")])
     seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -24,6 +31,7 @@ def test_to_seq():
 
 
 def test_map_empty():
+    # pylint: disable=missing-docstring
     pt = PTree()
     exp = PTree()
     res = pt.map(fun.idt, fun.idt)
@@ -31,6 +39,7 @@ def test_map_empty():
 
 
 def test_map_not_empty():
+    # pylint: disable=missing-docstring
     seg1 = Segment([TaggedValue(13, "C")])
     seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -50,12 +59,14 @@ def test_map_not_empty():
 # -------------------------- #
 
 def test_reduce_empty():
+    # pylint: disable=missing-docstring
     pt = PTree()
     with pytest.raises(AssertionError):
         pt.reduce(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
 
 def test_reduce():
+    # pylint: disable=missing-docstring
     seg1 = Segment([TaggedValue(13, "C")])
     seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -69,12 +80,14 @@ def test_reduce():
 # -------------------------- #
 
 def test_uacc_empty():
+    # pylint: disable=missing-docstring
     pt = PTree()
     with pytest.raises(AssertionError):
         pt.uacc(fun.add, fun.idt, fun.add, fun.add, fun.add)
 
 
 def test_uacc():
+    # pylint: disable=missing-docstring
     seg1 = Segment([TaggedValue(13, "C")])
     seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg3 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -92,6 +105,7 @@ def test_uacc():
 # -------------------------- #
 
 def test_dacc():
+    # pylint: disable=missing-docstring
     c = 0
     seg1 = Segment([TaggedValue(13, "C")])
     seg2 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
@@ -110,6 +124,7 @@ def test_dacc():
 # -------------------------- #
 
 def test_zip_not_same_size():
+    # pylint: disable=missing-docstring
     seg11 = Segment([TaggedValue(13, "C")])
     seg21 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg31 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -123,6 +138,7 @@ def test_zip_not_same_size():
 
 
 def test_zip():
+    # pylint: disable=missing-docstring
     seg11 = Segment([TaggedValue(1, "C")])
     seg21 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
     seg31 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
@@ -135,8 +151,12 @@ def test_zip():
     pt2 = PTree(lt2)
     res = pt1.zip(pt2).to_seq()
     seg1_exp = Segment([TaggedValue((1, 2), "C")])
-    seg2_exp = Segment([TaggedValue((1, 2), "N"), TaggedValue((1, 2), "L"), TaggedValue((1, 2), "L")])
-    seg3_exp = Segment([TaggedValue((1, 2), "N"), TaggedValue((1, 2), "L"), TaggedValue((1, 2), "L")])
+    seg2_exp = Segment([TaggedValue((1, 2), "N"),
+                        TaggedValue((1, 2), "L"),
+                        TaggedValue((1, 2), "L")])
+    seg3_exp = Segment([TaggedValue((1, 2), "N"),
+                        TaggedValue((1, 2), "L"),
+                        TaggedValue((1, 2), "L")])
     exp = LTree([seg1_exp, seg2_exp, seg3_exp]) if PID == 0 else None
     assert res == exp
 
@@ -144,6 +164,7 @@ def test_zip():
 # -------------------------- #
 
 def test_map2_not_same_size():
+    # pylint: disable=missing-docstring
     seg11 = Segment([TaggedValue(13, "C")])
     seg21 = Segment([TaggedValue(31, "N"), TaggedValue(47, "L"), TaggedValue(32, "L")])
     seg31 = Segment([TaggedValue(72, "N"), TaggedValue(92, "L"), TaggedValue(42, "L")])
@@ -157,6 +178,7 @@ def test_map2_not_same_size():
 
 
 def test_map2():
+    # pylint: disable=missing-docstring
     seg11 = Segment([TaggedValue(1, "C")])
     seg21 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
     seg31 = Segment([TaggedValue(1, "N"), TaggedValue(1, "L"), TaggedValue(1, "L")])
