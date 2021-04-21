@@ -5,7 +5,6 @@ from pyske.core.support.parallel import *
 from pyske.core.support.separate import *
 from pyske.core.util import par
 
-
 TAG_BASE = "270995"
 TAG_COMM_REDUCE = int(TAG_BASE + "11")
 TAG_COMM_UACC_1 = int(TAG_BASE + "21")
@@ -194,21 +193,9 @@ class PTree:
             logger.debug('[START] PID[' + str(PID) + '] reduce_local from ' + str(start) + ' to ' + str(start + offset))
             gt[i] = Segment(self.__content[start:start + offset]).reduce_local(k, phi, psi_l, psi_r)
             logger.debug('[END] PID[' + str(PID) + '] reduce_local from ' + str(start) + ' to ' + str(start + offset))
-            i = i+1
+            i = i + 1
         # Step 2 : Gather local Results
-        if PID == 0:
-            for i in range(1, NPROCS):
-                logger.debug(
-                    '[START] PID[' + str(PID) + '] reception from ' + str(i))
-                gt.extend(COMM.recv(source=i, tag=TAG_COMM_REDUCE)['c'])
-                logger.debug(
-                    '[END] PID[' + str(PID) + '] reception from ' + str(i))
-        else:
-            logger.debug(
-                    '[START] PID[' + str(PID) + '] emission to ' + str(0))
-            COMM.send({'c': gt}, dest=0, tag=TAG_COMM_REDUCE)
-            logger.debug(
-                    '[END] PID[' + str(PID) + '] emission to ' + str(0))
+        self.__gatherLocalResult(gt, i, TAG_COMM_UACC_1)
         # Step 3 : Global Reduction
         par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] reduce_global'))
         res = gt.reduce_global(psi_n) if PID == 0 else None
@@ -216,6 +203,83 @@ class PTree:
         logger.debug(
             '[END] PID[' + str(PID) + '] reduce skeleton')
         return res
+
+    def __localUpwardsAccumulation(self, k, phi, psi_l, psi_r):
+        gt = Segment([None] * self.__nb_segs)
+        lt2 = SList([None] * self.__nb_segs)
+        i = 0
+        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
+            logger.debug(
+                '[START] PID[' + str(PID) + '] uacc_local from ' + str(start) + ' to ' + str(start + offset))
+            (top, res) = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
+            logger.debug(
+                '[END] PID[' + str(PID) + '] uacc_local from ' + str(start) + ' to ' + str(start + offset))
+            gt[i] = top
+            lt2[i] = res
+            i = i + 1
+        return i, gt, lt2
+
+    @staticmethod
+    def __gatherLocalResult(gt, i, tag):
+        if PID == 0:
+            for iproc in range(1, NPROCS):
+                logger.debug(
+                    '[START] PID[' + str(PID) + '] reception local from ' + str(i))
+                gt.extend(COMM.recv(source=iproc, tag=tag)['c'])
+                logger.debug(
+                    '[END] PID[' + str(PID) + '] reception local from ' + str(i))
+        else:
+            logger.debug(
+                '[START] PID[' + str(PID) + '] emission local to ' + str(0))
+            COMM.send({'c': gt}, dest=0, tag=tag)
+            logger.debug(
+                '[END] PID[' + str(PID) + '] emission local to ' + str(0))
+
+    @staticmethod
+    def __globalUpwardsAccumulation(psi_n, gt):
+        gt2 = None
+        if PID == 0:
+            par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] uacc_global'))
+            gt2 = gt.uacc_global(psi_n)
+            for i in range(len(gt2)):
+                if gt2[i].is_node():
+                    gt2[i] = TaggedValue((gt2.get_left(i).get_value(), gt2.get_right(i).get_value()), gt2[i].get_tag())
+            par.at_root(lambda: logger.debug('[END] PID[' + str(PID) + '] uacc_global'))
+        return gt2
+
+    def __distributeGlobalResult(self, gt2, tag):
+        start = 0
+        if PID == 0:
+            for iproc in range(NPROCS):
+                iproc_off = self.__distribution[iproc]
+                if iproc != 0:
+                    logger.debug(
+                        '[START] PID[' + str(PID) + '] emission global to ' + str(iproc))
+                    COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=tag)
+                    logger.debug(
+                        '[END] PID[' + str(PID) + '] emission global to ' + str(iproc))
+                start = start + iproc_off
+        else:
+            logger.debug(
+                '[START] PID[' + str(PID) + '] reception global from ' + str(0))
+            gt2 = COMM.recv(source=0, tag=tag)['g']
+            logger.debug(
+                '[END] PID[' + str(PID) + '] reception global from ' + str(0))
+        return gt2
+
+    def __localUpdates(self, gt, gt2, lt2, k):
+        content = SList([None] * self.__content.length())
+        for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
+            (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
+            logger.debug('[START] PID[' + str(PID) + '] uacc_update from ' + str(start) + ' to ' + str(start + offset))
+            if gt[i].is_node():
+                (lc, rc) = gt2[i].get_value()
+                val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
+            else:
+                val = lt2[i]
+            logger.debug('[END] PID[' + str(PID) + '] uacc_update from ' + str(start) + ' to ' + str(start + offset))
+            content[start:start + offset] = val
+        return content
 
     def uacc(self, k, phi, psi_n, psi_l, psi_r):
         """Upward accumulation skeleton for distributed tree
@@ -242,75 +306,20 @@ class PTree:
             '[START] PID[' + str(PID) + '] uAcc skeleton')
         assert self.__distribution != []
         # Step 1 : Local Upwards Accumulation
-        gt = Segment([None] * self.__nb_segs)
-        lt2 = SList([None] * self.__nb_segs)
-        i = 0
-        for (start, offset) in self.__global_index[self.__start_index: self.__start_index + self.__nb_segs]:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] uacc_local from ' + str(start) + ' to ' + str(start + offset))
-            (top, res) = Segment(self.__content[start:start + offset]).uacc_local(k, phi, psi_l, psi_r)
-            logger.debug(
-                '[END] PID[' + str(PID) + '] uacc_local from ' + str(start) + ' to ' + str(start + offset))
-            gt[i] = top
-            lt2[i] = res
-            i = i + 1
+        i, gt, lt2 = self.__localUpwardsAccumulation(k, phi, psi_l, psi_r)
 
         # Step 2 : Gather local Results
-        if PID == 0:
-            for iproc in range(1, NPROCS):
-                logger.debug(
-                    '[START] PID[' + str(PID) + '] reception local from ' + str(i))
-                gt.extend(COMM.recv(source=iproc, tag=TAG_COMM_UACC_1)['c'])
-                logger.debug(
-                    '[END] PID[' + str(PID) + '] reception local from ' + str(i))
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] emission local to ' + str(0))
-            COMM.send({'c': gt}, dest=0, tag=TAG_COMM_UACC_1)
-            logger.debug(
-                '[END] PID[' + str(PID) + '] emission local to ' + str(0))
+        self.__gatherLocalResult(gt, i, TAG_COMM_UACC_1)
 
         # Step 3 : Global Upward Accumulation
-        gt2 = None
-        if PID == 0:
-            par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] uacc_global'))
-            gt2 = gt.uacc_global(psi_n)
-            for i in range(len(gt2)):
-                if gt2[i].is_node():
-                    gt2[i] = TaggedValue((gt2.get_left(i).get_value(), gt2.get_right(i).get_value()), gt2[i].get_tag())
-            par.at_root(lambda: logger.debug('[END] PID[' + str(PID) + '] uacc_global'))
+        gt2 = self.__globalUpwardsAccumulation(psi_n, gt)
 
         # Step 4 : Distributing Global Result
-        start = 0
-        if PID == 0:
-            for iproc in range(NPROCS):
-                iproc_off = self.__distribution[iproc]
-                if iproc != 0:
-                    logger.debug(
-                        '[START] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                    COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_UACC_2)
-                    logger.debug(
-                        '[END] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                start = start + iproc_off
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] reception global from ' + str(0))
-            gt2 = COMM.recv(source=0, tag=TAG_COMM_UACC_2)['g']
-            logger.debug(
-                '[END] PID[' + str(PID) + '] reception global from ' + str(0))
+        gt2 = self.__distributeGlobalResult(gt2, TAG_COMM_UACC_2)
 
         # Step 5 : Local Updates
-        content = SList([None] * self.__content.length())
-        for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
-            (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
-            logger.debug('[START] PID[' + str(PID) + '] uacc_update from ' + str(start) + ' to ' + str(start + offset))
-            if gt[i].is_node():
-                (lc, rc) = gt2[i].get_value()
-                val = Segment(self.__content[start:start + offset]).uacc_update(lt2[i], k, lc, rc)
-            else:
-                val = lt2[i]
-            logger.debug('[END] PID[' + str(PID) + '] uacc_update from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = val
+        content = self.__localUpdates(gt, gt2, lt2, k)
+
         res = PTree.init(self, content)
         logger.debug(
             '[END] PID[' + str(PID) + '] uAcc skeleton')
@@ -358,41 +367,13 @@ class PTree:
                 '[END] PID[' + str(PID) + '] dacc_path from ' + str(start) + ' to ' + str(start + offset))
             i = i + 1
         # Step 2 : Gather Local Results
-        if PID == 0:
-            for iproc in range(1, NPROCS):
-                logger.debug(
-                    '[START] PID[' + str(PID) + '] reception update from ' + str(i))
-                gt.extend(COMM.recv(source=iproc, tag=TAG_COMM_DACC_1)['c'])
-                logger.debug(
-                    '[END] PID[' + str(PID) + '] reception update from ' + str(i))
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] emission update to ' + str(0))
-            COMM.send({'c': gt}, dest=0, tag=TAG_COMM_DACC_1)
-            logger.debug(
-                '[END] PID[' + str(PID) + '] emission update to ' + str(0))
+        self.__gatherLocalResult(gt, i, TAG_COMM_DACC_1)
         # Step 3 : Global Downward Accumulation
         par.at_root(lambda: logger.debug('[START] PID[' + str(PID) + '] dacc_global'))
         gt2 = (gt.dacc_global(psi_d, c) if PID == 0 else None)
         par.at_root(lambda: logger.debug('[END] PID[' + str(PID) + '] dacc_global'))
         # Step 4 : Distributing Global Result
-        if PID == 0:
-            start = 0
-            for iproc in range(NPROCS):
-                iproc_off = self.__distribution[iproc]
-                if iproc != 0:
-                    logger.debug(
-                        '[START] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                    COMM.send({'g': gt2[start: start + iproc_off]}, dest=iproc, tag=TAG_COMM_DACC_2)
-                    logger.debug(
-                        '[END] PID[' + str(PID) + '] emission global to ' + str(iproc))
-                start = start + iproc_off
-        else:
-            logger.debug(
-                '[START] PID[' + str(PID) + '] reception global from ' + str(0))
-            gt2 = COMM.recv(source=0, tag=TAG_COMM_DACC_2)['g']
-            logger.debug(
-                '[END] PID[' + str(PID) + '] reception global from ' + str(0))
+        gt2 = self.__distributeGlobalResult(gt2, TAG_COMM_DACC_2)
         # Step 5 : Local Downward Accumulation
         content = SList([None] * self.__content.length())
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
@@ -427,8 +408,8 @@ class PTree:
         for i in range(len(self.__global_index[self.__start_index: self.__start_index + self.__nb_segs])):
             (start, offset) = self.__global_index[self.__start_index: self.__start_index + self.__nb_segs][i]
             logger.debug('[START] PID[' + str(PID) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
-            content[start:start + offset] = Segment(self.__content[start:start+offset]).\
-                zip(Segment(pt.__content[start:start+offset]))
+            content[start:start + offset] = Segment(self.__content[start:start + offset]). \
+                zip(Segment(pt.__content[start:start + offset]))
             logger.debug('[END] PID[' + str(PID) + '] zip_local from ' + str(start) + ' to ' + str(start + offset))
         res = PTree.init(self, content)
         logger.debug(
@@ -469,6 +450,7 @@ class PTree:
             (x1, y1) = x
             (x2, y2) = y
             return x1 + y1, y2
+
         return SList(self.__global_index.scanr(f))
 
     def to_seq(self):
