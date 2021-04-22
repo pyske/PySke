@@ -1,3 +1,6 @@
+"""
+LTree module
+"""
 import sys
 
 from pyske.core.list.slist import SList
@@ -22,6 +25,7 @@ EXT_FILE_LT = "lt"
 class __List(list):
 
     def length(self):
+        """Get the length of the current instance"""
         return len(self)
 
 
@@ -150,21 +154,23 @@ class Segment(__List):
     uacc_global(psi_n)
         Performs sequential upwards accumulation
     uacc_update(seg, k, lc, rc)
-        Makes an update of the current accumulation, using initial values and the top accumulated values
+        Makes an update of the current accumulation, using initial values
+        and the top accumulated values
     dacc_path(phi_l, phi_r, psi_u)
         Finds the m-critical node and then computes two values only on the path from the root node
         to the m-critical node
     dacc_global(psi_d, c)
         Performs sequential downwards accumulation
     dacc_local(gl, gr, c)
-        Computes local downward accumulation for the current instance using an accumulative parameter
-        resulting of a global downward accumulation
+        Computes local downward accumulation for the current instance using an accumulative
+        parameter resulting of a global downward accumulation
     from_str(s, parser)
         Get a segment from a string value
     zip()
         Zip the values contained in a second Segment with the ones in the current instance
     map2(f, seg)
-        Zip the values contained in a second Segment with the ones in the current instance using a function
+        Zip the values contained in a second Segment with the ones in the current instance
+        using a function
     """
 
     def __eq__(self, other):
@@ -212,10 +218,10 @@ class Segment(__List):
 
     @staticmethod
     def __node_reduce_local_compute(stack, d, k, psi_l, phi, v, psi_r):
-        """Calculation if the value is a node"""
+        """Computes when the value is a node"""
         if len(stack) < 2:
             raise IllFormedError(
-                "reduce_local cannot be applied if there is a node that does not have"
+                "reduce_local cannot be applied if there is a node that does not have "
                 "two children in the current instance")
         # We get two sub-reductions to make a reduction with the current node value
         lv = stack.pop()
@@ -258,7 +264,8 @@ class Segment(__List):
         ------
         IllFormedError
             If the current instance does not represent a correct linearized subtree
-            That is there is a node that does not have two children which can be either a leaf value or a critical value
+            That is there is a node that does not have two children which can be either
+            a leaf value or a critical value
         """
         assert self != [], "reduce_local cannot be applied to an empty Segment"
         stack = []
@@ -295,16 +302,19 @@ class Segment(__List):
         Parameters
         ----------
         psi_n : callable
-            A function used to respect the closure property on k (the initial function used for reduction)
-            to allow partial computation
+            A function used to respect the closure property on k
+            (the initial function used for reduction) to allow partial computation
 
         Raises
         ------
         IllFormedError
-            If the current instance does not represent a list of top values of a correct list of subtrees
-            That is for each node, there is not exist two children, of there is a critical value in the current instance
+            If the current instance does not represent a list of top values of a correct
+            list of subtrees
+            That is for each node, there is not exist two children, of there is a critical
+            value in the current instance
         """
-        assert not self.has_critical(), "reduce_global cannot be applied to a Segments which contains a critical"
+        assert not self.has_critical(), "reduce_global cannot be applied to a" \
+                                        "Segments which contains a critical"
         assert self != [], "reduce_global cannot be applied to an empty Segment"
         stack = []
         for g in reversed(self):
@@ -316,8 +326,8 @@ class Segment(__List):
                 # We get two sub reductions to make a total reduction of the current node
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "reduce_global cannot be applied if there is a node that does not have two children "
-                        "in the current instance")
+                        "reduce_global cannot be applied if there is a node that"
+                        "does not have two children in the current instance")
                 lv = stack.pop()
                 rv = stack.pop()
                 # We process and stack a reduction
@@ -327,7 +337,7 @@ class Segment(__List):
 
     @staticmethod
     def __node_uacc_local_compute(stack, d, phi, v, psi_l, res, psi_r, i, k):
-        """Calculation if the value is a node"""
+        """Computes when the value is a node"""
         if len(stack) < 2:
             raise IllFormedError(
                 "uacc_local cannot be applied if there is a node that does not have two children "
@@ -356,7 +366,7 @@ class Segment(__List):
             res[i] = TaggedValue(val, v.get_tag())
             stack.append(val)
             d = d - 1
-        return d, val, stack, res
+        return d, stack, res
 
     def uacc_local(self, k, phi, psi_l, psi_r):
         """Computes local upwards accumulation and reduction
@@ -380,7 +390,8 @@ class Segment(__List):
         ------
         IllFormedError
             If the current instance does not represent a correct linearized subtree
-            That is there is a node that doesn't have two children which can be either a leaf value or a critical value
+            That is there is a node that doesn't have two children which can be either a leaf
+            value or a critical value
         """
         assert self != [], "uacc_local cannot be applied to an empty Segment"
         stack = []
@@ -395,9 +406,12 @@ class Segment(__List):
                 stack.append(v.get_value())
                 d = d + 1
             elif v.is_node():
-                d, val, stack, res = self.__node_uacc_local_compute(stack, d, phi, v, psi_l, res, psi_r, i, k)
+                d, stack, res = self.__node_uacc_local_compute(stack, d,
+                                                               phi, v, psi_l,
+                                                               res, psi_r, i, k)
             else:  # v.is_critical()
-                # The current value is critical. We make a partial accumulation with phi and stack the result
+                # The current value is critical.
+                # We make a partial accumulation with phi and stack the result
                 stack.append(phi(v.get_value()))
                 res[i] = None
                 d = 0
@@ -405,7 +419,8 @@ class Segment(__List):
 
         top = stack.pop()
         tag = "N" if has_crit else "L"
-        # We return both the top values for following global upward accumulation, and the current accumulated subtree
+        # We return both the top values for following global upward accumulation, and the current
+        # accumulated subtree
         return TaggedValue(top, tag), res
 
     def uacc_global(self, psi_n):
@@ -418,8 +433,8 @@ class Segment(__List):
         Parameters
         ----------
         psi_n : callable
-            A function used to respect the closure property on k (the initial function used for accumulation)
-            to allow partial computation
+            A function used to respect the closure property on k
+            (the initial function used for accumulation) to allow partial computation
 
         Raises
         ------
@@ -427,8 +442,8 @@ class Segment(__List):
             If the current instance does not represent a correct linearized subtree
             That is there is a node that doesn't have two children
         """
-        assert not self.has_critical(), "uacc_global cannot be applied to a Segments which contains a critical"
-
+        assert not self.has_critical(), "uacc_global cannot be applied to a " \
+                                        "Segments which contains a critical"
         stack = []
         res = Segment([None] * self.length())
         for i in reversed(range(self.length())):
@@ -441,8 +456,8 @@ class Segment(__List):
             else:  # g.is_node()
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "uacc_global cannot be applied if there is a node that does not have two children "
-                        "in the current instance")
+                        "uacc_global cannot be applied if there is a node that "
+                        "does not have two children in the current instance")
                 lv = stack.pop()
                 rv = stack.pop()
                 val = psi_n(lv, g.get_value(), rv)
@@ -453,7 +468,7 @@ class Segment(__List):
 
     @staticmethod
     def __node_uacc_update_compute(stack, d, res, k, v1, v2, i):
-        """Calculation if the value is a node"""
+        """Computes when the value is a node"""
         if len(stack) < 2:
             raise IllFormedError(
                 "uacc_update cannot be applied if there is a node that does not have two children "
@@ -475,7 +490,8 @@ class Segment(__List):
         return res, stack, d
 
     def uacc_update(self, seg2, k, lc, rc):
-        """Makes an update of the current accumulation, using initial values and the top accumulated values
+        """Makes an update of the current accumulation, using initial values and the top
+         accumulated values
 
         Precondition
         -------------
@@ -498,8 +514,8 @@ class Segment(__List):
             If the current instance does not represent a correct linearized subtree
             That is there is a node that doesn't have two children
         """
-        assert self.length() == seg2.length(), "uacc_update cannot needs to Segment of same size as input"
-
+        assert self.length() == seg2.length(), "uacc_update cannot needs to " \
+                                               "Segment of same size as input"
         stack = [rc, lc]
         d = MINUS_INFINITY
         res = Segment([None] * self.length())
@@ -507,22 +523,19 @@ class Segment(__List):
             v1 = self[i]
             v2 = seg2[i]
             # We update the accumulation from seg2
-
             # We stack the values already updated to process updates on nodes
-
             if v1.is_leaf():
                 # The result of the accumulation is the node made in seg2
                 res[i] = v2
                 stack.append(v2.get_value())
                 d = d + 1
-
             elif v1.is_node():
                 res, stack, d = self.__node_uacc_update_compute(stack, d, res, k, v1, v2, i)
             else:  # v1.is_critical()
                 if len(stack) < 2:
                     raise IllFormedError(
-                        "uacc_update cannot be applied if there is a node that does not have two children "
-                        "in the current instance")
+                        "uacc_update cannot be applied if there is a node that "
+                        "does not have two children in the current instance")
                 # We need two sub accumulation values to process the accumulation of a critical node
                 lv = stack.pop()
                 rv = stack.pop()
@@ -534,7 +547,7 @@ class Segment(__List):
 
     @staticmethod
     def __node_dacc_path_compute(d, psi_u, phi_l, v, to_l, to_r):
-        """Calculation if the value is a node"""
+        """Computes when the value is a node"""
         if d == 0:
             # The current node is an ancestor of a critical value by the left
             # That is, there is a critical value on its left children in a BTree representation
@@ -553,7 +566,8 @@ class Segment(__List):
         return to_l, to_r, d
 
     def dacc_path(self, phi_l, phi_r, psi_u):
-        """Finds the critical node and then computes two values only on the path from the root node to the critical node
+        """Finds the critical node and then computes two values only on the path from the root node
+         to the critical node
 
         Precondition
         -------------
@@ -562,9 +576,11 @@ class Segment(__List):
         Parameters
         ----------
         phi_l : callable
-            A function used to respect the closure property to allow partial computation on the left
+            A function used to respect the closure property to allow partial computation
+            on the left
         phi_r : callable
-            A function used to respect the closure property to allow partial computation on the right
+            A function used to respect the closure property to allow partial computation
+            on the right
         psi_u : callable
             A function used to respect the closure property to make partial computation
 
@@ -591,7 +607,8 @@ class Segment(__List):
                 to_r = phi_r(v.get_value())
                 d = 0
         if not has_critical:
-            raise ApplicationError("dacc_path must be imperatively applied to a Segment which contains a critical node")
+            raise ApplicationError("dacc_path must be imperatively applied to a "
+                                   "Segment which contains a critical node")
         return TaggedValue((to_l, to_r), "N")
 
     def dacc_global(self, psi_d, c):
@@ -604,8 +621,8 @@ class Segment(__List):
         Parameters
         ----------
         psi_d : callable
-            A function used to respect the closure property on gr and gl (initial functions used for up accumulation)
-            to make partial downward accumulation
+            A function used to respect the closure property on gr and gl
+            (initial functions used for up accumulation) to make partial downward accumulation
         c
             Initial value of the accumulator
 
@@ -617,18 +634,19 @@ class Segment(__List):
         """
         stack = [c]
         res = Segment([None] * self.length())
-        assert not self.has_critical(), "dacc_global cannot be applied to Segment which contains a critical node"
-
+        assert not self.has_critical(), "dacc_global cannot be applied to " \
+                                        "Segment which contains a critical node"
         for i in range(self.length()):
             v = self[i]
             if len(stack) == 0:
                 raise IllFormedError(
-                    "dacc_global cannot be applied to ill-formed Segments that is two leaf values do not have a parent")
+                    "dacc_global cannot be applied to ill-formed "
+                    "Segments that is two leaf values do not have a parent")
             # We add the previous accumulation as a new value of our result
             val = stack.pop()
             res[i] = TaggedValue(val, v.get_tag())
-
-            # If the current value is node, we need to update the value to pass to the right, and left children
+            # If the current value is node, we need to update
+            # the value to pass to the right, and left children
             # These values are contained in the stack
             if v.is_node():
                 (to_l, to_r) = v.get_value()
@@ -637,8 +655,8 @@ class Segment(__List):
         return res
 
     def dacc_local(self, gl, gr, c):
-        """Computes local downward accumulation for the current instance using an accumulative parameter resulting of a
-        global downward accumulation
+        """Computes local downward accumulation for the current instance using an
+        accumulative parameter resulting of a global downward accumulation
 
         Parameters
         ----------
@@ -653,11 +671,11 @@ class Segment(__List):
         ------
         IllFormedError:
             If the current instance does not represent a correct linearized subtree
-            That is there are several leaves that doesn't have a parent in a BTree representation or if there is not a
-            value to accumulate from above
+            That is there are several leaves that doesn't have a parent in a BTree representation
+            or if there is not a value to accumulate from above
         """
-        # We update not finished accumulation locally using the value from the parent in the global representation of
-        # a linearized tree
+        # We update not finished accumulation locally using the value from the parent in the global
+        # representation of a linearized tree
         stack = [c]
         res = Segment([None] * self.length())
         for i in range(self.length()):
@@ -665,18 +683,20 @@ class Segment(__List):
             if v.is_leaf() or v.is_critical():
                 if len(stack) == 0:
                     raise IllFormedError(
-                        "dacc_local cannot be applied if there are two leaf values, or critical values that"
-                        "do not have a parent")
+                        "dacc_local cannot be applied if there are two leaf values, or critical "
+                        "values that do not have a parent")
                 # We get the accumulated value passed from the last parent
                 val = stack.pop()
                 res[i] = TaggedValue(val, v.get_tag())
             else:  # v.is_node()
                 if len(stack) == 0:
                     raise IllFormedError(
-                        "dacc_local cannot be applied if there is not a value to accumulate from above")
+                        "dacc_local cannot be applied if there is not a value to accumulate from "
+                        "above")
                 val = stack.pop()
                 # We get the accumulated value passed from the last parent
-                # And two new ones, one for the left children, and one to the right, using the gr and gl functions
+                # And two new ones, one for the left children, and one to the right, using
+                # the gr and gl functions
                 res[i] = TaggedValue(val, v.get_tag())
                 stack.append(gr(val, v.get_value()))
                 stack.append(gl(val, v.get_value()))
@@ -695,9 +715,11 @@ class Segment(__List):
         i : int
             The index of the value that we want to get the left children
         """
-        assert not self.has_critical(), "The left children of a value in a non-global Segment cannot be found"
+        assert not self.has_critical(), "The left children of a value in a non-global Segment " \
+                                        "cannot be found "
         assert not self[i].is_leaf(), "A leaf value doesn't have a left children"
-        assert i < self.length() - 1, "Cannot get the left children of a node in an ill-formed Segment"
+        assert i < self.length() - 1, "Cannot get the left children of a node in an ill-formed " \
+                                      "Segment "
         return self[i + 1]
 
     def get_right(self, i):
@@ -706,16 +728,19 @@ class Segment(__List):
         Precondition
         -------------
         self should not have critical nodes
-        The value at the looked index should not be a leaf, and should not be the before last element
+        The value at the looked index should not be a leaf, and should not be
+        the before last element
 
         Parameters
         ----------
         i : int
             The index of the value that we want to get the right children
         """
-        assert not self.has_critical(), "The right children of a value in a non-global Segment cannot be found"
+        assert not self.has_critical(), "The right children of a value in a non-global Segment " \
+                                        "cannot be found "
         assert not self[i].is_leaf(), "A leaf value doesn't have a right children"
-        assert i < self.length() - 2, "Cannot get the left children of a node in an ill-formed Segment"
+        assert i < self.length() - 2, "Cannot get the left children of a node in an ill-formed " \
+                                      "Segment "
 
         def get_right_index(gt, idx):
             if gt[idx + 1].is_leaf():
@@ -754,7 +779,8 @@ class Segment(__List):
         return res
 
     def map2(self, f, seg):
-        """Zip the values contained in a second Segment with the ones in the current instance using a function
+        """Zip the values contained in a second Segment with the ones in the current instance
+        using a function
 
         Precondition
         -------------
@@ -830,7 +856,8 @@ class LTree(__List):
     zip(lt)
         Zip the values contained in a second LTree with the ones in the current instance
     map2(lt, f)
-        Zip the values contained in a second LTree with the ones in the current instance using a function
+        Zip the values contained in a second LTree with the ones in the current instance
+        using a function
     deserialization()
         Get a binary tree from its linear representation
     """
@@ -900,7 +927,8 @@ class LTree(__List):
         bt_size = bt_one.uacc(lambda x, y, z: x + y + z)
         bt_tags = bt_size.mapt(lambda x: TAG_LEAF,
                                lambda x, y, z: TAG_CRITICAL
-                               if up_div(x, m) > up_div(y.get_value(), m) and up_div(x, m) > up_div(z.get_value(), m)
+                               if up_div(x, m) > up_div(y.get_value(), m)
+                               and up_div(x, m) > up_div(z.get_value(), m)
                                else TAG_NODE)
         bt_val = bt.map2(TaggedValue, bt_tags)
         return LTree(__tv2lv(bt_val))
@@ -1068,9 +1096,11 @@ class LTree(__List):
         c
             Initial value of accumulation
         phi_l : callable
-            A function used to respect the closure property to allow partial computation on the left
+            A function used to respect the closure property to allow partial computation
+            on the left
         phi_r : callable
-            A function used to respect the closure property to allow partial computation on the right
+            A function used to respect the closure property to allow partial computation
+            on the right
         psi_d : callable
             A function used to respect the closure property to make partial downward accumulation
         psi_u : callable
@@ -1079,8 +1109,10 @@ class LTree(__List):
         assert self != [], "dacc cannot be applied to an empty linearized tree"
         gt = Segment([None] * self.length())
         res = LTree([None] * self.length())
-        # We first find the values to pass to sub trees for each segment that contains critical values
-        # That is incomplete subtrees (which have node with left and right children not contained in the same segment)
+        # We first find the values to pass to sub trees for each segment
+        # that contains critical values
+        # That is incomplete subtrees (which have node with left and right children not
+        # contained in the same segment)
         for i in range(self.length()):
             seg = self[i]
             if seg.has_critical():
@@ -1091,7 +1123,8 @@ class LTree(__List):
         # We process a global downward accumulation using the initial value of the accumulator
         gt2 = gt.dacc_global(psi_d, c)
 
-        # We finally pass the values of global accumulation to each segment, to update their local accumulation
+        # We finally pass the values of global accumulation to each segment, to update their
+        # local accumulation
         for i in range(gt.length()):
             res[i] = self[i].dacc_local(gl, gr, gt2[i].get_value())
         return res
@@ -1115,7 +1148,8 @@ class LTree(__List):
         return res
 
     def map2(self, f, lt):
-        """Zip the values contained in a second LTree with the ones in the current instance using a function
+        """Zip the values contained in a second LTree with the ones in the current instance using
+        a function
 
         Precondition
         -------------
@@ -1141,14 +1175,17 @@ class LTree(__List):
         def __graft(bt, lbt, rbt):
             val = bt.get_value()
             if bt.is_node():
-                return Node(val, __graft(bt.get_left(), lbt, rbt), __graft(bt.get_right(), lbt, rbt))
-            else:  # bt.is_leaf()
-                return Node(val, lbt, rbt) if val.is_critical() else bt
+                return Node(val, __graft(bt.get_left(), lbt, rbt),
+                            __graft(bt.get_right(), lbt, rbt))
+            # bt.is_leaf()
+            return Node(val, lbt, rbt) if val.is_critical() else bt
 
         def __remove_annotation(bt):
             v = bt.get_value()
-            return Leaf(v.get_value()) if bt.is_leaf() else Node(v.get_value(), __remove_annotation(bt.get_left()),
-                                                                 __remove_annotation(bt.get_right()))
+            return Leaf(v.get_value()) if bt.is_leaf() else Node(v.get_value(),
+                                                                 __remove_annotation(bt.get_left()),
+                                                                 __remove_annotation(
+                                                                     bt.get_right()))
 
         def __lv2ibt(segment):
             stack = []
@@ -1162,19 +1199,19 @@ class LTree(__List):
                 elif v.is_critical():
                     stack.append(Leaf(v))
                     if has_crit_b:
-                        raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
-                    else:
-                        has_crit_b = True
+                        raise IllFormedError(
+                            "A ill-formed Segment cannot be transformed into a BTree")
+                    has_crit_b = True
                 else:
                     if len(stack) < 2:
-                        raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
+                        raise IllFormedError(
+                            "A ill-formed Segment cannot be transformed into a BTree")
                     lv = stack.pop()
                     rv = stack.pop()
                     stack.append(Node(v, lv, rv))
             if len(stack) != 1:
                 raise IllFormedError("A ill-formed Segment cannot be transformed into a BTree")
-            else:
-                return has_crit_b, stack[0]
+            return has_crit_b, stack[0]
 
         def __rev_segment_to_trees(lb, glob):
             stack = []
@@ -1186,9 +1223,9 @@ class LTree(__List):
                     rbt = stack.pop()
                     stack.append(__graft(lb[i], lbt, rbt))
             if len(stack) != 1:
-                raise IllFormedError("A ill-formed list of incomplete BTree cannot be transformed into a BTree")
-            else:
-                return stack[0]
+                raise IllFormedError(
+                    "A ill-formed list of incomplete BTree cannot be transformed into a BTree")
+            return stack[0]
 
         gt = SList()
         list_of_btree = SList()
