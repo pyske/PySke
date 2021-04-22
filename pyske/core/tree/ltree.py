@@ -210,6 +210,32 @@ class Segment(__List):
             res[i] = v
         return res
 
+    @staticmethod
+    def __node_reduce_local_compute(stack, d, k, psi_l, phi, v, psi_r):
+        """Calculation if the value is a node"""
+        if len(stack) < 2:
+            raise IllFormedError(
+                "reduce_local cannot be applied if there is a node that does not have"
+                "two children in the current instance")
+        # We get two sub-reductions to make a reduction with the current node value
+        lv = stack.pop()
+        rv = stack.pop()
+        if d == 0:
+            # The current node is an ancestor of a critical value by the left
+            # That is, there is a critical value on its left children in a BTree representation
+            # We process and stack a partial reduction
+            stack.append(psi_l(lv, phi(v.get_value()), rv))
+        elif d == 1:
+            # The current node is an ancestor of a critical value by the right
+            # That is, there is a critical value on its right children in a BTree representation
+            # We process and stack a partial reduction
+            stack.append(psi_r(lv, phi(v.get_value()), rv))
+            d = 0
+        else:
+            # We did not meet a critical value, we process and stack a normal reduction
+            stack.append(k(lv, v.get_value(), rv))
+        return stack, d
+
     def reduce_local(self, k, phi, psi_l, psi_r):
         """Reduces a local Segment into a value
 
@@ -246,27 +272,7 @@ class Segment(__List):
                 stack.append(v.get_value())
                 d = d + 1
             elif v.is_node():
-                if len(stack) < 2:
-                    raise IllFormedError(
-                        "reduce_local cannot be applied if there is a node that does not have"
-                        "two children in the current instance")
-                # We get two sub-reductions to make a reduction with the current node value
-                lv = stack.pop()
-                rv = stack.pop()
-                if d == 0:
-                    # The current node is an ancestor of a critical value by the left
-                    # That is, there is a critical value on its left children in a BTree representation
-                    # We process and stack a partial reduction
-                    stack.append(psi_l(lv, phi(v.get_value()), rv))
-                elif d == 1:
-                    # The current node is an ancestor of a critical value by the right
-                    # That is, there is a critical value on its right children in a BTree representation
-                    # We process and stack a partial reduction
-                    stack.append(psi_r(lv, phi(v.get_value()), rv))
-                    d = 0
-                else:
-                    # We did not meet a critical value, we process and stack a normal reduction
-                    stack.append(k(lv, v.get_value(), rv))
+                stack, d = self.__node_reduce_local_compute(stack, d, k, psi_l, phi, v, psi_r)
             else:  # v.is_critical()
                 # we process and stack the reduction of critical value
                 stack.append(phi(v.get_value()))
@@ -319,6 +325,39 @@ class Segment(__List):
         top = stack.pop()
         return top
 
+    @staticmethod
+    def __node_uacc_local_compute(stack, d, phi, v, psi_l, res, psi_r, i, k):
+        """Calculation if the value is a node"""
+        if len(stack) < 2:
+            raise IllFormedError(
+                "uacc_local cannot be applied if there is a node that does not have two children "
+                "in the current instance")
+        # We get the values of two sub upward accumulation
+        lv = stack.pop()
+        rv = stack.pop()
+        if d == 0:
+            # The current node is an ancestor of a critical value by the left
+            # That is, there is a critical value on its left children in a BTree representation
+            # We process and stack the value of a partial accumulation
+            val = phi(v.get_value())
+            stack.append(psi_l(lv, val, rv))
+            res[i] = None
+        elif d == 1:
+            # The current node is an ancestor of a critical value by the left
+            # That is, there is a critical value on its left children in a BTree representation
+            # We process and stack the value of a partial accumulation
+            val = phi(v.get_value())
+            stack.append(psi_r(lv, val, rv))
+            res[i] = None
+            d = 0
+        else:
+            # We did not meet a critical value, we can process a normal upward accumulation with k
+            val = k(lv, v.get_value(), rv)
+            res[i] = TaggedValue(val, v.get_tag())
+            stack.append(val)
+            d = d - 1
+        return d, val, stack, res
+
     def uacc_local(self, k, phi, psi_l, psi_r):
         """Computes local upwards accumulation and reduction
 
@@ -355,37 +394,8 @@ class Segment(__List):
                 res[i] = v
                 stack.append(v.get_value())
                 d = d + 1
-
             elif v.is_node():
-                if len(stack) < 2:
-                    raise IllFormedError(
-                        "uacc_local cannot be applied if there is a node that does not have two children "
-                        "in the current instance")
-                # We get the values of two sub upward accumulation
-                lv = stack.pop()
-                rv = stack.pop()
-                if d == 0:
-                    # The current node is an ancestor of a critical value by the left
-                    # That is, there is a critical value on its left children in a BTree representation
-                    # We process and stack the value of a partial accumulation
-                    val = phi(v.get_value())
-                    stack.append(psi_l(lv, val, rv))
-                    res[i] = None
-                elif d == 1:
-                    # The current node is an ancestor of a critical value by the left
-                    # That is, there is a critical value on its left children in a BTree representation
-                    # We process and stack the value of a partial accumulation
-                    val = phi(v.get_value())
-                    stack.append(psi_r(lv, val, rv))
-                    res[i] = None
-                    d = 0
-                else:
-                    # We did not meet a critical value, we can process a normal upward accumulation with k
-                    val = k(lv, v.get_value(), rv)
-                    res[i] = TaggedValue(val, v.get_tag())
-                    stack.append(val)
-                    d = d - 1
-
+                d, val, stack, res = self.__node_uacc_local_compute(stack, d, phi, v, psi_l, res, psi_r, i, k)
             else:  # v.is_critical()
                 # The current value is critical. We make a partial accumulation with phi and stack the result
                 stack.append(phi(v.get_value()))
@@ -441,6 +451,29 @@ class Segment(__List):
         # We get the top value of the accumulation
         return res
 
+    @staticmethod
+    def __node_uacc_update_compute(stack, d, res, k, v1, v2, i):
+        """Calculation if the value is a node"""
+        if len(stack) < 2:
+            raise IllFormedError(
+                "uacc_update cannot be applied if there is a node that does not have two children "
+                "in the current instance")
+        # We need two sub accumulation values to process the accumulation of a node
+        lv = stack.pop()
+        rv = stack.pop()
+        if d in (0, 1):
+            # We met a critical value before, so the accumulation is not completed yet
+            val = k(lv, v1.get_value(), rv)
+            res[i] = TaggedValue(val, v1.get_tag())
+            stack.append(val)
+            d = 0
+        else:
+            # We did not meet a critical value before, so the accumulation is completed yet
+            res[i] = v2
+            stack.append(v2.get_value())
+            d = d - 1
+        return res, stack, d
+
     def uacc_update(self, seg2, k, lc, rc):
         """Makes an update of the current accumulation, using initial values and the top accumulated values
 
@@ -484,24 +517,7 @@ class Segment(__List):
                 d = d + 1
 
             elif v1.is_node():
-                if len(stack) < 2:
-                    raise IllFormedError(
-                        "uacc_update cannot be applied if there is a node that does not have two children "
-                        "in the current instance")
-                # We need two sub accumulation values to process the accumulation of a node
-                lv = stack.pop()
-                rv = stack.pop()
-                if d in (0, 1):
-                    # We met a critical value before, so the accumulation is not completed yet
-                    val = k(lv, v1.get_value(), rv)
-                    res[i] = TaggedValue(val, v1.get_tag())
-                    stack.append(val)
-                    d = 0
-                else:
-                    # We did not meet a critical value before, so the accumulation is completed yet
-                    res[i] = v2
-                    stack.append(v2.get_value())
-                    d = d - 1
+                res, stack, d = self.__node_uacc_update_compute(stack, d, res, k, v1, v2, i)
             else:  # v1.is_critical()
                 if len(stack) < 2:
                     raise IllFormedError(
@@ -515,6 +531,26 @@ class Segment(__List):
                 stack.append(val)
                 d = 0
         return res
+
+    @staticmethod
+    def __node_dacc_path_compute(d, psi_u, phi_l, v, to_l, to_r):
+        """Calculation if the value is a node"""
+        if d == 0:
+            # The current node is an ancestor of a critical value by the left
+            # That is, there is a critical value on its left children in a BTree representation
+            # We process and stack the value of a partial downward accumulation
+            to_l = psi_u(phi_l(v.get_value()), to_l)
+            to_r = psi_u(phi_l(v.get_value()), to_r)
+        elif d == 1:
+            # The current node is an ancestor of a critical value by the right
+            # That is, there is a critical value on its right children in a BTree representation
+            # We process and stack the value of a partial downward accumulation
+            to_l = psi_u(phi_l(v.get_value()), to_l)
+            to_r = psi_u(phi_l(v.get_value()), to_r)
+            d = 0
+        else:
+            d = d - 1
+        return to_l, to_r, d
 
     def dacc_path(self, phi_l, phi_r, psi_u):
         """Finds the critical node and then computes two values only on the path from the root node to the critical node
@@ -548,21 +584,7 @@ class Segment(__List):
             if v.is_leaf():
                 d = d + 1
             elif v.is_node():
-                if d == 0:
-                    # The current node is an ancestor of a critical value by the left
-                    # That is, there is a critical value on its left children in a BTree representation
-                    # We process and stack the value of a partial downward accumulation
-                    to_l = psi_u(phi_l(v.get_value()), to_l)
-                    to_r = psi_u(phi_l(v.get_value()), to_r)
-                elif d == 1:
-                    # The current node is an ancestor of a critical value by the right
-                    # That is, there is a critical value on its right children in a BTree representation
-                    # We process and stack the value of a partial downward accumulation
-                    to_l = psi_u(phi_l(v.get_value()), to_l)
-                    to_r = psi_u(phi_l(v.get_value()), to_r)
-                    d = 0
-                else:
-                    d = d - 1
+                to_l, to_r, d = self.__node_dacc_path_compute(d, psi_u, phi_l, v, to_l, to_r)
             else:  # v.is_critical()
                 has_critical = True
                 to_l = phi_l(v.get_value())
