@@ -17,20 +17,15 @@ def distribute_tree(lt, n):
     for seg_i in range(1, lt.length()):
         seg = lt[seg_i]
         curr_seg_length = seg.length()
-        if current_pid == n - 1:
-            # We need to give all the rest to the last processor
-            if seg_i == lt.length() - 1:
-                distribution[current_pid] = (nb_segs + 1)
-                global_index.append((acc_size, curr_seg_length))
-            else:
+        # We need to give all the rest to the last processor
+        if seg_i == lt.length() - 1:
+            distribution[current_pid] = (nb_segs + 1)
+            global_index.append((acc_size, curr_seg_length))
+        else:
+            if current_pid == n - 1:
                 nb_segs += 1
-                curr_seg_length = seg.length()
                 global_index.append((acc_size, curr_seg_length))
                 acc_size = acc_size + curr_seg_length
-        else:
-            if seg_i == lt.length() - 1:
-                distribution[current_pid] = (nb_segs + 1)
-                global_index.append((acc_size, seg.length()))
             else:
                 curr_seg_length = seg.length()
                 if abs(avg_elements - (acc_size + curr_seg_length)) > abs(avg_elements - acc_size):
