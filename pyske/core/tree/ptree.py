@@ -1,5 +1,5 @@
 """
-PTree module
+PTree Module
 """
 import logging
 
@@ -32,7 +32,6 @@ logger.addHandler(ch)
 
 class PTree:
     # pylint: disable=too-many-instance-attributes
-
     """A class used to represent a distributed tree
 
     Attributes
@@ -393,9 +392,11 @@ class PTree:
         c
             Initial value of accumulation
         phi_l : callable
-            A function used to respect the closure property to allow partial computation on the left
+            A function used to respect the closure property to allow partial computation
+            on the left
         phi_r : callable
-            A function used to respect the closure property to allow partial computation on the right
+            A function used to respect the closure property to allow partial computation
+            on the right
         psi_d : callable
             A function used to respect the closure property to make partial downward accumulation
         psi_u : callable

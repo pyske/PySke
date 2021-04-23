@@ -1,3 +1,6 @@
+"""
+BTree Module
+"""
 from abc import ABC, abstractmethod  # abstract classes library
 
 
@@ -16,12 +19,14 @@ class BTree(ABC):
         Gives the number of elements in the current instance
     """
 
-    def is_leaf(self):
+    @staticmethod
+    def is_leaf():
         """ Indicates if the BTree is a leaf
         """
         return False
 
-    def is_node(self):
+    @staticmethod
+    def is_node():
         """ Indicates if the BTree is a node
         """
         return False
@@ -33,46 +38,57 @@ class BTree(ABC):
 
     @abstractmethod
     def get_value(self):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def set_value(self, v):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def map(self, kl, kn, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def mapt(self, kl, kn, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def reduce(self, k, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def uacc(self, k, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def dacc(self, gl, gr, c, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def zip(self, t, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def map2(self, f, t, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def getchl(self, c, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
     @abstractmethod
     def getchr(self, c, tail_recursive=False, acc=lambda x: x):
+        # pylint: disable=missing-docstring
         pass
 
 
@@ -97,7 +113,8 @@ class Leaf(BTree):
     map(kl, kn)
         Applies functions to every leaf and to every node values
     mapt(kl, kn)
-        Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
+        Applies kl to every leaf values the current instance, and kn to every subtrees that are
+        nodes
     reduce(k)
         Reduces a BTree into a single value using k
     uacc(k)
@@ -162,8 +179,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(Leaf(kl(self.get_value())))
-        else:
-            return Leaf(kl(self.get_value()))
+        return Leaf(kl(self.get_value()))
 
     def mapt(self, kl, kn, tail_recursive=False, acc=lambda x: x):
         """Applies a function to every leaf values the current instance,
@@ -182,8 +198,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(Leaf(kl(self.get_value())))
-        else:
-            return Leaf(kl(self.get_value()))
+        return Leaf(kl(self.get_value()))
 
     def reduce(self, k, tail_recursive=False, acc=lambda x: x):
         """Reduces a BTree into a single value using a function k
@@ -201,8 +216,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(self.get_value())
-        else:
-            return self.get_value()
+        return self.get_value()
 
     def uacc(self, k, tail_recursive=False, acc=lambda x: x):
         """Makes an upward accumulation of the values in the current instance using a function k
@@ -220,8 +234,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(Leaf(self.get_value()))
-        else:
-            return Leaf(self.get_value())
+        return Leaf(self.get_value())
 
     def dacc(self, gl, gr, c, tail_recursive=False, acc=lambda x: x):
         """Makes an downward accumulation of the values in a BTree using gl, gr and c
@@ -241,8 +254,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(Leaf(c))
-        else:
-            return Leaf(c)
+        return Leaf(c)
 
     def zip(self, t, tail_recursive=False, acc=lambda x: x):
         """Zip the values contained in t with the ones in the current instance
@@ -263,8 +275,7 @@ class Leaf(BTree):
         assert t.is_leaf(), "A leaf can only be zipped with another leaf"
         if tail_recursive:
             return acc(Leaf((self.get_value(), t.get_value())))
-        else:
-            return Leaf((self.get_value(), t.get_value()))
+        return Leaf((self.get_value(), t.get_value()))
 
     def map2(self, f, t, tail_recursive=False, acc=lambda x: x):
         """Zip the values contained in a tree with the ones in the current instance using a function
@@ -287,8 +298,7 @@ class Leaf(BTree):
         assert t.is_leaf(), "A leaf can only be zipped with another leaf"
         if tail_recursive:
             return acc(Leaf(f(self.get_value(), t.get_value())))
-        else:
-            return Leaf(f(self.get_value(), t.get_value()))
+        return Leaf(f(self.get_value(), t.get_value()))
 
     def getchl(self, c, tail_recursive=False, acc=lambda x: x):
         """Shift all the values contained in the current instance by the left
@@ -304,8 +314,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(Leaf(c))
-        else:
-            return Leaf(c)
+        return Leaf(c)
 
     def getchr(self, c, tail_recursive=False, acc=lambda x: x):
         """Shift all the values contained in the current instance by the right
@@ -321,8 +330,7 @@ class Leaf(BTree):
         """
         if tail_recursive:
             return acc(Leaf(c))
-        else:
-            return Leaf(c)
+        return Leaf(c)
 
 
 class Node(BTree):
@@ -354,7 +362,8 @@ class Node(BTree):
     map(kl, kn)
         Applies functions to every leaf and to every node values
     mapt(kl, kn)
-        Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
+        Applies kl to every leaf values the current instance, and kn to every subtrees that are
+        nodes
     reduce(k)
         Reduces a BTree into a single value using a function k
     uacc(k)
@@ -382,8 +391,8 @@ class Node(BTree):
 
     def __eq__(self, other):
         if isinstance(other, Node):
-            return (self.get_value() == other.get_value()) and (self.get_left() == other.get_left()) and (
-                    self.get_right() == other.get_right())
+            return (self.get_value() == other.get_value()) and \
+                   (self.get_left() == other.get_left()) and (self.get_right() == other.get_right())
         return False
 
     def is_node(self):
@@ -431,20 +440,17 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().map(kl,
-                                       kn,
-                                       lambda lm: self.get_right().map(kl,
-                                                                       kn,
-                                                                       lambda rm: acc(
-                                                                           Node(kn(self.get_value()), lm, rm))))
-        else:
-            new_val = kn(self.get_value())
-            left = self.get_left().map(kl, kn)
-            right = self.get_right().map(kl, kn)
-            return Node(new_val, left, right)
+            return self.get_left()\
+               .map(kl, kn, lambda lm: self.get_right()
+                    .map(kl, kn, lambda rm: acc(Node(kn(self.get_value()), lm, rm))))
+        new_val = kn(self.get_value())
+        left = self.get_left().map(kl, kn)
+        right = self.get_right().map(kl, kn)
+        return Node(new_val, left, right)
 
     def mapt(self, kl, kn, tail_recursive=False, acc=lambda x: x):
-        """Applies kl to every leaf values the current instance, and kn to every subtrees that are nodes
+        """Applies kl to every leaf values the current instance, and kn to every subtrees that are
+        nodes
 
         Parameters
         ----------
@@ -458,19 +464,14 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().mapt(kl,
-                                        kn,
-                                        lambda lm: self.get_right().mapt(kl,
-                                                                         kn,
-                                                                         lambda rm: acc(Node(kn(self.get_value(),
-                                                                                                self.get_left(),
-                                                                                                self.get_right()), lm,
-                                                                                             rm))))
-        else:
-            new_val = kn(self.get_value(), self.get_left(), self.get_right())
-            left = self.get_left().mapt(kl, kn)
-            right = self.get_right().mapt(kl, kn)
-            return Node(new_val, left, right)
+            return self.get_left()\
+               .mapt(kl, kn, lambda lm: self.get_right()
+                     .mapt(kl, kn, lambda rm: acc(Node(kn(self.get_value(), self.get_left(),
+                                                          self.get_right()), lm, rm))))
+        new_val = kn(self.get_value(), self.get_left(), self.get_right())
+        left = self.get_left().mapt(kl, kn)
+        right = self.get_right().mapt(kl, kn)
+        return Node(new_val, left, right)
 
     def reduce(self, k, tail_recursive=False, acc=lambda x: x):
         """Reduces a BTree into a single value using a function k
@@ -487,20 +488,18 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().reduce(k,
-                                          lambda lm: self.get_right().reduce(k,
-                                                                             lambda rm: acc(k(lm,
-                                                                                              self.get_value(),
-                                                                                              rm))))
-        else:
-            left = self.get_left().reduce(k)
-            right = self.get_right().reduce(k)
-            return k(left, self.get_value(), right)
+            return self.get_left()\
+                .reduce(k, lambda lm: self.get_right()
+                        .reduce(k, lambda rm: acc(k(lm, self.get_value(), rm))))
+        left = self.get_left().reduce(k)
+        right = self.get_right().reduce(k)
+        return k(left, self.get_value(), right)
 
     def uacc(self, k, tail_recursive=False, acc=lambda x: x):
         """Makes an upward accumulation of the values in the current instance using a function k
 
-        Every values in nodes are replaced by the reduced value of the BTree considering the current node as the root.
+        Every values in nodes are replaced by the reduced value of the BTree considering the current
+        node as the root.
 
         Parameters
         ----------
@@ -512,15 +511,12 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().uacc(k,
-                                        lambda lm: self.get_right().uacc(k,
-                                                                         lambda rm: acc(Node(k(lm.get_value(),
-                                                                                               self.get_value(),
-                                                                                               rm.get_value()), lm,
-                                                                                             rm))))
-        else:
-            r = self.reduce(k)
-            return Node(r, self.get_left().uacc(k), self.get_right().uacc(k))
+            return self.get_left()\
+               .uacc(k, lambda lm: self.get_right()
+                     .uacc(k, lambda rm: acc(Node(k(lm.get_value(), self.get_value(),
+                                                    rm.get_value()), lm, rm))))
+        r = self.reduce(k)
+        return Node(r, self.get_left().uacc(k), self.get_right().uacc(k))
 
     def dacc(self, gl, gr, c, tail_recursive=False, acc=lambda x: x):
         """Makes an downward accumulation of the values in a BTree using gl, gr and c
@@ -539,18 +535,13 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().dacc(gl,
-                                        gr,
-                                        gl(c, self.get_value()),
-                                        lambda lm: self.get_right().dacc(gl,
-                                                                         gr,
-                                                                         gr(c, self.get_value()),
-                                                                         lambda rm: acc(Node(c, lm, rm))))
-        else:
-            b = self.get_value()
-            left = self.get_left().dacc(gl, gr, gl(c, b))
-            right = self.get_right().dacc(gl, gr, gr(c, b))
-            return Node(c, left, right)
+            return self.get_left()\
+                .dacc(gl, gr, gl(c, self.get_value()), lambda lm: self.get_right()
+                      .dacc(gl, gr, gr(c, self.get_value()), lambda rm: acc(Node(c, lm, rm))))
+        b = self.get_value()
+        left = self.get_left().dacc(gl, gr, gl(c, b))
+        right = self.get_right().dacc(gl, gr, gr(c, b))
+        return Node(c, left, right)
 
     def zip(self, t, tail_recursive=False, acc=lambda x: x):
         """Zip the values contained in t with the ones in the current instance
@@ -570,17 +561,14 @@ class Node(BTree):
         """
         assert t.is_node(), "A node can only be zipped with another node"
         if tail_recursive:
-            return self.get_left().zip(t.get_left(),
-                                       lambda lm: self.get_right().zip(t.get_right(),
-                                                                       lambda rm: acc(Node((self.get_value(),
-                                                                                            t.get_value()),
-                                                                                           lm,
-                                                                                           rm))))
-        else:
-            v = (self.get_value(), t.get_value())
-            left = self.get_left().zip(t.get_left())
-            right = self.get_right().zip(t.get_right())
-            return Node(v, left, right)
+            return self.get_left()\
+                .zip(t.get_left(), lambda lm: self.get_right()
+                     .zip(t.get_right(), lambda rm: acc(Node((self.get_value(),
+                                                              t.get_value()), lm, rm))))
+        v = (self.get_value(), t.get_value())
+        left = self.get_left().zip(t.get_left())
+        right = self.get_right().zip(t.get_right())
+        return Node(v, left, right)
 
     def map2(self, f, t, tail_recursive=False, acc=lambda x: x):
         """Zip the values contained in a tree with the ones in the current instance using a function
@@ -602,17 +590,14 @@ class Node(BTree):
         """
         assert t.is_node(), "A node can only be zipped with another node"
         if tail_recursive:
-            return self.get_left().map2(f, t.get_left(),
-                                        lambda lm: self.get_right().map2(f, t.get_right(),
-                                                                         lambda rm: acc(Node(f(self.get_value(),
-                                                                                               t.get_value()),
-                                                                                             lm,
-                                                                                             rm))))
-        else:
-            v = f(self.get_value(), t.get_value())
-            left = self.get_left().map2(f, t.get_left())
-            right = self.get_right().map2(f, t.get_right())
-            return Node(v, left, right)
+            return self.get_left()\
+                .map2(f, t.get_left(), lambda lm: self.get_right()
+                      .map2(f, t.get_right(), lambda rm: acc(Node(f(self.get_value(),
+                                                                    t.get_value()), lm, rm))))
+        v = f(self.get_value(), t.get_value())
+        left = self.get_left().map2(f, t.get_left())
+        right = self.get_right().map2(f, t.get_right())
+        return Node(v, left, right)
 
     def getchl(self, c, tail_recursive=False, acc=lambda x: x):
         """Shift all the values contained in the current instance by the left
@@ -627,16 +612,13 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().getchl(c,
-                                          lambda lm: self.get_right().getchl(c,
-                                                                             lambda rm: acc(
-                                                                                 Node(self.get_left().get_value(), lm,
-                                                                                      rm))))
-        else:
-            v = self.get_left().get_value()
-            left = self.get_left().getchl(c)
-            right = self.get_right().getchl(c)
-            return Node(v, left, right)
+            return self.get_left()\
+                .getchl(c, lambda lm: self.get_right()
+                        .getchl(c, lambda rm: acc(Node(self.get_left().get_value(), lm, rm))))
+        v = self.get_left().get_value()
+        left = self.get_left().getchl(c)
+        right = self.get_right().getchl(c)
+        return Node(v, left, right)
 
     def getchr(self, c, tail_recursive=False, acc=lambda x: x):
         """Shift all the values contained in the current instance by the right
@@ -651,13 +633,10 @@ class Node(BTree):
             Continuation
         """
         if tail_recursive:
-            return self.get_left().getchr(c,
-                                          lambda lm: self.get_right().getchr(c,
-                                                                             lambda rm: acc(
-                                                                                 Node(self.get_right().get_value(), lm,
-                                                                                      rm))))
-        else:
-            v = self.get_right().get_value()
-            left = self.get_left().getchr(c)
-            right = self.get_right().getchr(c)
-            return Node(v, left, right)
+            return self.get_left()\
+                .getchr(c, lambda lm: self.get_right()
+                        .getchr(c, lambda rm: acc(Node(self.get_right().get_value(), lm, rm))))
+        v = self.get_right().get_value()
+        left = self.get_left().getchr(c)
+        right = self.get_right().getchr(c)
+        return Node(v, left, right)
