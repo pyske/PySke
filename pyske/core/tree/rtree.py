@@ -1,3 +1,6 @@
+"""
+RTree Module
+"""
 from pyske.core.support.errors import ConstructorError
 from pyske.core.list.slist import SList
 from pyske.core.tree.btree import Node, Leaf, BTree
@@ -36,7 +39,8 @@ class RNode:
     zip(rt)
         Zip the values contained in a second RTree with the ones in the current instance
     map2(rt, f)
-        Zip the values contained in a second RTree with the ones in the current instance using a function
+        Zip the values contained in a second RTree with the ones in the current instance
+        using a function
     racc(f, unit_f)
         Makes a rightward accumulation of the values in the current instance
     lacc(f, unit_f)
@@ -48,7 +52,8 @@ class RNode:
     def __init__(self, value, ts=None):
         if isinstance(value, BTree):
             if value == Leaf(None):
-                raise ConstructorError("A RTree cannot be constructed from a single Leaf that contains None")
+                raise ConstructorError("A RTree cannot be constructed from a single Leaf that "
+                                       "contains None")
             # Create a RTree from a BTree
             bt = value
             rt = RNode.b2r(bt)
@@ -71,17 +76,15 @@ class RNode:
                 val = btree.get_value()
                 if val is None:
                     return SList()
-                else:
-                    return SList([RNode(val)])
-            else:
-                n = btree.get_value()
-                left = btree.get_left()
-                right = btree.get_right()
-                res_l = aux(left)
-                res_r = aux(right)
-                res_head = RNode(n, res_l)
-                res_r.insert(0, res_head)
-                return res_r
+                return SList([RNode(val)])
+            n = btree.get_value()
+            left = btree.get_left()
+            right = btree.get_right()
+            res_l = aux(left)
+            res_r = aux(right)
+            res_head = RNode(n, res_l)
+            res_r.insert(0, res_head)
+            return res_r
 
         return aux(bt)[0]
 
@@ -169,7 +172,8 @@ class RNode:
             A binary operator to combine all sub reduction of the children of the current instance
             into an intermediate reduction
         g : callable
-            A binary operator to combine the value of the current instance with the intermediate reduction
+            A binary operator to combine the value of the current instance with the intermediate
+            reduction
         """
         if not self.children:
             return self.get_value()
@@ -179,7 +183,8 @@ class RNode:
         red = reductions[0]
         for i in range(1, reductions.length()):
             red = g(red, reductions[i])
-        # The final reduction is the result of the combination of sub reductions and the value of the current instance
+        # The final reduction is the result of the combination of sub reductions and the value of
+        # the current instance
         return f(self.get_value(), red)
 
     def uacc(self, f, g):
@@ -188,10 +193,11 @@ class RNode:
         Parameters
         ----------
         f : callable
-            A binary operator to combine all top values from the accumulation within the children of the current
-            instance into an intermediate accumulation
+            A binary operator to combine all top values from the accumulation within the children of
+            the current instance into an intermediate accumulation
         g : callable
-            A binary operator to combine the value of the current instance with the intermediate accumulation
+            A binary operator to combine the value of the current instance with the intermediate
+            accumulation
         """
         v = self.reduce(f, g)
         ch = self.children.map(lambda x: x.uacc(f, g))
@@ -212,7 +218,8 @@ class RNode:
             # Auxiliary function to make an accumulation with an arbitrary accumulator
             return RNode(c, t.children.map(lambda x: dacc2(x, fct, fct(c, t.get_value()))))
 
-        # Since the accumulator changes at each iteration, we need to use a changing parameter, not defined in dacc.
+        # Since the accumulator changes at each iteration, we need to use a changing parameter, not
+        # defined in dacc.
         # Use of an auxiliary function, with as a first accumulator, unit_f
         return dacc2(self, f, unit_f)
 
@@ -238,7 +245,8 @@ class RNode:
         return RNode(v, ch)
 
     def map2(self, rt, f):
-        """Zip the values contained in a second RTree with the ones in the current instance using a function
+        """Zip the values contained in a second RTree with the ones in the current instance using a
+        function
 
         Precondition
         -------------
@@ -323,9 +331,8 @@ class RNode:
         def r2b2(ts):
             if not ts:
                 return Leaf(None)
-            else:
-                h = ts[0]
-                t = ts[1:]
-                return r2b1(h, t)
+            h = ts[0]
+            t = ts[1:]
+            return r2b1(h, t)
 
         return r2b1(self, SList())

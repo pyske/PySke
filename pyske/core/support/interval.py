@@ -46,13 +46,16 @@ def union(inter1, inter2):
             max(upper(inter1), upper(inter2)))
 
 
+def is_valid_intersection(inter1, inter2):
+    """Test if intersect of two intervals is possible."""
+    return upper(inter1) >= lower(inter2) or upper(inter2) >= lower(inter1)
+
+
 def intersection(inter1, inter2):
     """Intersect two intervals."""
     assert is_valid(inter1)
     assert is_valid(inter2)
-    if (inter1 is None or inter2 is None or
-            upper(inter1) < lower(inter2) or
-            upper(inter2) < lower(inter1)):
+    if inter1 is None or inter2 is None or not is_valid_intersection(inter1, inter2):
         return None
     return (max(lower(inter1), lower(inter2)),
             min(upper(inter1), upper(inter2)))
