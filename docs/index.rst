@@ -10,6 +10,11 @@ Welcome to PySke's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   intro
+   listSkeletons
+   treeSkeletons
+   api
+
 
 
 Indices and tables
