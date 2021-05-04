@@ -1,13 +1,10 @@
 """
 Parallel regular sampling sort
 """
-
 import functools
-import gc
 from heapq import merge
 from operator import and_
 from pyske.core import PList, Distribution, par
-from pyske.examples.list import util
 
 __all__ = ['bcast', "pssr"]
 
@@ -123,30 +120,3 @@ def _is_sorted_list(lst):
 def is_sorted(input_list: PList) -> bool:
     """Check if the list is sorted."""
     return input_list.get_partition().map(_is_sorted_list).reduce(and_, True)
-
-
-# -------------- Execution --------------
-
-def _main():
-    from pyske.core import Timing
-    size, num_iter, choice = util.standard_parse_command_line()
-    pyske_list_class = util.select_pyske_list(choice)
-    input_list = util.rand_list(pyske_list_class, size)
-    timing = Timing()
-    execute = util.select_execute(choice)
-    example = pssr if choice == util.PAR else sorted
-    execute(lambda: print('Version:\t', choice))
-    gc.disable()
-    for iteration in range(1, 1 + num_iter):
-        timing.start()
-        result = example(input_list)
-        timing.stop()
-        gc.collect()
-        if choice == util.PAR:
-            assert is_sorted(result)
-        result = len(result)
-        util.print_experiment(result, timing.get(), execute, iteration)
-
-
-if __name__ == '__main__':
-    _main()

@@ -3,9 +3,6 @@ Variance Example
 """
 from operator import add
 
-__all__ = ['variance']
-
-
 # ------------------- Variance of a Random Variable ----------------------
 
 def variance(input_list):

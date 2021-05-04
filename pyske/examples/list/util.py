@@ -19,6 +19,7 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     :param data_arg: (default True) flag to select argument --data
     :return:  (size, iter, ['parallel' | 'sequential'])
     """
+    # pylint: disable=import-outside-toplevel
     import argparse
     parser = argparse.ArgumentParser()
     if size_arg:
@@ -49,6 +50,7 @@ def select_pyske_list(choice):
     :param choice: either ``PAR`` or ```SEQ``
     :return: either PList or SList
     """
+    # pylint: disable=import-outside-toplevel
     if choice == PAR:
         from pyske.core import PList as ListClass
     else:
@@ -63,6 +65,7 @@ def select_execute(choice):
     :param choice: either ``PAR`` or ``SEQ``.
     :return: either ``par.at_root`` or ``lambda f: f()``
     """
+    # pylint: disable=import-outside-toplevel
     if choice == PAR:
         from pyske.core.util import par
         return par.at_root
@@ -80,6 +83,7 @@ def rand_list(cls, size):
         Precondition: size >= 0
     :return: a list of the given class
     """
+    # pylint: disable=import-outside-toplevel
     assert size >= 0
     import random
     return cls.init(lambda _: float(random.randint(-100, 100)), size)
@@ -113,6 +117,7 @@ def standard_main(example, size_arg=True, iter_arg=True, data_arg=True):
     :param data_arg: (default True) flag to select argument --data
     :param example: a function on PySke lists.
     """
+    # pylint: disable=import-outside-toplevel
     from pyske.core import Timing
     size, num_iter, choice = standard_parse_command_line(size_arg, iter_arg, data_arg)
     pyske_list_class = select_pyske_list(choice)
