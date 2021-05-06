@@ -2,6 +2,8 @@
 Utility functions for PySke examples
 """
 
+from sklearn.datasets import make_blobs
+
 PAR = 'parallel'
 SEQ = 'sequential'
 
@@ -89,18 +91,21 @@ def rand_list(cls, size):
     return cls.init(lambda _: float(random.randint(-100, 100)), size)
 
 
-def rand_point_list(cls, size):
+def rand_point_list(cls, size, clusters):
     """
     Return a randomly generated list of points.
 
     :param cls: the class of the generated list.
     :param size: a positive number
         Precondition: size >= 0
+    :param clusters: number of clusters
     :return: a list of the given class
     """
     from pyske.core.util.point import Point
-    import random
-    return cls.init(lambda _: Point(random.randint(0, size), random.randint(0, size)), size)
+    x, y_true = make_blobs(n_samples=size, centers=clusters)
+    x = x.tolist()
+    x = list(map(lambda y: Point(y[0], y[1]), x))
+    return cls.from_seq(x)
 
 
 def print_experiment(result, timing, execute, iteration=None):

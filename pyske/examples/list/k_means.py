@@ -100,22 +100,15 @@ def k_means(input_list: List, n_cluster: int, max_iter: int = 10):
     :param n_cluster: number of cluster
     :param max_iter: number of iteration
 
-    :return: a list of class
+    :return: 2 dimension list of points
     """
     centroids = k_means_init(input_list, n_cluster)
     j = 0
     while j < max_iter:
         clusters = make_clusters(input_list, centroids)
-        plt.scatter([point.x for point in input_list.to_seq()], [point.y for point in input_list.to_seq()],
-                    c='yellow')
-        clusters_color = ['green', 'blue', 'black', 'purple', 'brown']
-        for i in range(len(clusters)):
-            plt.scatter([point.x for point in clusters[i]], [point.y for point in clusters[i]],
-                        c=clusters_color[i])
 
         centroids = define_centroids(clusters)
-        plt.scatter([point.x for point in centroids], [point.y for point in centroids], c='red')
-        plt.show()
+        # plt.scatter([point.x for point in centroids], [point.y for point in centroids], c='red')
         j = j + 1
 
     return clusters
