@@ -2,12 +2,12 @@
 Execution of k_means
 """
 import gc
+import argparse
+import matplotlib.pyplot as plt
 
 from pyske.core import Timing
 from pyske.examples.list.k_means import k_means
 from pyske.examples.list import util
-import matplotlib.pyplot as plt
-import argparse
 
 PAR = 'parallel'
 SEQ = 'sequential'
@@ -15,7 +15,7 @@ SEQ = 'sequential'
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000)
     parser.add_argument("--iter", help="number of iterations", type=int, default=30)
     parser.add_argument("--data", help="type of data structure", choices=[PAR, SEQ], default=SEQ)
     parser.add_argument("--clusters", help="number of clusters", type=int, default=3)

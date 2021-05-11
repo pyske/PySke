@@ -1,11 +1,9 @@
 """
 K-Means
 """
-
+import random
 from pyske.core.interface import List
 from pyske.core.list import SList
-import random
-import matplotlib.pyplot as plt
 from pyske.core.util.point import Point
 
 
@@ -65,6 +63,17 @@ def define_centroids(clusters):
         centroids.append(get_new_centroid(cluster))
     return centroids
 
+def index_max_value(input_list: List):
+    """
+    Return the index of the maximum value
+    """
+    index_max = 0
+    max_dist = 0
+    for i in range(len(input_list.to_seq())):
+        if input_list.to_seq()[i] > max_dist:
+            max_dist = input_list.to_seq()[i]
+            index_max = i
+    return index_max
 
 def k_means_init(input_list: List, n_cluster: int):
     """
@@ -79,14 +88,14 @@ def k_means_init(input_list: List, n_cluster: int):
     c1 = input_list.to_seq()[random.randint(0, input_list.length() - 1)]
     centroids.append(c1)
 
-    for c in range(n_cluster - 1):
+    for _ in range(n_cluster - 1):
         dist = input_list.map(lambda x: x.distance(centroids[0]))
         for i in range(1, len(centroids)):
-            temp_dist = input_list.map(lambda x: x.distance(centroids[i]))
-            dist = dist.map2(lambda x, y: min(x, y), temp_dist)
+            temp_dist = input_list.map(lambda x, index=i: x.distance(centroids[index]))
+            dist = dist.map2(lambda x, y: y if y < x else x, temp_dist)
 
-        index_max = [i for i, x in enumerate(dist.to_seq()) if x == max(dist.to_seq())]
-        next_centroid = input_list.to_seq()[index_max[0]]
+        index_max = index_max_value(dist)
+        next_centroid = input_list.to_seq()[index_max]
         centroids.append(next_centroid)
 
     return centroids
@@ -100,13 +109,13 @@ def k_means(input_list: List, n_cluster: int, max_iter: int = 10):
     :param n_cluster: number of cluster
     :param max_iter: number of iteration
 
-    :return: 2 dimension list of points
+    :return: 2 dimensions list of points
     """
+
     centroids = k_means_init(input_list, n_cluster)
     j = 0
     while j < max_iter:
         clusters = make_clusters(input_list, centroids)
-
         centroids = define_centroids(clusters)
         # plt.scatter([point.x for point in centroids], [point.y for point in centroids], c='red')
         j = j + 1
