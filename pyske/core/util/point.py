@@ -8,7 +8,7 @@ from math import sqrt
 class Point(object):
     """A class to represent a point"""
 
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self.__x = x
         self.__y = y
 
@@ -19,6 +19,38 @@ class Point(object):
         if isinstance(other, Point):
             return self.__x == other.x and self.__y == other.__y
         return False
+
+    def __add__(self, other):
+        """
+        Addition of two points
+
+        Examples::
+
+            >>> p1 = Point(5,5)
+            >>> p2 = Point(5,7)
+            >>> p1 + p2
+            (10, 12)
+        """
+        if isinstance(other, Point):
+            return Point(self.x + other.x, self.y + other.y)
+
+    def __mul__(self, other):
+        """
+        Multiplication by a point or a scalar
+
+        Examples::
+
+            >>> p1 = Point(5,5)
+            >>> p2 = Point(5,7)
+            >>> p1 * 5
+            (25, 25)
+            >>> p1 * p2
+            (25, 35)
+        """
+        if isinstance(other, Point):
+            return Point(self.x * other.x, self.y * other.y)
+        if isinstance(other, int) or isinstance(other, float):
+            return Point(self.x * other, self.y * other)
 
     @property
     def x(self):
