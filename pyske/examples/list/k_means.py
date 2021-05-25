@@ -2,20 +2,21 @@
 K-Means
 """
 import random
+from typing import Callable, Tuple
 from pyske.core.interface import List
 from pyske.core.list import SList
 from pyske.core.util.point import Point
 
 
-def cluster_index(p, centroids):
+def cluster_index(point, centroids):
     """
     Get the centroid index of the closest centroid
     """
     min_dist = float("inf")
     p_centroid = centroids[0]
     for c in centroids:
-        if p.distance(c) < min_dist:
-            min_dist = p.distance(c)
+        if point.distance(c) < min_dist:
+            min_dist = point.distance(c)
             p_centroid = c
     return centroids.index(p_centroid)
 
@@ -54,7 +55,7 @@ def get_new_centroid(cluster):
     return new_centroid
 
 
-def define_centroids(clusters):
+def define_centroids(clusters):  # Pas utile car tuple ( num_cluster, point )
     """
     Redefine centroids of clusters
     """
@@ -63,17 +64,16 @@ def define_centroids(clusters):
         centroids.append(get_new_centroid(cluster))
     return centroids
 
-def index_max_value(input_list: List):
+
+def max_dist(pair_a: Tuple[Point, float], pair_b: Tuple[Point, float]):
     """
-    Return the index of the maximum value
+    Return the tuple with the maximum distance
     """
-    index_max = 0
-    max_dist = 0
-    for i in range(len(input_list.to_seq())):
-        if input_list.to_seq()[i] > max_dist:
-            max_dist = input_list.to_seq()[i]
-            index_max = i
-    return index_max
+    if pair_a[1] > pair_b[1]:
+        return pair_a
+    else:
+        return pair_b
+
 
 def k_means_init(input_list: List, n_cluster: int):
     """
@@ -94,30 +94,31 @@ def k_means_init(input_list: List, n_cluster: int):
             temp_dist = input_list.map(lambda x, index=i: x.distance(centroids[index]))
             dist = dist.map2(lambda x, y: y if y < x else x, temp_dist)
 
-        index_max = index_max_value(dist)
-        next_centroid = input_list.to_seq()[index_max]
+        zip_list = input_list.zip(dist)
+        next_centroid = zip_list.reduce(max_dist)[0]
         centroids.append(next_centroid)
 
     return centroids
 
 
-def k_means(input_list: List, n_cluster: int, max_iter: int = 10):
+def k_means(input_list: List, init_function: Callable[[List, int], List], n_cluster: int,
+            max_iter: int = 10):
     """
     K-means algorithm on a list of point
 
     :param input_list: a list of point
     :param n_cluster: number of cluster
     :param max_iter: number of iteration
+    :param init_function: a function that initialize centroids
 
     :return: 2 dimensions list of points
     """
 
-    centroids = k_means_init(input_list, n_cluster)
+    centroids = init_function(input_list, n_cluster)
     j = 0
     while j < max_iter:
-        clusters = make_clusters(input_list, centroids)
-        centroids = define_centroids(clusters)
-        # plt.scatter([point.x for point in centroids], [point.y for point in centroids], c='red')
+        clusters = make_clusters(input_list, centroids)  # assign_cluster
+        centroids = define_centroids(clusters)  # update_centroids
         j = j + 1
 
     return clusters
