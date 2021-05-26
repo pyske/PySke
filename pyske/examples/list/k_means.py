@@ -18,51 +18,32 @@ def cluster_index(point, centroids):
         if point.distance(c) < min_dist:
             min_dist = point.distance(c)
             p_centroid = c
-    return centroids.index(p_centroid)
+    return point, centroids.index(p_centroid)
 
 
-def make_clusters(input_list, centroids):
+def assign_clusters(input_list, centroids):
     """
-    Append all points to the cluster with the minimal distance from its centroid
+    Assign to each point to a cluster
     """
-    clusters = [[] for c in centroids]
-    for p in input_list.to_seq():
-        index = cluster_index(p, centroids)
-        clusters[index].append(p)
-    return clusters
+
+    return input_list.map(lambda x: cluster_index(x, centroids))
 
 
-def coords_average(cluster):
+def update_centroids(clusters, centroids):
     """
-    Get the coordinates average of all points in one cluster
+    Update centroids of clusters
     """
-    x_average = sum([p.x for p in cluster]) / len(cluster)
-    y_average = sum([p.y for p in cluster]) / len(cluster)
-    return Point(x_average, y_average)
-
-
-def get_new_centroid(cluster):
-    """
-    Get closest point to average of point coordinates
-    """
-    average_point = coords_average(cluster)
-    min_dist = float("inf")
-    new_centroid = cluster[0]
-    for p in cluster:
-        if p.distance(average_point) < min_dist:
-            min_dist = p.distance(average_point)
-            new_centroid = p
-    return new_centroid
-
-
-def define_centroids(clusters):  # Pas utile car tuple ( num_cluster, point )
-    """
-    Redefine centroids of clusters
-    """
-    centroids = []
-    for cluster in clusters:
-        centroids.append(get_new_centroid(cluster))
-    return centroids
+    new_centroids = SList([])
+    i = 0
+    while i < len(centroids):
+        cluster = clusters.filter(lambda x: x[1] == i)
+        sum_cluster = cluster.map(lambda x: x[0]).reduce(lambda x, y: x + y)
+        average_point = sum_cluster / cluster.length()
+        centroid = clusters.reduce(
+            lambda x, y: x if average_point.distance(x[0]) < average_point.distance(y[0]) else y)[0]
+        new_centroids.append(centroid)
+        i += 1
+    return new_centroids
 
 
 def max_dist(pair_a: Tuple[Point, float], pair_b: Tuple[Point, float]):
@@ -113,12 +94,15 @@ def k_means(input_list: List, init_function: Callable[[List, int], List], n_clus
 
     :return: 2 dimensions list of points
     """
-
     centroids = init_function(input_list, n_cluster)
+
     j = 0
+
     while j < max_iter:
-        clusters = make_clusters(input_list, centroids)  # assign_cluster
-        centroids = define_centroids(clusters)  # update_centroids
+        clusters = assign_clusters(input_list, centroids)
+
+        centroids = update_centroids(clusters, centroids)
+
         j = j + 1
 
     return clusters

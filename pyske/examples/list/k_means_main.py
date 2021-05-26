@@ -1,13 +1,13 @@
 """
 Execution of k_means
 """
-import gc
 import argparse
 import matplotlib.pyplot as plt
 
 from pyske.core import Timing
-from pyske.examples.list.k_means import k_means
+from pyske.examples.list.k_means import k_means, k_means_init
 from pyske.examples.list import util
+from pyske.core.support import parallel
 
 PAR = 'parallel'
 SEQ = 'sequential'
@@ -32,13 +32,12 @@ if __name__ == '__main__':
     execute = util.select_execute(choice)
     example = k_means
     execute(lambda: print('Version:\t', choice))
-    gc.disable()
     for iteration in range(1, 1 + num_iter):
         timing.start()
-        result = example(input_list, clusters)
+        result = example(input_list, k_means_init, clusters)
         timing.stop()
-        gc.collect()
         util.print_experiment("", timing.get(), execute, iteration)
-        for i in range(len(result)):
-            plt.scatter([point.x for point in result[i]], [point.y for point in result[i]])
-        plt.show()
+        #if parallel.PID == 0:
+        #    for i in range((len(result))):
+        #        plt.scatter([point.x for point in result[i]], [point.y for point in result[i]])
+        #    plt.show()
