@@ -52,6 +52,10 @@ class Point(object):
         if isinstance(other, int) or isinstance(other, float):
             return Point(self.x * other, self.y * other)
 
+    def __truediv__(self, other):
+        if isinstance(other, int):
+            return Point(self.x / other, self.y / other)
+
     @property
     def x(self):
         """X getter"""
