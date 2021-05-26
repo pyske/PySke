@@ -102,10 +102,11 @@ def rand_point_list(cls, size, clusters):
     :return: a list of the given class
     """
     from pyske.core.util.point import Point
+    print(clusters)
     x, y_true = make_blobs(n_samples=size, centers=clusters)
     x = x.tolist()
     x = list(map(lambda y: Point(y[0], y[1]), x))
-    return cls.from_seq(x)
+    return cls.init(lambda i: x[i], size)
 
 
 def print_experiment(result, timing, execute, iteration=None):
