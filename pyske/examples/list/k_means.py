@@ -1,24 +1,47 @@
 """
 K-Means
 """
+import operator
 import random
+from math import sqrt
 from typing import Callable, Tuple
 from pyske.core.interface import List
 from pyske.core.list import SList
 from pyske.core.util.point import Point
 
 
-def cluster_index(point, centroids):
+def distance2D(sample_1, sample_2):
+    """
+            return distance between 2d sample.
+
+            Examples::
+
+                >>> from pyske.core.util.point import Point
+                >>> p1 = Point(5,5)
+                >>> p2 = Point(5,7)
+                >>> p1.distance(p2)
+                2.0
+
+            :param other: a point
+            :return: distance from other point
+
+            """
+    dx = sample_1[0] - sample_2[0]
+    dy = sample_1[1] - sample_2[1]
+    return sqrt(dx ** 2 + dy ** 2)
+
+
+def cluster_index(sample, centroids):
     """
     Get the centroid index of the closest centroid
     """
     min_dist = float("inf")
     p_centroid = centroids[0]
     for c in centroids:
-        if point.distance(c) < min_dist:
-            min_dist = point.distance(c)
+        if distance2D(sample, c) < min_dist:
+            min_dist = distance2D(sample, c)
             p_centroid = c
-    return point, centroids.index(p_centroid)
+    return sample, centroids.index(p_centroid)
 
 
 def assign_clusters(input_list, centroids):
@@ -37,16 +60,16 @@ def update_centroids(clusters, centroids):
     i = 0
     while i < len(centroids):
         cluster = clusters.filter(lambda x: x[1] == i)
-        sum_cluster = cluster.map(lambda x: x[0]).reduce(lambda x, y: x + y)
-        average_point = sum_cluster / cluster.length()
+        sum_cluster = cluster.map(lambda x: x[0]).reduce(lambda a, b: tuple(map(operator.add, a, b)))
+        average_point = [x/clusters.length() for x in sum_cluster]
         centroid = clusters.reduce(
-            lambda x, y: x if average_point.distance(x[0]) < average_point.distance(y[0]) else y)[0]
+            lambda x, y: x if distance2D(average_point, x[0]) < distance2D(average_point, y[0]) else y)[0]
         new_centroids.append(centroid)
         i += 1
     return new_centroids
 
 
-def max_dist(pair_a: Tuple[Point, float], pair_b: Tuple[Point, float]):
+def max_dist(pair_a, pair_b):
     """
     Return the tuple with the maximum distance
     """
@@ -70,9 +93,9 @@ def k_means_init(input_list: List, n_cluster: int):
     centroids.append(c1)
 
     for _ in range(n_cluster - 1):
-        dist = input_list.map(lambda x: x.distance(centroids[0]))
+        dist = input_list.map(lambda sample: distance2D(sample, centroids[0]))
         for i in range(1, len(centroids)):
-            temp_dist = input_list.map(lambda x, index=i: x.distance(centroids[index]))
+            temp_dist = input_list.map(lambda sample, index=i: distance2D(sample, centroids[index]))
             dist = dist.map2(lambda x, y: y if y < x else x, temp_dist)
 
         zip_list = input_list.zip(dist)
