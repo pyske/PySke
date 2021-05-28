@@ -29,20 +29,18 @@ def assign_clusters(input_list: List[Point], centroids: SList[Point]) -> List[Tu
     return input_list.map(lambda x: cluster_index(x, centroids))
 
 
-def update_centroids(clusters: List[Tuple[Point, int]],  centroids: SList[Point]):
+def update_centroids(clusters: List[Tuple[Point, int]], centroids: SList[Point]):
     """
     Update centroids of clusters
     """
-    new_centroids = SList([])
-    i = 0
-    while i < len(centroids):
-        cluster = clusters.filter(lambda x: x[1] == i)
-        sum_cluster = cluster.map(lambda x: x[0]).reduce(lambda x, y: x + y)
-        average_point = sum_cluster / cluster.length()
-        centroid = clusters.reduce(
-            lambda x, y: x if average_point.distance(x[0]) < average_point.distance(y[0]) else y)[0]
-        new_centroids.append(centroid)
-        i += 1
+
+    new_centroids = SList.init(lambda _: (Point(), _, _), len(centroids))
+
+    new_centroids = new_centroids.mapi(lambda i, x: clusters.map_reduce(lambda w: (w[0], w[1], 1),
+        lambda y, z: (y[0] + z[0], y[1], y[2] + z[2]) if y[1] == i and z[1] == i else (
+            z if y[1] != i else y)))
+    new_centroids = new_centroids.map(lambda x: x[0] / x[2])
+
     return new_centroids
 
 
