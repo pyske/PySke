@@ -111,6 +111,23 @@ def rand_point_list(cls, size, clusters):
     return cls.from_seq(x).distribute(distr)
 
 
+def rand_2D_sample_list(cls, size , clusters):
+    """
+    Return a randomly generated list of 2D sample.
+
+    :param cls: the class of the generated list.
+    :param size: a positive number
+        Precondition: size >= 0
+    :param clusters: number of clusters
+    :return: a list of the given class
+    """
+    print(clusters)
+    x, y_true = make_blobs(n_samples=size, centers=clusters)
+    x = x.tolist()
+    x = list(map(lambda y: (y[0], y[1]), x))
+    return cls.init(lambda i: x[i], size)
+
+
 def print_experiment(result, timing, execute, iteration=None):
     """
     Print the result and timing of the experiment.
