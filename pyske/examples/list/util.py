@@ -101,12 +101,12 @@ def rand_point_list(cls, size, clusters):
     :param clusters: number of clusters
     :return: a list of the given class
     """
-    from pyske.core.util.point import Point
+    from pyske.core.util.point_2D import Point_2D
     from pyske.core import Distribution
 
     x, _ = make_blobs(n_samples=size, centers=clusters)
     x = x.tolist()
-    x = list(map(lambda y: Point(y[0], y[1]), x))
+    x = list(map(lambda y: Point_2D(y[0], y[1]), x))
     distr = Distribution().balanced(size)
     return cls.from_seq(x).distribute(distr)
 
