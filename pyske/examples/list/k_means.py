@@ -34,7 +34,7 @@ def update_centroids(clusters: List[Tuple[Point_Interface, int]], centroids: SLi
     Update centroids of clusters
     """
 
-    new_centroids = SList.init(lambda _: (Point(), _, _), len(centroids))
+    new_centroids = SList.init(lambda _: (_, _, _), len(centroids))
 
     new_centroids = new_centroids.mapi(lambda i, x: clusters.map_reduce(lambda w: (w[0], w[1], 1),
         lambda y, z: (y[0] + z[0], y[1], y[2] + z[2]) if y[1] == i and z[1] == i else (
