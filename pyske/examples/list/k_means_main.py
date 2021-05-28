@@ -27,7 +27,10 @@ if __name__ == '__main__':
     clusters = args.clusters
 
     pyske_list_class = util.select_pyske_list(choice)
-    input_list = util.rand_point_list(pyske_list_class, size, clusters)
+
+    # input_list = util.rand_point_2D_list(pyske_list_class, size, clusters)
+    input_list = util.rand_point_3D_list(pyske_list_class, size, clusters)
+
     timing = Timing()
     execute = util.select_execute(choice)
     example = k_means
@@ -37,7 +40,7 @@ if __name__ == '__main__':
         result = example(input_list, k_means_init, clusters)
         timing.stop()
         util.print_experiment("", timing.get(), execute, iteration)
-        #if parallel.PID == 0:
+        # if parallel.PID == 0:
         #    for i in range((len(result))):
         #        plt.scatter([point.x for point in result[i]], [point.y for point in result[i]])
         #    plt.show()

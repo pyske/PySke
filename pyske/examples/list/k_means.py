@@ -6,10 +6,10 @@ from typing import Callable, Tuple
 
 from pyske.core.interface import List
 from pyske.core.list import SList
-from pyske.core.util.point import Point
+from pyske.core.util.point_Interface import Point_Interface
 
 
-def cluster_index(point: Point, centroids: SList[Point]) -> Tuple[Point, int]:
+def cluster_index(point: Point_Interface, centroids: SList[Point_Interface]) -> Tuple[Point_Interface, int]:
     """
     Get the centroid index of the closest centroid
     """
@@ -22,14 +22,14 @@ def cluster_index(point: Point, centroids: SList[Point]) -> Tuple[Point, int]:
     return point, centroids.index(p_centroid)
 
 
-def assign_clusters(input_list: List[Point], centroids: SList[Point]) -> List[Tuple[Point, int]]:
+def assign_clusters(input_list: List[Point_Interface], centroids: SList[Point_Interface]) -> List[Tuple[Point_Interface, int]]:
     """
     Assign each point to a cluster
     """
     return input_list.map(lambda x: cluster_index(x, centroids))
 
 
-def update_centroids(clusters: List[Tuple[Point, int]], centroids: SList[Point]):
+def update_centroids(clusters: List[Tuple[Point_Interface, int]], centroids: SList[Point_Interface]):
     """
     Update centroids of clusters
     """
@@ -44,7 +44,7 @@ def update_centroids(clusters: List[Tuple[Point, int]], centroids: SList[Point])
     return new_centroids
 
 
-def max_dist(pair_a: Tuple[Point, float], pair_b: Tuple[Point, float]):
+def max_dist(pair_a: Tuple[Point_Interface, float], pair_b: Tuple[Point_Interface, float]):
     """
     Return the tuple with the maximum distance
     """
@@ -53,7 +53,7 @@ def max_dist(pair_a: Tuple[Point, float], pair_b: Tuple[Point, float]):
     return pair_b
 
 
-def k_means_init(input_list: List[Point], n_cluster: int) -> SList[Point]:
+def k_means_init(input_list: List[Point_Interface], n_cluster: int) -> SList[Point_Interface]:
     """
     K-means++ initialisation
 
@@ -79,8 +79,8 @@ def k_means_init(input_list: List[Point], n_cluster: int) -> SList[Point]:
     return centroids
 
 
-def k_means(input_list: List[Point], init_function: Callable[[List, int], List], n_cluster: int,
-            max_iter: int = 10) -> SList[SList[Point]]:
+def k_means(input_list: List[Point_Interface], init_function: Callable[[List, int], List], n_cluster: int,
+            max_iter: int = 10) -> SList[SList[Point_Interface]]:
     """
     K-means algorithm on a list of point
 
