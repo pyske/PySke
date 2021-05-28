@@ -110,16 +110,25 @@ def rand_point_2D_list(cls, size, clusters):
     distr = Distribution().balanced(size)
     return cls.from_seq(x).distribute(distr)
 
+
 def rand_point_3D_list(cls, size, clusters):
     """
-        Return a randomly generated list of 3D points.
+    Return a randomly generated list of 2D points.
 
-        :param cls: the class of the generated list.
-        :param size: a positive number
-            Precondition: size >= 0
-        :param clusters: number of clusters
-        :return: a list of the given class
-        """
+    :param cls: the class of the generated list.
+    :param size: a positive number
+        Precondition: size >= 0
+    :param clusters: number of clusters
+    :return: a list of the given class
+    """
+    from pyske.core.util.point_3D import Point_3D
+    from pyske.core import Distribution
+
+    x, _ = make_blobs(n_samples=size, centers=clusters)
+    x = x.tolist()
+    x = list(map(lambda y: Point_3D(y[0], y[1], y[2]), x))
+    distr = Distribution().balanced(size)
+    return cls.from_seq(x).distribute(distr)
 
 
 def print_experiment(result, timing, execute, iteration=None):
