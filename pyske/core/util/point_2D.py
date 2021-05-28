@@ -1,5 +1,5 @@
 """
-A module to represent a point
+A module to represent a 2D point
 """
 
 from math import sqrt
@@ -18,7 +18,7 @@ class Point_2D(Point_Interface):
 
     def __eq__(self, other):
         if isinstance(other, Point_2D):
-            return self.__x == other.x and self.__y == other.__y
+            return self.__x == other.__x and self.__y == other.__y
         return False
 
     def __add__(self, other):

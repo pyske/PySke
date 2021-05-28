@@ -91,9 +91,9 @@ def rand_list(cls, size):
     return cls.init(lambda _: float(random.randint(-100, 100)), size)
 
 
-def rand_point_list(cls, size, clusters):
+def rand_point_2D_list(cls, size, clusters):
     """
-    Return a randomly generated list of points.
+    Return a randomly generated list of 2D points.
 
     :param cls: the class of the generated list.
     :param size: a positive number
@@ -110,22 +110,16 @@ def rand_point_list(cls, size, clusters):
     distr = Distribution().balanced(size)
     return cls.from_seq(x).distribute(distr)
 
-
-def rand_2D_sample_list(cls, size , clusters):
+def rand_point_3D_list(cls, size, clusters):
     """
-    Return a randomly generated list of 2D sample.
+        Return a randomly generated list of 3D points.
 
-    :param cls: the class of the generated list.
-    :param size: a positive number
-        Precondition: size >= 0
-    :param clusters: number of clusters
-    :return: a list of the given class
-    """
-    print(clusters)
-    x, y_true = make_blobs(n_samples=size, centers=clusters)
-    x = x.tolist()
-    x = list(map(lambda y: (y[0], y[1]), x))
-    return cls.init(lambda i: x[i], size)
+        :param cls: the class of the generated list.
+        :param size: a positive number
+            Precondition: size >= 0
+        :param clusters: number of clusters
+        :return: a list of the given class
+        """
 
 
 def print_experiment(result, timing, execute, iteration=None):

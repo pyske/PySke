@@ -27,7 +27,7 @@ if __name__ == '__main__':
     clusters = args.clusters
 
     pyske_list_class = util.select_pyske_list(choice)
-    input_list = util.rand_point_list(pyske_list_class, size, clusters)
+    input_list = util.rand_point_2D_list(pyske_list_class, size, clusters)
     timing = Timing()
     execute = util.select_execute(choice)
     example = k_means
