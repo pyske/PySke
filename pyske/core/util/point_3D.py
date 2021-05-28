@@ -37,10 +37,26 @@ class Point_3D(Point_Interface):
             return Point_3D(self.x + other.x, self.y + other.y, self.z + other.z)
 
     def __mul__(self, other):
-        pass
+        """
+        Multiplication by a point or a scalar
+
+        Examples::
+
+            >>> p1 = Point_3D(5,5,2)
+            >>> p2 = Point_3D(5,7,1)
+            >>> p1 * 5
+            (25, 25, 10)
+            >>> p1 * p2
+            (25, 35, 2)
+        """
+        if isinstance(other, Point_3D):
+            return Point_3D(self.x * other.x, self.y * other.y, self.z * other.z)
+        if isinstance(other, int) or isinstance(other, float):
+            return Point_3D(self.x * other, self.y * other, self.z * other.z)
 
     def __truediv__(self, other):
-        pass
+        if isinstance(other, int):
+            return Point_3D(self.x / other, self.y / other, self.z / other)
 
     @property
     def x(self):
@@ -55,7 +71,7 @@ class Point_3D(Point_Interface):
     @property
     def z(self):
         """Z getter"""
-        return self.z
+        return self.__z
 
     def distance(self, other):
         """

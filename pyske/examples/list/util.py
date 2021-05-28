@@ -124,7 +124,7 @@ def rand_point_3D_list(cls, size, clusters):
     from pyske.core.util.point_3D import Point_3D
     from pyske.core import Distribution
 
-    x, _ = make_blobs(n_samples=size, centers=clusters)
+    x, _ = make_blobs(n_samples=size, centers=clusters, n_features=3)
     x = x.tolist()
     x = list(map(lambda y: Point_3D(y[0], y[1], y[2]), x))
     distr = Distribution().balanced(size)
