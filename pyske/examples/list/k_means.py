@@ -7,6 +7,7 @@ from typing import Callable, Tuple
 from pyske.core.interface import List
 from pyske.core.list import SList
 from pyske.core.util.point_Interface import Point_Interface
+from pyske.core.util.par import procs
 
 
 def cluster_index(point: Point_Interface, centroids: SList[Point_Interface]) -> Tuple[Point_Interface, int]:
@@ -63,7 +64,9 @@ def k_means_init(input_list: List[Point_Interface], n_cluster: int) -> SList[Poi
     :return: n_cluster centroids
     """
     centroids = SList([])
-    first_centroid = input_list.to_seq()[random.randint(0, input_list.length() - 1)]
+    first_centroid = input_list.get_partition()\
+                               .map(lambda l: l[random.randint(0, l.length() - 1)])\
+                               .to_seq()[random.randint(0, list(procs())[len(list(procs())) - 1])]
     centroids.append(first_centroid)
 
     for _ in range(n_cluster - 1):
