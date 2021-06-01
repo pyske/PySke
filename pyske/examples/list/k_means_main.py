@@ -19,17 +19,17 @@ if __name__ == '__main__':
     parser.add_argument("--iter", help="number of iterations", type=int, default=30)
     parser.add_argument("--data", help="type of data structure", choices=[PAR, SEQ], default=SEQ)
     parser.add_argument("--clusters", help="number of clusters", type=int, default=3)
+    parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
 
     args = parser.parse_args()
     size = args.size
     num_iter = args.iter
     choice = args.data
     clusters = args.clusters
+    dimensions = args.dimensions
 
     pyske_list_class = util.select_pyske_list(choice)
-
-    # input_list = util.rand_point_2D_list(pyske_list_class, size, clusters)
-    input_list = util.rand_point_3D_list(pyske_list_class, size, clusters)
+    input_list = util.rand_point_list(pyske_list_class, size, clusters, dimensions)
 
     timing = Timing()
     execute = util.select_execute(choice)

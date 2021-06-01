@@ -3,6 +3,7 @@ Utility functions for PySke examples
 """
 
 from sklearn.datasets import make_blobs
+from pyske.core import Distribution
 
 PAR = 'parallel'
 SEQ = 'sequential'
@@ -90,43 +91,39 @@ def rand_list(cls, size):
     import random
     return cls.init(lambda _: float(random.randint(-100, 100)), size)
 
-
-def rand_point_2D_list(cls, size, clusters):
+def select_point_dimensions(dimensions):
     """
-    Return a randomly generated list of 2D points.
+    Return a PySke list class.
+
+    :param dimensions: point dimensions
+            Precondition: dimensions >= 2
+    :return: a Point
+    """
+    # pylint: disable=import-outside-toplevel
+    if dimensions == 2:
+        from pyske.core.util.point_2D import Point_2D as PointClass
+    elif dimensions == 3:
+        from pyske.core.util.point_3D import Point_3D as PointClass
+    else:
+        from pyske.core.util.point_2D import Point_2D as PointClass
+    return PointClass
+
+def rand_point_list(cls, size, clusters, dimensions):
+    """
+    Return a randomly generated list of points.
 
     :param cls: the class of the generated list.
     :param size: a positive number
         Precondition: size >= 0
     :param clusters: number of clusters
+    :param dimensions: point dimensions
+            Precondition: dimensions >= 2
     :return: a list of the given class
     """
-    from pyske.core.util.point_2D import Point_2D
-    from pyske.core import Distribution
-
-    x, _ = make_blobs(n_samples=size, centers=clusters)
+    x, _ = make_blobs(n_samples=size, centers=clusters, n_features=dimensions)
     x = x.tolist()
-    x = list(map(lambda y: Point_2D(y[0], y[1]), x))
-    distr = Distribution().balanced(size)
-    return cls.from_seq(x).distribute(distr)
-
-
-def rand_point_3D_list(cls, size, clusters):
-    """
-    Return a randomly generated list of 2D points.
-
-    :param cls: the class of the generated list.
-    :param size: a positive number
-        Precondition: size >= 0
-    :param clusters: number of clusters
-    :return: a list of the given class
-    """
-    from pyske.core.util.point_3D import Point_3D
-    from pyske.core import Distribution
-
-    x, _ = make_blobs(n_samples=size, centers=clusters, n_features=3)
-    x = x.tolist()
-    x = list(map(lambda y: Point_3D(y[0], y[1], y[2]), x))
+    pointclass = select_point_dimensions(dimensions)
+    x = list(map(lambda y: pointclass(*y), x))
     distr = Distribution().balanced(size)
     return cls.from_seq(x).distribute(distr)
 
