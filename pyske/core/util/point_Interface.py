@@ -1,9 +1,9 @@
 """
 A module to represent a point
 """
+from abc import ABC
 
-
-class Point_Interface:
+class Point_Interface(ABC):
     """Point interface to represent point of n dimensions"""
 
     def __repr__(self):
