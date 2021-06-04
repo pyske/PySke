@@ -2,12 +2,10 @@
 Execution of k_means
 """
 import argparse
-import matplotlib.pyplot as plt
 
 from pyske.core import Timing
 from pyske.examples.list.k_means import k_means, k_means_init
 from pyske.examples.list import util
-from pyske.core.support import parallel
 
 PAR = 'parallel'
 SEQ = 'sequential'
@@ -20,6 +18,8 @@ if __name__ == '__main__':
     parser.add_argument("--data", help="type of data structure", choices=[PAR, SEQ], default=SEQ)
     parser.add_argument("--clusters", help="number of clusters", type=int, default=3)
     parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
+    parser.add_argument("--show-clusters", help="display the clusters graph of 2D points",
+                        action="store_true")
 
     args = parser.parse_args()
     size = args.size
@@ -27,6 +27,7 @@ if __name__ == '__main__':
     choice = args.data
     clusters = args.clusters
     dimensions = args.dimensions
+    show_clusters = args.show_clusters
 
     pyske_list_class = util.select_pyske_list(choice)
     input_list = util.rand_point_list(pyske_list_class, size, clusters, dimensions)
@@ -40,7 +41,5 @@ if __name__ == '__main__':
         result = example(input_list, k_means_init, clusters)
         timing.stop()
         util.print_experiment("", timing.get(), execute, iteration)
-        # if parallel.PID == 0:
-        #    for i in range((len(result))):
-        #        plt.scatter([point.x for point in result[i]], [point.y for point in result[i]])
-        #    plt.show()
+        if show_clusters and dimensions == 2:
+            util.print_2D_result(result.to_seq())

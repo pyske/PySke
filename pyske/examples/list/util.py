@@ -1,9 +1,13 @@
 """
 Utility functions for PySke examples
 """
+from typing import Tuple
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs
-from pyske.core import Distribution
+from pyske.core import Distribution, SList
+from pyske.core.support import parallel
+from pyske.core.util.point_2D import Point_2D
 
 PAR = 'parallel'
 SEQ = 'sequential'
@@ -100,9 +104,7 @@ def select_point_dimensions(dimensions):
     :return: a Point
     """
     # pylint: disable=import-outside-toplevel
-    if dimensions == 2:
-        from pyske.core.util.point_2D import Point_2D as PointClass
-    elif dimensions == 3:
+    if dimensions == 3:
         from pyske.core.util.point_3D import Point_3D as PointClass
     else:
         from pyske.core.util.point_2D import Point_2D as PointClass
@@ -126,6 +128,17 @@ def rand_point_list(cls, size, clusters, dimensions):
     x = list(map(lambda y: pointclass(*y), x))
     distr = Distribution().balanced(size)
     return cls.from_seq(x).distribute(distr)
+
+def print_2D_result(clusters_list: SList[Tuple[Point_2D, int]]):
+    """
+    Print experiment of 2 dimension points k-means clustering
+    """
+    if parallel.PID == 0:
+        x = clusters_list.map(lambda pair: pair[0].x)
+        y = clusters_list.map(lambda pair: pair[0].y)
+        colors = clusters_list.map(lambda pair: pair[1])
+        plt.scatter(x, y, c=colors)
+        plt.show()
 
 
 def print_experiment(result, timing, execute, iteration=None):
