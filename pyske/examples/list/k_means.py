@@ -10,7 +10,8 @@ from pyske.core.util.point_Interface import Point_Interface
 from pyske.core.util.par import procs
 
 
-def cluster_index(point: Point_Interface, centroids: SList[Point_Interface]) -> Tuple[Point_Interface, int]:
+def cluster_index(point: Point_Interface, centroids: SList[Point_Interface]) -> \
+        Tuple[Point_Interface, int]:
     """
     Get the centroid index of the closest centroid
     """
@@ -23,24 +24,37 @@ def cluster_index(point: Point_Interface, centroids: SList[Point_Interface]) -> 
     return point, centroids.index(p_centroid)
 
 
-def assign_clusters(input_list: List[Point_Interface], centroids: SList[Point_Interface]) -> List[Tuple[Point_Interface, int]]:
+def assign_clusters(input_list: List[Point_Interface], centroids: SList[Point_Interface]) -> \
+        List[Tuple[Point_Interface, int]]:
     """
     Assign each point to a cluster
     """
     return input_list.map(lambda x: cluster_index(x, centroids))
 
 
-def update_centroids(clusters: List[Tuple[Point_Interface, int]], centroids: SList[Point_Interface]):
+def update_centroids(clusters: List[Tuple[Point_Interface, int]],
+                     centroids: SList[Point_Interface]):
     """
     Update centroids of clusters
     """
 
-    new_centroids = SList.init(lambda _: (_, _, _), len(centroids))
+    def centroids_list_update(list_to_update, item):
+        if isinstance(item, SList):
+            list_to_update = list_to_update.map2(lambda a_pair, b_pair: (a_pair[0] + b_pair[0],
+                                                                         a_pair[1] + b_pair[1]),
+                                                 item)
+        else:
+            index = item[1]
+            point = item[0]
+            list_to_update[index] = (list_to_update[index][0] + point,
+                                     list_to_update[index][1] + 1)
+        return list_to_update
 
-    new_centroids = new_centroids.mapi(lambda i, x: clusters.map_reduce(lambda w: (w[0], w[1], 1),
-        lambda y, z: (y[0] + z[0], y[1], y[2] + z[2]) if y[1] == i and z[1] == i else (
-            z if y[1] != i else y)))
-    new_centroids = new_centroids.map(lambda x: x[0] / x[2])
+    point_class = type(centroids[0])
+    neutral_list = SList.init(lambda _: (point_class(), 0), len(centroids))
+    new_centroids = clusters.reduce(lambda a_item, b_item:
+                                    centroids_list_update(a_item, b_item), neutral_list)
+    new_centroids = new_centroids.map(lambda x: x[0] / x[1])
 
     return new_centroids
 
@@ -58,15 +72,15 @@ def k_means_init(input_list: List[Point_Interface], n_cluster: int) -> SList[Poi
     """
     K-means++ initialisation
 
-    :param input_list: a list of point
-    :param n_cluster: number of cluster
+    :param input_list: a list of points
+    :param n_cluster: number of clusters
 
-    :return: n_cluster centroids
+    :return: list of centroids
     """
     centroids = SList([])
-    first_centroid = input_list.get_partition()\
-                               .map(lambda l: l[random.randint(0, l.length() - 1)])\
-                               .to_seq()[random.randint(0, list(procs())[len(list(procs())) - 1])]
+    first_centroid = input_list.get_partition() \
+        .map(lambda l: l[random.randint(0, l.length() - 1)]) \
+        .to_seq()[random.randint(0, list(procs())[len(list(procs())) - 1])]
     centroids.append(first_centroid)
 
     for _ in range(n_cluster - 1):
@@ -82,17 +96,18 @@ def k_means_init(input_list: List[Point_Interface], n_cluster: int) -> SList[Poi
     return centroids
 
 
-def k_means(input_list: List[Point_Interface], init_function: Callable[[List, int], List], n_cluster: int,
-            max_iter: int = 10) -> SList[SList[Point_Interface]]:
+def k_means(input_list: List[Point_Interface], init_function: Callable[[List, int], List],
+            n_cluster: int,
+            max_iter: int = 10) -> List[Tuple[Point_Interface, int]]:
     """
-    K-means algorithm on a list of point
+    K-means algorithm on a list of points
 
-    :param input_list: a list of point
-    :param n_cluster: number of cluster
-    :param max_iter: number of iteration
+    :param input_list: a list of points
+    :param n_cluster: number of clusters
+    :param max_iter: number of iterations
     :param init_function: a function that initialize centroids
 
-    :return: 2 dimensions list of points
+    :return: a list of tuples with the point and his cluster index
     """
     centroids = init_function(input_list, n_cluster)
 
@@ -104,9 +119,4 @@ def k_means(input_list: List[Point_Interface], init_function: Callable[[List, in
 
         j = j + 1
 
-    clusters2d = SList([])
-    for i in range(len(centroids)):
-        clusters2d.append(clusters.filter(lambda x, num_cluster=i: x[1] == num_cluster)
-                          .map(lambda x: x[0]).to_seq()
-                          )
-    return clusters2d
+    return clusters
