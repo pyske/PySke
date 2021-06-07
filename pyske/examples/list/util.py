@@ -3,6 +3,7 @@ Utility functions for PySke examples
 """
 from typing import Tuple
 import matplotlib.pyplot as plt
+import argparse
 
 from sklearn.datasets import make_blobs
 from pyske.core import Distribution, SList
@@ -26,8 +27,6 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     :param data_arg: (default True) flag to select argument --data
     :return:  (size, iter, ['parallel' | 'sequential'])
     """
-    # pylint: disable=import-outside-toplevel
-    import argparse
     parser = argparse.ArgumentParser()
     if size_arg:
         parser.add_argument("--size", help="size of the list to generate",
@@ -49,6 +48,20 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
         data_type = args.data
     return size, num_iter, data_type
 
+
+def k_means_parser():
+    """
+    Parse command line for k-means example.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000)
+    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
+    parser.add_argument("--data", help="type of data structure", choices=[PAR, SEQ], default=SEQ)
+    parser.add_argument("--clusters", help="number of clusters", type=int, default=3)
+    parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
+    parser.add_argument("--show-clusters", help="display the clusters graph of 2D points",
+                        action="store_true")
+    return parser
 
 def select_pyske_list(choice):
     """

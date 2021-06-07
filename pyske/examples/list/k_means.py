@@ -70,7 +70,7 @@ def max_dist(pair_a: Tuple[Point_Interface, float], pair_b: Tuple[Point_Interfac
 
 def k_means_init(input_list: List[Point_Interface], n_cluster: int) -> SList[Point_Interface]:
     """
-    K-means++ initialisation
+    K-means++ initialization
 
     :param input_list: a list of points
     :param n_cluster: number of clusters
@@ -103,9 +103,9 @@ def k_means(input_list: List[Point_Interface], init_function: Callable[[List, in
     K-means algorithm on a list of points
 
     :param input_list: a list of points
+    :param init_function: a function that initialize centroids
     :param n_cluster: number of clusters
     :param max_iter: number of iterations
-    :param init_function: a function that initialize centroids
 
     :return: a list of tuples with the point and his cluster index
     """
