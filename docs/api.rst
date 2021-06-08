@@ -3,7 +3,7 @@ PySke API
 
 Pyske API offer applications implemented with list and tree skeletons.
 The user can use the sequential or parallel version.
-The parallel version allows a faster execution time when its launched on several processors or computers.
+The parallel version allows a faster execution time when its launched on several processors, cores or computers.
 
 Dot Product
 -----------
@@ -23,19 +23,25 @@ K-means function
 
 .. autofunction:: k_means
 
-Here the implementation of the 2 dimensions point class.
+Initialization functions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is the standard method that initializes the centroids. This method chooses the centroids in order that each point is as far as possible from the other.
+
+.. autofunction:: k_means_init
+
+
+Point Interface
+^^^^^^^^^^^^^^^
+
+K-means algorithm takes a list of points in parameters. For now two versions implement this class, one for 2 dimension points and another for 3 dimension points.
+
+Point 2D class implementation:
 
 .. autoclass:: pyske.core.util.point_2D.Point_2D
     :members:
     :special-members:
-    :show-inheritance:
-    :private-members:
     :member-order: bysource
-
-Initialization functions
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autofunction:: k_means_init
 
 Running Example
 ^^^^^^^^^^^^^^^^^^^^

@@ -17,6 +17,9 @@ class Point_2D(Point_Interface):
         return "(%s, %s)" % (self.__x, self.__y)
 
     def __eq__(self, other):
+        """
+        Equality between two points
+        """
         if isinstance(other, Point_2D):
             return self.__x == other.__x and self.__y == other.__y
         return False
