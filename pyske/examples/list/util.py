@@ -3,12 +3,14 @@ Utility functions for PySke examples
 """
 from typing import Tuple
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
 import argparse
 
 from sklearn.datasets import make_blobs
 from pyske.core import Distribution, SList
 from pyske.core.support import parallel
 from pyske.core.util.point_2D import Point_2D
+from pyske.core.util.point_3D import Point_3D
 
 PAR = 'parallel'
 SEQ = 'sequential'
@@ -153,6 +155,26 @@ def print_2D_result(clusters_list: SList[Tuple[Point_2D, int]]):
         plt.scatter(x, y, c=colors)
         plt.show()
 
+def print_3D_result(clusters_list: SList[Tuple[Point_3D, int]]):
+    """
+        Print experiment of 3 dimension points k-means clustering
+        """
+    if parallel.PID == 0:
+        x = clusters_list.map(lambda pair: pair[0].x)
+        y = clusters_list.map(lambda pair: pair[0].y)
+        z = clusters_list.map(lambda pair: pair[0].z)
+        colors = clusters_list.map(lambda pair: pair[1])
+
+        # Tracé du résultat en 3D
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')  # Affichage en 3D
+        ax.scatter(x, y, z, label='Courbe', marker='d')  # Tracé des points 3D
+        plt.title("Points 3D")
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.tight_layout()
+        plt.show()
 
 def print_experiment(result, timing, execute, iteration=None):
     """

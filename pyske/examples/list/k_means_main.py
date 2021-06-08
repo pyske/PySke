@@ -36,3 +36,7 @@ if __name__ == '__main__':
         util.print_experiment("", timing.get(), execute, iteration)
         if show_clusters and dimensions == 2:
             util.print_2D_result(result.to_seq())
+        elif show_clusters and dimensions == 3:
+            util.print_3D_result(result.to_seq())
+
+
