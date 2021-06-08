@@ -57,12 +57,12 @@ def k_means_parser():
     Parse command line for k-means example.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000)
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=5_000)
     parser.add_argument("--iter", help="number of iterations", type=int, default=30)
     parser.add_argument("--data", help="type of data structure", choices=[PAR, SEQ], default=SEQ)
     parser.add_argument("--clusters", help="number of clusters", type=int, default=3)
     parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
-    parser.add_argument("--show-clusters", help="display the clusters graph of 2D points",
+    parser.add_argument("--show-clusters", help="display the clusters graph of 2D or 3D points",
                         action="store_true")
     return parser
 
