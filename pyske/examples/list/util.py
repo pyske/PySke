@@ -1,10 +1,11 @@
 """
 Utility functions for PySke examples
 """
+
 from typing import Tuple
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import axes3d
+
 import argparse
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_blobs
 from pyske.core import Distribution, SList
@@ -157,8 +158,8 @@ def print_2D_result(clusters_list: SList[Tuple[Point_2D, int]]):
 
 def print_3D_result(clusters_list: SList[Tuple[Point_3D, int]]):
     """
-        Print experiment of 3 dimension points k-means clustering
-        """
+    Print experiment of 3 dimension points k-means clustering
+    """
     if parallel.PID == 0:
         x = clusters_list.map(lambda pair: pair[0].x)
         y = clusters_list.map(lambda pair: pair[0].y)
@@ -167,8 +168,8 @@ def print_3D_result(clusters_list: SList[Tuple[Point_3D, int]]):
 
         # Tracé du résultat en 3D
         fig = plt.figure()
-        ax = fig.gca(projection='3d')  # Affichage en 3D
-        ax.scatter(x, y, z, label='Courbe', marker='d')  # Tracé des points 3D
+        ax = fig.add_subplot(projection='3d')  # Affichage en 3D
+        ax.scatter(x, y, z, label='Courbe', marker='d', c=colors)  # Tracé des points 3D
         plt.title("Points 3D")
         ax.set_xlabel('X')
         ax.set_ylabel('Y')

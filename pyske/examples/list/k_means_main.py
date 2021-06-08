@@ -12,7 +12,7 @@ SEQ = 'sequential'
 
 if __name__ == '__main__':
 
-    parser = util. k_means_parser()
+    parser = util.k_means_parser()
 
     args = parser.parse_args()
     size = args.size
@@ -34,9 +34,9 @@ if __name__ == '__main__':
         result = example(input_list, k_means_init, clusters)
         timing.stop()
         util.print_experiment("", timing.get(), execute, iteration)
-        if show_clusters and dimensions == 2:
-            util.print_2D_result(result.to_seq())
-        elif show_clusters and dimensions == 3:
-            util.print_3D_result(result.to_seq())
-
+        if show_clusters:
+            if dimensions == 2:
+                util.print_2D_result(result.to_seq())
+            if dimensions == 3:
+                util.print_3D_result(result.to_seq())
 
