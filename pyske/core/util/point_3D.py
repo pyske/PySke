@@ -91,5 +91,5 @@ class Point_3D(Point_Interface):
         """
         dx = self.__x - other.x
         dy = self.__y - other.y
-        dz = self.__x - other.z
+        dz = self.__z - other.z
         return sqrt(dx ** 2 + dy ** 2 + dz ** 2)
