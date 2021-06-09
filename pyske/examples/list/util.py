@@ -34,16 +34,7 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     :param data_arg: (default True) flag to select argument --data
     :return:  (size, iter, ['parallel' | 'sequential'])
     """
-    parser = argparse.ArgumentParser()
-    if size_arg:
-        parser.add_argument("--size", help="size of the list to generate",
-                            type=int, default=1_000_000)
-    if iter_arg:
-        parser.add_argument("--iter", help="number of iterations",
-                            type=int, default=30)
-    if data_arg:
-        parser.add_argument("--data", help="type of data structure",
-                            choices=[PAR, SEQ], default=SEQ)
+    parser = standard_parser(size_arg, iter_arg, data_arg)
     size = num_iter = 0
     data_type = PAR
     args = parser.parse_args()
@@ -56,9 +47,25 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     return size, num_iter, data_type
 
 
+def standard_parser(size_arg=True, iter_arg=True, data_arg=True):
+    """
+    Parser for standard example.
+    """
+    parser = argparse.ArgumentParser()
+    if size_arg:
+        parser.add_argument("--size", help="size of the list to generate",
+                            type=int, default=1_000_000)
+    if iter_arg:
+        parser.add_argument("--iter", help="number of iterations",
+                            type=int, default=30)
+    if data_arg:
+        parser.add_argument("--data", help="type of data structure",
+                            choices=[PAR, SEQ], default=SEQ)
+    return parser
+
 def k_means_parser():
     """
-    Parse command line for k-means example.
+    Parser for k-means example.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--size", help="size of the list to generate", type=int, default=5_000)
@@ -68,11 +75,12 @@ def k_means_parser():
     parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
     parser.add_argument("--show-clusters", help="display the clusters graph of 2D or 3D points",
                         action="store_true")
+
     return parser
 
 def dot_product_parser():
     """
-    Parse command line for dot-product example.
+    Parse for dot-product example.
     """
 
     parser = argparse.ArgumentParser()

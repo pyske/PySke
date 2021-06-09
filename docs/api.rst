@@ -1,9 +1,12 @@
 PySke API
-=========
+#########
 
 PySke API offer applications implemented with list and tree skeletons.
 The user can use the sequential or parallel version.
 The parallel version allows a faster execution time when its launched on several processors, cores or computers.
+
+List Examples
+=============
 
 Dot Product
 -----------
@@ -24,14 +27,19 @@ Dot Product Variant
 Running Example
 ^^^^^^^^^^^^^^^
 
-.. argparse::
-    :module: pyske.examples.list.util
-    :func: dot_product_parser
-    :prog: python3 dot_product_main.py
+.. autoprogram:: pyske.examples.list.util:dot_product_parser()
+    :prog: dot_product_main.py
 
 
 Discrete Fast Fourier Transform
 -------------------------------
+
+Running Example
+^^^^^^^^^^^^^^^
+
+.. autoprogram:: pyske.examples.list.util:standard_parser(data_arg=False)
+    :prog: fft_main.py
+
 
 K-means Clustering
 ------------------
@@ -68,21 +76,47 @@ Point 2D class implementation:
 Running Example
 ^^^^^^^^^^^^^^^
 
-.. argparse::
-    :module: pyske.examples.list.util
-    :func: k_means_parser
-    :prog: python3 k_means_main.py
+.. autoprogram:: pyske.examples.list.util:k_means_parser()
+    :prog: k_means_main.py
 
 
 Maximum Prefix Sum
 ------------------
 
+Running Example
+^^^^^^^^^^^^^^^
+
+.. autoprogram:: pyske.examples.list.util:standard_parser()
+    :prog: maximum_prefix_sum_main.py
+
 Maximum Segment Sum
 -------------------
+
+Running Example
+^^^^^^^^^^^^^^^
+
+.. autoprogram:: pyske.examples.list.util:standard_parser()
+    :prog: maximum_segment_sum_main.py
 
 Parallel Regular Sampling Sort
 ------------------------------
 
+Running Example
+^^^^^^^^^^^^^^^
+
+.. autoprogram:: pyske.examples.list.util:standard_parser()
+    :prog: regular_sampling_sort_main.py
+
 Variance Example
 ----------------
+
+Running Example
+^^^^^^^^^^^^^^^
+
+.. autoprogram:: pyske.examples.list.util:standard_parser()
+    :prog: variance_main.py
+
+
+Tree Examples
+=============
 
