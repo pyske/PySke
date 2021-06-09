@@ -1,12 +1,34 @@
 PySke API
 =========
 
-Pyske API offer applications implemented with list and tree skeletons.
+PySke API offer applications implemented with list and tree skeletons.
 The user can use the sequential or parallel version.
 The parallel version allows a faster execution time when its launched on several processors, cores or computers.
 
 Dot Product
 -----------
+
+.. py:module:: pyske.examples.list.dot_product
+
+
+Dot Product function
+^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: opt_dot_product
+
+Dot Product Variant
+^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: dot_product
+
+Running Example
+^^^^^^^^^^^^^^^
+
+.. argparse::
+    :module: pyske.examples.list.util
+    :func: dot_product_parser
+    :prog: python3 dot_product_main.py
+
 
 Discrete Fast Fourier Transform
 -------------------------------
@@ -44,7 +66,7 @@ Point 2D class implementation:
     :member-order: bysource
 
 Running Example
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. argparse::
     :module: pyske.examples.list.util

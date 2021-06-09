@@ -15,6 +15,10 @@ from pyske.core.util.point_3D import Point_3D
 
 PAR = 'parallel'
 SEQ = 'sequential'
+_DIRECT = '_DIRECT'
+_HAND = 'hand_optimized'
+_OPT = 'optimized'
+_EVAL = 'evaluated'
 
 
 def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
@@ -64,6 +68,19 @@ def k_means_parser():
     parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
     parser.add_argument("--show-clusters", help="display the clusters graph of 2D or 3D points",
                         action="store_true")
+    return parser
+
+def dot_product_parser():
+    """
+    Parse command line for dot-product example.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
+    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
+    parser.add_argument("--test", help="choice of the test",
+                        choices=[_DIRECT, _HAND, _EVAL, _OPT],
+                        default=_DIRECT)
     return parser
 
 def select_pyske_list(choice):
