@@ -94,6 +94,13 @@ Running Example
 Maximum Prefix Sum
 ------------------
 
+.. py:module:: pyske.examples.list.maximum_prefix_sum
+
+Maximum Prefix Sum function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: mps
+
 Running Example
 ^^^^^^^^^^^^^^^
 
@@ -112,6 +119,20 @@ Running Example
 Parallel Regular Sampling Sort
 ------------------------------
 
+.. py:module:: pyske.examples.list.regular_sampling_sort
+
+
+Broadcast function
+^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: bcast
+
+Sort function
+^^^^^^^^^^^^^
+
+.. autofunction:: pssr
+
+
 Running Example
 ^^^^^^^^^^^^^^^
 
@@ -120,6 +141,13 @@ Running Example
 
 Variance Example
 ----------------
+
+.. py:module:: pyske.examples.list.variance
+
+Variance function
+^^^^^^^^^^^^^^^^^
+
+.. autofunction:: variance
 
 Running Example
 ^^^^^^^^^^^^^^^
