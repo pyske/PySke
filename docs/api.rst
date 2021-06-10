@@ -5,6 +5,14 @@ PySke API offer applications implemented with list and tree skeletons.
 The user can use the sequential or parallel version.
 The parallel version allows a faster execution time when its launched on several processors, cores or computers.
 
+Run examples with parallel computing:
+
+    .. code-block:: console
+
+        mpirun -np NB_CORES python3 PROGRAM_NAME [OPTIONS]
+
+Examples without :code:`--data` option are only runnable in parallel.
+
 List Examples
 =============
 
@@ -14,13 +22,10 @@ Dot Product
 .. py:module:: pyske.examples.list.dot_product
 
 
-Dot Product function
-^^^^^^^^^^^^^^^^^^^^
+Dot Product functions
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: opt_dot_product
-
-Dot Product Variant
-^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: dot_product
 
@@ -33,6 +38,12 @@ Running Example
 
 Discrete Fast Fourier Transform
 -------------------------------
+.. py:module:: pyske.examples.list.fft
+
+Fast Fourier Transform function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: fft
 
 Running Example
 ^^^^^^^^^^^^^^^
