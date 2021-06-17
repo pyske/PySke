@@ -7,6 +7,8 @@ from pyske.core.array.parray2d import PArray2D
 
 def __main():
     parray2d = PArray2D.init(lambda x: x, 6, 12)
+    #print(parray2d)
+    parray2d = parray2d.distribute()
     print(parray2d)
 
 
