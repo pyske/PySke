@@ -51,6 +51,6 @@ class PArray2D:
 
         parray2d.__content = [value_at(i) for i in range(lines_start_index * col_size,
                                                          (lines_stop_index + 1) * col_size)]
-        parray2d.__distribution = [parimpl.local_size(_PID, line_size) * col_size for _ in
-                                   range(0, _NPROCS)]
+        parray2d.__distribution = _COMM.allgather(parray2d.__local_index)
+
         return parray2d
