@@ -6,6 +6,7 @@ class PArray2D: parallel arrays.
 from typing import Callable
 from enum import Enum
 
+from pyske.core import SList
 from pyske.core.support import parallel as parimpl
 
 _PID: int = parimpl.PID
@@ -17,28 +18,17 @@ class Distribution(Enum):
     COLUMN = 'COLUMN'
 
 
-def _local_index(distribution: str, col_size: int, line_size: int):
+def _local_index(distribution: Enum, col_size: int, line_size: int, pid: int):
+    local_sizes = SList([])
+    for i in range(_NPROCS):
+        if distribution == Distribution.LINE:
+            local_sizes.append(parimpl.local_size(i, line_size))
+        else:
+            local_sizes.append(parimpl.local_size(i, col_size))
+    start_indexes = local_sizes.scanl(lambda x, y: x + y, 0)
     if distribution == Distribution.LINE:
-        local_size = parimpl.local_size(_PID, line_size)
-        b_start_index = 0
-        b_stop_index = col_size - 1
-    else:
-        local_size = parimpl.local_size(_PID, col_size)
-        b_start_index = 0
-        b_stop_index = line_size - 1
-
-    if _PID == 0:
-        a_start_index = local_size * _PID
-    else:
-        a_start_index = _COMM.recv(source=_PID - 1) + 1
-    a_stop_index = a_start_index + local_size - 1
-    if _PID != _NPROCS - 1:
-        _COMM.send(a_stop_index, _PID + 1)
-
-    if distribution == Distribution.LINE:
-        return (a_start_index, a_stop_index), (b_start_index, b_stop_index)
-    else:
-        return (b_start_index, b_stop_index), (a_start_index, a_stop_index)
+        return (start_indexes[pid], start_indexes[pid] + local_sizes[pid] - 1), (0, col_size - 1)
+    return (0, line_size - 1), (start_indexes[pid], start_indexes[pid] + local_sizes[pid] - 1)
 
 
 class PArray2D:
@@ -69,11 +59,14 @@ class PArray2D:
         parray2d = PArray2D()
         parray2d.__global_index = ((0, line_size - 1), (0, col_size - 1))
 
-        parray2d.__local_index = _local_index(Distribution.LINE, col_size, line_size)
+        parray2d.__local_index = _local_index(Distribution.LINE, col_size, line_size, _PID)
 
         parray2d.__content = [value_at(i) for i in range(parray2d.__local_index[0][0] * col_size,
-                                                         (parray2d.__local_index[0][1] + 1) * col_size)]
-        parray2d.__distribution = _COMM.allgather(parray2d.__local_index)
+                                                         (parray2d.__local_index[0][
+                                                              1] + 1) * col_size)]
+        parray2d.__distribution = [
+            _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
+            range(_NPROCS)]
 
         return parray2d
 
@@ -87,10 +80,11 @@ class PArray2D:
         col_size = self.__global_index[1][1] - self.__global_index[1][0] + 1
         line_size = self.__global_index[0][1] - self.__global_index[0][0] + 1
 
-        parray2d.__local_index = _local_index(Distribution.COLUMN, col_size, line_size)
-
-        parray2d.__distribution = _COMM.allgather(parray2d.__local_index)
+        parray2d.__local_index = _local_index(Distribution.COLUMN, col_size, line_size, _PID)
         parray2d.__distribution_direction = Distribution.COLUMN
+        parray2d.__distribution = [
+            _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
+            range(_NPROCS)]
 
         # update content for each process
         for i in range(0, _NPROCS):
