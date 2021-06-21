@@ -17,7 +17,6 @@ class Distribution(Enum):
     LINE = 'LINE'
     COLUMN = 'COLUMN'
 
-
 def _local_index(distribution: Enum, col_size: int, line_size: int, pid: int):
     local_sizes = SList([])
     for i in range(_NPROCS):
@@ -52,7 +51,15 @@ class PArray2D:
                "  content: " + str(self.__content) + "\n"
 
     @staticmethod
-    def init(value_at: Callable[[int, int], int], col_size: int = _NPROCS, line_size: int = _NPROCS):
+    def init_line(value_at: Callable[[int, int], int], col_size: int = _NPROCS,
+                  line_size: int = _NPROCS):
+        """
+        Return an array built using a function per line on each processor
+
+        :param value_at: binary function
+        :return: an 2d array of the given line and column size, where for all valid line column
+            i, j, the value at this index is value_at(i, j)
+        """
         assert _NPROCS <= col_size
         assert _NPROCS <= line_size
 
@@ -65,6 +72,35 @@ class PArray2D:
             for column in range(parray2d.__local_index[1][0], parray2d.__local_index[1][1] + 1):
                 parray2d.__content.append(value_at(line, column))
 
+        parray2d.__distribution = [
+            _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
+            range(_NPROCS)]
+
+        return parray2d
+
+    @staticmethod
+    def init_column(value_at: Callable[[int, int], int], col_size: int = _NPROCS,
+                    line_size: int = _NPROCS):
+        """
+        Return an array built using a function per column on each processor
+
+        :param value_at: binary function
+        :return: an 2d array of the given line and column size, where for all valid line column
+            i, j, the value at this index is value_at(i, j)
+        """
+        assert _NPROCS <= col_size
+        assert _NPROCS <= line_size
+
+        parray2d = PArray2D()
+        parray2d.__global_index = ((0, line_size - 1), (0, col_size - 1))
+
+        parray2d.__local_index = _local_index(Distribution.COLUMN, col_size, line_size, _PID)
+
+        for line in range(parray2d.__local_index[0][0], parray2d.__local_index[0][1] + 1):
+            for column in range(parray2d.__local_index[1][0], parray2d.__local_index[1][1] + 1):
+                parray2d.__content.append(value_at(line, column))
+
+        parray2d.__distribution_direction = Distribution.COLUMN
         parray2d.__distribution = [
             _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
             range(_NPROCS)]
