@@ -52,7 +52,7 @@ class PArray2D:
                "  content: " + str(self.__content) + "\n"
 
     @staticmethod
-    def init(value_at: Callable[[int], int], col_size: int = _NPROCS, line_size: int = _NPROCS):
+    def init(value_at: Callable[[int, int], int], col_size: int = _NPROCS, line_size: int = _NPROCS):
         assert _NPROCS <= col_size
         assert _NPROCS <= line_size
 
@@ -61,9 +61,10 @@ class PArray2D:
 
         parray2d.__local_index = _local_index(Distribution.LINE, col_size, line_size, _PID)
 
-        parray2d.__content = [value_at(i) for i in range(parray2d.__local_index[0][0] * col_size,
-                                                         (parray2d.__local_index[0][
-                                                              1] + 1) * col_size)]
+        for line in range(parray2d.__local_index[0][0], parray2d.__local_index[0][1] + 1):
+            for column in range(parray2d.__local_index[1][0], parray2d.__local_index[1][1] + 1):
+                parray2d.__content.append(value_at(line, column))
+
         parray2d.__distribution = [
             _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
             range(_NPROCS)]
