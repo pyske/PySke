@@ -3,7 +3,8 @@ A module of parallel arrays and associated skeletons
 
 class PArray2D: parallel arrays.
 """
-from typing import Callable, TypeVar, Generic
+import functools
+from typing import Callable, TypeVar, Generic, Optional
 from enum import Enum
 
 from pyske.core import SList
@@ -16,9 +17,11 @@ _COMM = parimpl.COMM
 T = TypeVar('T')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
+
 class Distribution(Enum):
     LINE = 'LINE'
     COLUMN = 'COLUMN'
+
 
 def _local_index(distribution: Enum, col_size: int, line_size: int, pid: int):
     local_sizes = SList([])
@@ -126,3 +129,25 @@ class PArray2D(Generic[T]):
         """
         self.__content = [unary_op(elem) for elem in self.__content]
         return self
+
+    def reduce(self: 'PArray2D[T]', binary_op: Callable[[T, T], T],
+               neutral: Optional[T] = None) -> T:
+        """
+        Reduce an array of value to one value.
+
+        :param binary_op: a binary associative and commutative operation
+        :param neutral: (optional):
+            a value that should be a neutral element for the operation,
+            i.e. for all element e,
+                ``binary_op(neutral, e) == binary_op(e, neutral) == e``.
+            If this argument is omitted the list should not be empty.
+        :return: a value
+        """
+        if neutral is None:
+            assert self.__global_index != ((-1, -1), (-1, -1))
+            partial = functools.reduce(binary_op, self.__content)
+            partials = _COMM.allgather(partial)
+            return functools.reduce(binary_op, partials)
+        partial = functools.reduce(binary_op, self.__content, neutral)
+        partials = _COMM.allgather(partial)
+        return functools.reduce(binary_op, partials, neutral)

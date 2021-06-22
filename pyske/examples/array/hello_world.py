@@ -10,7 +10,8 @@ def __main():
     line_size = 12
 
     print("Line initialization")
-    parray2d_line_init = PArray2D.init(lambda line, column: line * col_size + column, Distribution.LINE, col_size, line_size)
+    parray2d_line_init = PArray2D.init(lambda line, column: line * col_size + column,
+                                       Distribution.LINE, col_size, line_size)
     print(parray2d_line_init)
 
     print("Line to column distribution")
@@ -18,8 +19,14 @@ def __main():
     print(parray2d_column)
 
     print("Column initialization")
-    parray2d_column_init = PArray2D.init(lambda line, column: line * col_size + column, Distribution.COLUMN, col_size, line_size)
+    parray2d_column_init = PArray2D.init(lambda line, column: line * col_size + column,
+                                         Distribution.COLUMN, col_size, line_size)
     print(parray2d_column_init)
+
+    print(parray2d_column_init.reduce(lambda x, y: x + y, 0))
+    print(parray2d_line_init.reduce(lambda x, y: x + y, 0))
+    print(parray2d_column.reduce(lambda x, y: x + y, 0))
+    print(PArray2D().reduce(lambda x, y: x + y, 0))
 
 
 if __name__ == '__main__':
