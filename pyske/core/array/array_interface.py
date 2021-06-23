@@ -5,9 +5,9 @@ Interfaces: Array2D.
 """
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Callable, Generic, TypeVar, Optional
 
-from pyske.core.array.parray2d import Distribution
 # pylint: disable=unused-import
 from pyske.core.interface import List
 from pyske.core.support import parallel as parimpl
@@ -18,6 +18,10 @@ V = TypeVar('V')  # pylint: disable=invalid-name
 _PID: int = parimpl.PID
 _NPROCS: int = parimpl.NPROCS
 _COMM = parimpl.COMM
+
+class Distribution(Enum):
+    LINE = 'LINE'
+    COLUMN = 'COLUMN'
 
 class Array2D(ABC, Generic[T]):
     """
@@ -39,14 +43,13 @@ class Array2D(ABC, Generic[T]):
 
     @staticmethod
     @abstractmethod
-    def init(value_at: Callable[[int, int], V], distribution: Distribution,
-             col_size: int = _NPROCS,
-             line_size: int = _NPROCS) -> 'Array2D[V]':
+    def init(value_at: Callable[[int, int], V], distribution: Distribution, col_size: int,
+             line_size: int) -> 'Array2D[V]':
         """
         Return an array built using a function per line on each processor
 
         :param value_at: binary function
-        :param distribution: the distribution direction (LINE, COLUMN)
+        :param distribution: the distribution direction (LINE, COLUMN), leave empty for sequential array
         :param col_size: number of columns
         :param line_size: number of lines
         :return: an 2d array of the given line and column size, where for all valid line column
@@ -77,7 +80,7 @@ class Array2D(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def reduce(self: 'PArray2D[T]', binary_op: Callable[[T, T], T],
+    def reduce(self: 'Array2D[T]', binary_op: Callable[[T, T], T],
                neutral: Optional[T] = None) -> T:
         """
         Reduce an array of value to one value.
