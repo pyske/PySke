@@ -38,7 +38,7 @@ class Array2D(ABC, Generic[T]):
     @abstractmethod
     def __init__(self: 'Array2D[T]') -> None:
         """
-        Return an empty list.
+        Return an empty array.
         """
 
     @staticmethod

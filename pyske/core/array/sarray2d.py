@@ -47,6 +47,9 @@ class SArray2D(Array2D, Generic[T]):
             content += "\n"
         return content
 
+    def __repr__(self):
+        return str(self)
+
     def __len__(self):
         return self.__column_size * self.__line_size
 
@@ -73,7 +76,7 @@ class SArray2D(Array2D, Generic[T]):
         return functools.reduce(binary_op, self.__values, neutral)
 
     def get_partition(self: 'SArray2D[T]') -> 'SList[SArray2D[T]]':
-        pass
+        return SList([self])
 
     def distribute(self: 'SArray2D[T]') -> 'SArray2D[T]':
         return self

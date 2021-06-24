@@ -41,6 +41,9 @@ def __main():
                              col_size, line_size)
     print(sarray2d)
 
+    print("Get partition")
+    print(parray2d_column_init.get_partition())
+
 
 if __name__ == '__main__':
     __main()

@@ -6,7 +6,7 @@ class PArray2D: parallel arrays.
 from typing import Callable, TypeVar, Generic, Optional
 from enum import Enum
 
-from pyske.core import SList
+from pyske.core import SList, PList
 from pyske.core.array import array_interface
 from pyske.core.array.array_interface import Distribution
 from pyske.core.array.sarray2d import SArray2D
@@ -152,11 +152,13 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         if neutral is None:
             assert self.__global_index != ((-1, -1), (-1, -1))
             partial = self.__content.reduce(binary_op)
-            partials = SArray2D(_COMM.allgather(partial), self.__content.line_size, self.__content.column_size)
         else:
             partial = self.__content.reduce(binary_op, neutral)
-            partials = SArray2D(_COMM.allgather(partial), self.__content.line_size, self.__content.column_size)
+        partials = SArray2D(_COMM.allgather(partial), self.__content.line_size,
+                            self.__content.column_size)
         return partials.reduce(binary_op, neutral)
 
-    def get_partition(self: 'PArray2D[T]') -> 'SList[PArray2D[T]]':
-        pass
+    def get_partition(self: 'PArray2D[T]') -> 'PList[SArray2D[T]]':
+        contents = _COMM.allgather(self.__content)
+        p_list = PList().init(lambda i: contents[i], _NPROCS)
+        return p_list
