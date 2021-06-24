@@ -37,6 +37,13 @@ class PArray2D(array_interface.Array2D, Generic[T]):
     # pylint: disable=protected-access
     """
     Distributed arrays
+
+    Static methods from interface IArray:
+        init.
+
+    Methods from interface IArray:
+        map,reduce,
+        get_partition,distribute
     """
 
     def __init__(self: 'PArray2D[T]'):
@@ -58,16 +65,6 @@ class PArray2D(array_interface.Array2D, Generic[T]):
     def init(value_at: Callable[[int, int], V], distribution: Distribution,
              col_size: int = _NPROCS,
              line_size: int = _NPROCS) -> 'PArray2D[V]':
-        """
-        Return an array built using a function per line on each processor
-
-        :param value_at: binary function
-        :param distribution: the distribution direction (LINE, COLUMN)
-        :param col_size: number of columns
-        :param line_size: number of lines
-        :return: an 2d array of the given line and column size, where for all valid line column
-            i, j, the value at this index is value_at(i, j)
-        """
         assert _NPROCS <= col_size
         assert _NPROCS <= line_size
 
@@ -92,9 +89,6 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         return parray2d
 
     def distribute(self: 'PArray2D[T]') -> 'PArray2D[T]':
-        """
-        Distribute line to column
-        """
         parray2d = PArray2D()
         parray2d.__global_index = self.__global_index
 
@@ -127,28 +121,11 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         return parray2d
 
     def map(self: 'PArray2D[T]', unary_op: Callable[[T], V]) -> 'PArray2D[V]':
-        """
-        Apply a function to all the elements.
-
-        The returned array has the same shape (same size, same distribution)
-        than the initial array.
-        """
         self.__content = self.__content.map(unary_op)
         return self
 
     def reduce(self: 'PArray2D[T]', binary_op: Callable[[T, T], T],
                neutral: Optional[T] = None) -> T:
-        """
-        Reduce an array of value to one value.
-
-        :param binary_op: a binary associative and commutative operation
-        :param neutral: (optional):
-            a value that should be a neutral element for the operation,
-            i.e. for all element e,
-                ``binary_op(neutral, e) == binary_op(e, neutral) == e``.
-            If this argument is omitted the list should not be empty.
-        :return: a value
-        """
         if neutral is None:
             assert self.__global_index != ((-1, -1), (-1, -1))
             partial = self.__content.reduce(binary_op)

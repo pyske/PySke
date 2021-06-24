@@ -17,10 +17,20 @@ V = TypeVar('V')  # pylint: disable=invalid-name
 class SArray2D(Array2D, Generic[T]):
     """
     Sequential arrays
+
+    Static methods from interface IArray:
+        init.
+
+    Methods from interface IArray:
+        map,reduce,
+        get_partition,distribute
+
     """
 
-    def __init__(self, content: list, line_size, col_size):
+    def __init__(self, content=None, line_size=-1, col_size=-1):
         super().__init__()
+        if content is None:
+            content = []
         self.__line_size = line_size
         self.__column_size = col_size
         self.__values = content
@@ -40,11 +50,12 @@ class SArray2D(Array2D, Generic[T]):
     def __str__(self):
         content = ""
         for i in range(self.__line_size):
-            content += "[ "
+            content += "("
             for j in range(self.__column_size):
-                content += str(self.__values[i * self.__column_size + j]) + " "
-            content += "]"
-            content += "\n"
+                content += '%4s' % self.__values[i * self.__column_size + j]
+            content += '%4s' % ')'
+            if i != self.line_size - 1:
+                content += '\n'
         return content
 
     def __repr__(self):

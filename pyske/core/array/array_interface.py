@@ -46,10 +46,21 @@ class Array2D(ABC, Generic[T]):
     def init(value_at: Callable[[int, int], V], distribution: Distribution, col_size: int,
              line_size: int) -> 'Array2D[V]':
         """
-        Return an array built using a function per line on each processor
+        Return an array built using a function
+
+        Example::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.array_interface import Distribution
+            >>> number_line = 2
+            >>> number_column = 2
+            >>> init_function = lambda line, column: line * number_column + column
+            >>> SArray2D.init(init_function, Distribution.LINE, number_column, number_line)
+            (   0   1   )
+            (   2   3   )
 
         :param value_at: binary function
-        :param distribution: the distribution direction (LINE, COLUMN), leave empty for sequential array
+        :param distribution: the distribution direction (LINE, COLUMN)
         :param col_size: number of columns
         :param line_size: number of lines
         :return: an 2d array of the given line and column size, where for all valid line column
@@ -62,7 +73,7 @@ class Array2D(ABC, Generic[T]):
         Copy the array while changing its distribution.
 
         In sequential, it just returns ``self``. In parallel, communications
-        are performed to meet the new distribution.
+        are performed to meet line or column distribution.
 
         :return: an array containing the same elements.
         """
@@ -75,6 +86,16 @@ class Array2D(ABC, Generic[T]):
         The returned array has the same shape (same size, same distribution)
         than the initial array.
 
+        Examples::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.array_interface import Distribution
+            >>> col_size = 2
+            >>> line_size = 2
+            >>> SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size, line_size).map(lambda x: x + 1)
+            (   2   2   )
+            (   2   2   )
+
         :param unary_op: function to apply to elements
         :return: a new array
         """
@@ -84,6 +105,17 @@ class Array2D(ABC, Generic[T]):
                neutral: Optional[T] = None) -> T:
         """
         Reduce an array of value to one value.
+
+        Examples::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.parray2d import PArray2D
+            >>> from pyske.core.array.array_interface import Distribution
+            >>> parray2d = PArray2D.init(lambda i, j: 1, Distribution.COLUMN, col_size=2, line_size=2)
+            >>> parray2d.reduce(lambda x, y: x + y)
+            4
+            >>> SArray2D().reduce(lambda x, y: x + y, 0)
+            0
 
         :param binary_op: a binary associative and commutative operation
         :param neutral: (optional):
@@ -98,6 +130,16 @@ class Array2D(ABC, Generic[T]):
     def get_partition(self: 'Array2D[T]') -> 'List[Array2D[T]]':
         """
         Make the distribution visible.
+
+        Examples::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.array_interface import Distribution
+            >>> col_size = 2
+            >>> line_size = 2
+            >>> SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size, line_size).get_partition()
+            [(   1   1   )
+            (   1   1   )]
 
         :return: a list of array.
         """
