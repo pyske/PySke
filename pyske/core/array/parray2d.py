@@ -17,6 +17,7 @@ _NPROCS: int = parimpl.NPROCS
 _COMM = parimpl.COMM
 
 T = TypeVar('T')  # pylint: disable=invalid-name
+U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
 
@@ -53,6 +54,14 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         self.__content = SArray2D([], -1, -1)
         self.__distribution = [((-1, -1), (-1, -1)) for _ in range(0, _NPROCS)]
         self.__distribution_direction = Distribution.LINE
+
+    def __get_shape(self: 'PArray2D[T]') -> 'PArray2D':
+        p_array2d = PArray2D()
+        p_array2d.__global_index = self.__global_index
+        p_array2d.__local_index = self.__local_index
+        p_array2d.__distribution = self.__distribution
+        p_array2d.__distribution_direction = self.__distribution_direction
+        return p_array2d
 
     def __str__(self: 'PArray2D[T]') -> str:
         return "PID[" + str(_PID) + "]:\n" + \
@@ -121,8 +130,9 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         return parray2d
 
     def map(self: 'PArray2D[T]', unary_op: Callable[[T], V]) -> 'PArray2D[V]':
-        self.__content = self.__content.map(unary_op)
-        return self
+        p_array2d = self.__get_shape()
+        p_array2d.__content = self.__content.map(unary_op)
+        return p_array2d
 
     def reduce(self: 'PArray2D[T]', binary_op: Callable[[T, T], T],
                neutral: Optional[T] = None) -> T:
@@ -139,3 +149,10 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         contents = _COMM.allgather(self.__content)
         p_list = PList().init(lambda i: contents[i], _NPROCS)
         return p_list
+
+    def map2(self: 'PArray2D[T]', binary_op: Callable[[T, U], V],
+             a_array: 'PArray2D[U]') -> 'PArray2D[V]':
+        assert self.__distribution == a_array.__distribution
+        p_array2d = self.__get_shape()
+        p_array2d.__content = self.__content.map2(binary_op, a_array.__content)
+        return p_array2d

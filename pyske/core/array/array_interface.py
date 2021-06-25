@@ -13,6 +13,7 @@ from pyske.core.interface import List
 from pyske.core.support import parallel as parimpl
 
 T = TypeVar('T')  # pylint: disable=invalid-name
+U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
 _PID: int = parimpl.PID
@@ -142,4 +143,28 @@ class Array2D(ABC, Generic[T]):
             (   1   1   )]
 
         :return: a list of array.
+        """
+
+    @abstractmethod
+    def map2(self: 'Array2D[T]', binary_op: Callable[[T, U], V],
+             a_array: 'Array2D[U]') -> 'Array2D[V]':
+        """
+        Apply a function to all the elements of ``self`` and an array.
+
+        The returned array has the same shape (same size, same distribution)
+        than the initial arrays.
+
+        Examples::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.array_interface import Distribution
+            >>> sarray2d = SArray2D.init(lambda line, column: 1, Distribution.LINE, col_size = 2, line_size = 2)
+            >>> sarray2d.map2(lambda x, y: x + y, sarray2d)
+            (   2   2   )
+            (   2   2   )
+
+        :param binary_op: function to apply to each pair of elements
+        :param a_array: the second array.
+            The second array must have same column and line size than `self`.
+        :return: a new array.
         """

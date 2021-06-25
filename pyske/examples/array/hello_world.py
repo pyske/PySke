@@ -44,6 +44,13 @@ def __main():
     print("Get partition")
     print(parray2d_column_init.get_partition())
 
+    b_sarray2d = SArray2D.init(lambda line, column: 1, Distribution.LINE, col_size, line_size)
+
+    print("Map2 array")
+    print(sarray2d.map2(lambda x, y: x + y, b_sarray2d))
+    print(parray2d_line_init.map2(lambda x, y: x + y, parray2d_line_init))
+    print(parray2d_column_init.map2(lambda x, y: x + y, parray2d_column))
+
 
 if __name__ == '__main__':
     __main()

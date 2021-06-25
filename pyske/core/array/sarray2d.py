@@ -11,6 +11,7 @@ from pyske.core import SList
 from pyske.core.array.array_interface import Array2D, Distribution
 
 T = TypeVar('T')  # pylint: disable=invalid-name
+U = TypeVar('U')  # pylint: disable=invalid-name
 V = TypeVar('V')  # pylint: disable=invalid-name
 
 
@@ -91,3 +92,10 @@ class SArray2D(Array2D, Generic[T]):
 
     def distribute(self: 'SArray2D[T]') -> 'SArray2D[T]':
         return self
+
+    def map2(self: 'SArray2D[T]', binary_op: Callable[[T, U], V],
+             a_array: 'SArray2D[U]') -> 'SArray2D[V]':
+        assert self.__line_size == a_array.line_size
+        assert self.__column_size == a_array.column_size
+        content = [binary_op(left, right) for (left, right) in zip(self.__values, a_array.values)]
+        return SArray2D(content, self.__line_size, self.__column_size)
