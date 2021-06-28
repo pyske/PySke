@@ -79,6 +79,7 @@ class Array2D(ABC, Generic[T]):
         Examples::
 
             >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.array_interface import Distribution
             >>> sarray2d = SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size=2, line_size=2)
             >>> sarray2d.distribute()
             (   1   1   )
@@ -98,10 +99,15 @@ class Array2D(ABC, Generic[T]):
         Examples::
 
             >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.parray2d import PArray2D
             >>> from pyske.core.array.array_interface import Distribution
             >>> col_size = 2
             >>> line_size = 2
             >>> SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size, line_size).map(lambda x: x + 1)
+            (   2   2   )
+            (   2   2   )
+            >>> parray2d = PArray2D.init(lambda i, j: 1, Distribution.LINE, col_size=2, line_size=2).map(lambda x: x + 1)
+            >>> parray2d.to_seq()
             (   2   2   )
             (   2   2   )
 
@@ -143,12 +149,21 @@ class Array2D(ABC, Generic[T]):
         Examples::
 
             >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.parray2d import PArray2D
             >>> from pyske.core.array.array_interface import Distribution
+            >>> from pyske.core.util import par
             >>> col_size = 2
             >>> line_size = 2
-            >>> SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size, line_size).get_partition()
-            [(   1   1   )
-            (   1   1   )]
+            >>> init_function = lambda line, column: line * col_size + column
+            >>> SArray2D.init(init_function, Distribution.LINE, col_size, line_size).get_partition()
+            [(   0   1   )
+            (   2   3   )]
+            >>> parray2d = PArray2D.init(init_function, Distribution.LINE, col_size=2, line_size=2)
+            >>> parray2d.get_partition().to_seq() if par.procs() == [0, 1] else [(0, 1), (2, 3)]
+            [(0, 1), (2, 3)]
+
+
+
 
         :return: a list of array.
         """
