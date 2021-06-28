@@ -99,3 +99,12 @@ class SArray2D(Array2D, Generic[T]):
         assert self.__column_size == a_array.column_size
         content = [binary_op(left, right) for (left, right) in zip(self.__values, a_array.values)]
         return SArray2D(content, self.__line_size, self.__column_size)
+
+    def to_seq(self: 'SArray2D[T]') -> 'SArray2D[T]':
+        return self
+
+    @staticmethod
+    def concat(a_sarray: 'SArray2D[T]', b_sarray: 'SArray2D[T]') -> 'SArray2D[T]':
+        line_size = a_sarray.line_size + b_sarray.line_size
+        col_size = a_sarray.column_size
+        return SArray2D(a_sarray.values + b_sarray.values, line_size, col_size)

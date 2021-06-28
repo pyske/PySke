@@ -76,6 +76,14 @@ class Array2D(ABC, Generic[T]):
         In sequential, it just returns ``self``. In parallel, communications
         are performed to meet line or column distribution.
 
+        Examples::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> sarray2d = SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size=2, line_size=2)
+            >>> sarray2d.distribute()
+            (   1   1   )
+            (   1   1   )
+
         :return: an array containing the same elements.
         """
 
@@ -167,4 +175,26 @@ class Array2D(ABC, Generic[T]):
         :param a_array: the second array.
             The second array must have same column and line size than `self`.
         :return: a new array.
+        """
+
+    @abstractmethod
+    def to_seq(self: 'Array2D[T]') -> 'Array2D[T]':
+        """
+        Return a sequential array with same content.
+
+        The distribution must be per line.
+
+        Examples::
+
+            >>> from pyske.core.array.sarray2d import SArray2D
+            >>> from pyske.core.array.parray2d import PArray2D
+            >>> from pyske.core.array.array_interface import Distribution
+            >>> PArray2D.init(lambda i, j: 1, Distribution.LINE, col_size=2, line_size=2).to_seq()
+            (   1   1   )
+            (   1   1   )
+            >>> SArray2D.init(lambda line, column: 1, Distribution.LINE, col_size = 2, line_size = 2).to_seq()
+            (   1   1   )
+            (   1   1   )
+
+        :return: a sequential array.
         """

@@ -156,3 +156,12 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         p_array2d = self.__get_shape()
         p_array2d.__content = self.__content.map2(binary_op, a_array.__content)
         return p_array2d
+
+    def to_seq(self: 'PArray2D[T]') -> 'SArray2D[T]':
+        assert self.__distribution_direction == Distribution.LINE
+        col_size = self.__global_index[1][1] - self.__global_index[1][0] + 1
+        line_size = self.__global_index[0][1] - self.__global_index[0][0] + 1
+        content = self.get_partition()\
+            .reduce(lambda a_sarray, b_sarray: SArray2D.concat(a_sarray, b_sarray),
+                    SArray2D([], 0, 0)).values
+        return SArray2D(content, line_size, col_size)

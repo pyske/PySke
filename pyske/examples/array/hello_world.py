@@ -51,6 +51,9 @@ def __main():
     print(parray2d_line_init.map2(lambda x, y: x + y, parray2d_line_init))
     print(parray2d_column_init.map2(lambda x, y: x + y, parray2d_column))
 
+    print("To seq")
+    print(parray2d_line_init.to_seq())
+
 
 if __name__ == '__main__':
     __main()
