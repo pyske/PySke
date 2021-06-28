@@ -159,11 +159,8 @@ class Array2D(ABC, Generic[T]):
             [(   0   1   )
             (   2   3   )]
             >>> parray2d = PArray2D.init(init_function, Distribution.LINE, col_size=2, line_size=2)
-            >>> parray2d.get_partition().to_seq() if par.procs() == [0, 1] else [(0, 1), (2, 3)]
-            [(0, 1), (2, 3)]
-
-
-
+            >>> parray2d.get_partition().to_seq() if par.procs() == [0, 1] else '[(   0   1   ), (   2   3   )]'
+            '[(   0   1   ), (   2   3   )]'
 
         :return: a list of array.
         """
