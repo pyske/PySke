@@ -17,8 +17,12 @@ def __main():
     print(parray2d_line_init)
 
     print("Line to column distribution")
-    parray2d_column = parray2d_line_init.distribute()
+    parray2d_column = parray2d_line_init.distribute(Distribution.COLUMN)
     print(parray2d_column)
+
+    print("Column to line distribution")
+    parray2d_line = parray2d_column.distribute(Distribution.LINE)
+    print(parray2d_line)
 
     print("Column initialization")
     parray2d_column_init = PArray2D.init(lambda line, column: line * col_size + column,
@@ -52,7 +56,7 @@ def __main():
     print(parray2d_column_init.map2(lambda x, y: x + y, parray2d_column))
 
     print("To seq")
-    print(parray2d_line_init.to_seq())
+    print(parray2d_column.to_seq())
 
 
 if __name__ == '__main__':

@@ -69,7 +69,7 @@ class Array2D(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def distribute(self: 'Array2D[T]') -> 'Array2D[T]':
+    def distribute(self: 'Array2D[T]', distribution_direction: Distribution) -> 'Array2D[T]':
         """
         Copy the array while changing its distribution.
 
@@ -194,14 +194,12 @@ class Array2D(ABC, Generic[T]):
         """
         Return a sequential array with same content.
 
-        The distribution must be per line.
-
         Examples::
 
             >>> from pyske.core.array.sarray2d import SArray2D
             >>> from pyske.core.array.parray2d import PArray2D
             >>> from pyske.core.array.array_interface import Distribution
-            >>> PArray2D.init(lambda i, j: 1, Distribution.LINE, col_size=2, line_size=2).to_seq()
+            >>> PArray2D.init(lambda i, j: 1, Distribution.COLUMN, col_size=2, line_size=2).to_seq()
             (   1   1   )
             (   1   1   )
             >>> SArray2D.init(lambda line, column: 1, Distribution.LINE, col_size = 2, line_size = 2).to_seq()

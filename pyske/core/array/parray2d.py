@@ -97,35 +97,65 @@ class PArray2D(array_interface.Array2D, Generic[T]):
 
         return parray2d
 
-    def distribute(self: 'PArray2D[T]') -> 'PArray2D[T]':
-        parray2d = PArray2D()
-        parray2d.__global_index = self.__global_index
-
+    def __distribute_column(self: 'PArray2D[T]', new_parray: 'PArray2D[T]', local_line_size,
+                            local_col_size):
         col_size = self.__global_index[1][1] - self.__global_index[1][0] + 1
-        line_size = self.__global_index[0][1] - self.__global_index[0][0] + 1
-
-        parray2d.__local_index = _local_index(Distribution.COLUMN, col_size, line_size, _PID)
-        parray2d.__distribution_direction = Distribution.COLUMN
-        parray2d.__distribution = [
-            _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
-            range(_NPROCS)]
-        local_line_size = parray2d.__local_index[0][1] - parray2d.__local_index[0][0] + 1
-        local_col_size = parray2d.__local_index[1][1] - parray2d.__local_index[1][0] + 1
-
         # update content for each process
         for i in range(0, _NPROCS):
             content_to_send = []
             for j in range(len(self.__content)):
-                if j % col_size in range(parray2d.__distribution[i][1][0],
-                                         parray2d.__distribution[i][1][1] + 1):
+                if j % col_size in range(new_parray.__distribution[i][1][0],
+                                         new_parray.__distribution[i][1][1] + 1):
                     content_to_send.append(self.__content.values[j])
             if i == _PID:
                 content = _COMM.gather(content_to_send, i)
                 # flatten the list
                 content = [item for items in content for item in items]
-                parray2d.__content = SArray2D(content, local_line_size, local_col_size)
+                new_parray.__content = SArray2D(content, local_line_size, local_col_size)
             else:
                 _COMM.gather(content_to_send, i)
+
+        return new_parray
+
+    def __distribute_line(self: 'PArray2D[T]', new_parray: 'PArray2D[T]', local_line_size,
+                          local_col_size, old_distribution):
+        # update content for each process
+        for i in range(0, _NPROCS):
+            content = []
+            old_local_col_size = old_distribution[_PID][1][1] - old_distribution[_PID][1][0] + 1
+            start_index = new_parray.__distribution[i][0][0] * old_local_col_size
+            stop_index = (new_parray.__distribution[i][0][1] + 1) * old_local_col_size
+            for j in range(start_index, stop_index, old_local_col_size):
+                content_to_send = self.__content.values[j:j+old_local_col_size]
+                content_to_send = _COMM.allgather(content_to_send)
+                content.extend([item for items in content_to_send for item in items])
+            if i == _PID:
+                new_parray.__content = SArray2D(content, local_line_size, local_col_size)
+
+        return new_parray
+
+    def distribute(self: 'PArray2D[T]', distribution_direction: Distribution) -> 'PArray2D[T]':
+        if distribution_direction == self.__distribution_direction:
+            return self
+        parray2d = PArray2D()
+        parray2d.__global_index = self.__global_index
+
+        line_size = self.__global_index[0][1] - self.__global_index[0][0] + 1
+        col_size = self.__global_index[1][1] - self.__global_index[1][0] + 1
+
+        old_distribution = self.__distribution
+
+        parray2d.__local_index = _local_index(distribution_direction, col_size, line_size, _PID)
+        parray2d.__distribution_direction = distribution_direction
+        parray2d.__distribution = [
+            _local_index(parray2d.__distribution_direction, col_size, line_size, i) for i in
+            range(_NPROCS)]
+        local_line_size = parray2d.__local_index[0][1] - parray2d.__local_index[0][0] + 1
+        local_col_size = parray2d.__local_index[1][1] - parray2d.__local_index[1][0] + 1
+        if distribution_direction == Distribution.COLUMN:
+            parray2d = self.__distribute_column(parray2d, local_line_size, local_col_size)
+        else:
+            parray2d = self.__distribute_line(parray2d, local_line_size, local_col_size, old_distribution)
 
         return parray2d
 
@@ -158,10 +188,12 @@ class PArray2D(array_interface.Array2D, Generic[T]):
         return p_array2d
 
     def to_seq(self: 'PArray2D[T]') -> 'SArray2D[T]':
-        assert self.__distribution_direction == Distribution.LINE
-        col_size = self.__global_index[1][1] - self.__global_index[1][0] + 1
-        line_size = self.__global_index[0][1] - self.__global_index[0][0] + 1
-        content = self.get_partition()\
+        parray2d = self
+        if self.__distribution_direction == Distribution.COLUMN:
+            parray2d = self.distribute(Distribution.LINE)
+        col_size = parray2d.__global_index[1][1] - parray2d.__global_index[1][0] + 1
+        line_size = parray2d.__global_index[0][1] - parray2d.__global_index[0][0] + 1
+        content = parray2d.get_partition() \
             .reduce(lambda a_sarray, b_sarray: SArray2D.concat(a_sarray, b_sarray),
                     SArray2D([], 0, 0)).values
         return SArray2D(content, line_size, col_size)
