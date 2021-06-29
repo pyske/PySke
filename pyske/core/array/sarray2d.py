@@ -90,7 +90,7 @@ class SArray2D(Array2D, Generic[T]):
     def get_partition(self: 'SArray2D[T]') -> 'SList[SArray2D[T]]':
         return SList([self])
 
-    def distribute(self: 'SArray2D[T]') -> 'SArray2D[T]':
+    def distribute(self: 'SArray2D[T]', distribution_direction: Distribution) -> 'SArray2D[T]':
         return self
 
     def map2(self: 'SArray2D[T]', binary_op: Callable[[T, U], V],
