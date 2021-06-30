@@ -1,0 +1,8 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "mpi4py",
+    "pytest",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
