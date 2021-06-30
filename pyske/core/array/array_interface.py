@@ -84,7 +84,7 @@ class Array2D(ABC, Generic[T]):
             >>> sarray2d.distribute()
             (   1   1   )
             (   1   1   )
-
+        :param distribution_direction: the distribution direction (LINE, COLUMN)
         :return: an array containing the same elements.
         """
 
