@@ -81,9 +81,10 @@ class Array2D(ABC, Generic[T]):
             >>> from pyske.core.array.sarray2d import SArray2D
             >>> from pyske.core.array.array_interface import Distribution
             >>> sarray2d = SArray2D.init(lambda i, j: 1, Distribution.LINE, col_size=2, line_size=2)
-            >>> sarray2d.distribute()
+            >>> sarray2d.distribute(Distribution.COLUMN)
             (   1   1   )
             (   1   1   )
+
         :param distribution_direction: the distribution direction (LINE, COLUMN)
         :return: an array containing the same elements.
         """
