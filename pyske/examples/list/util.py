@@ -2,8 +2,23 @@
 Utility functions for PySke examples
 """
 
+from typing import Tuple
+
+import argparse
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_blobs
+from pyske.core import Distribution, SList
+from pyske.core.support import parallel
+from pyske.core.util.point_2D import Point_2D
+from pyske.core.util.point_3D import Point_3D
+
 PAR = 'parallel'
 SEQ = 'sequential'
+_DIRECT = '_DIRECT'
+_HAND = 'hand_optimized'
+_OPT = 'optimized'
+_EVAL = 'evaluated'
 
 
 def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
@@ -19,18 +34,7 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
     :param data_arg: (default True) flag to select argument --data
     :return:  (size, iter, ['parallel' | 'sequential'])
     """
-    # pylint: disable=import-outside-toplevel
-    import argparse
-    parser = argparse.ArgumentParser()
-    if size_arg:
-        parser.add_argument("--size", help="size of the list to generate",
-                            type=int, default=1_000_000)
-    if iter_arg:
-        parser.add_argument("--iter", help="number of iterations",
-                            type=int, default=30)
-    if data_arg:
-        parser.add_argument("--data", help="type of data structure",
-                            choices=[PAR, SEQ], default=SEQ)
+    parser = standard_parser(size_arg, iter_arg, data_arg)
     size = num_iter = 0
     data_type = PAR
     args = parser.parse_args()
@@ -42,6 +46,50 @@ def standard_parse_command_line(size_arg=True, iter_arg=True, data_arg=True):
         data_type = args.data
     return size, num_iter, data_type
 
+
+def standard_parser(size_arg=True, iter_arg=True, data_arg=True):
+    """
+    Parser for standard example.
+    """
+    parser = argparse.ArgumentParser()
+    if size_arg:
+        parser.add_argument("--size", help="size of the list to generate",
+                            type=int, default=1_000_000)
+    if iter_arg:
+        parser.add_argument("--iter", help="number of iterations",
+                            type=int, default=30)
+    if data_arg:
+        parser.add_argument("--data", help="type of data structure",
+                            choices=[PAR, SEQ], default=SEQ)
+    return parser
+
+def k_means_parser():
+    """
+    Parser for k-means example.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=5_000)
+    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
+    parser.add_argument("--data", help="type of data structure", choices=[PAR, SEQ], default=SEQ)
+    parser.add_argument("--clusters", help="number of clusters", type=int, default=3)
+    parser.add_argument("--dimensions", help="point dimensions", type=int, default=2)
+    parser.add_argument("--show-clusters", help="display the clusters graph of 2D or 3D points",
+                        action="store_true")
+
+    return parser
+
+def dot_product_parser():
+    """
+    Parse for dot-product example.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
+    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
+    parser.add_argument("--test", help="choice of the test",
+                        choices=[_DIRECT, _HAND, _EVAL, _OPT],
+                        default=_DIRECT)
+    return parser
 
 def select_pyske_list(choice):
     """
@@ -88,6 +136,71 @@ def rand_list(cls, size):
     import random
     return cls.init(lambda _: float(random.randint(-100, 100)), size)
 
+def select_point_dimensions(dimensions):
+    """
+    Return a PySke list class.
+
+    :param dimensions: point dimensions
+            Precondition: dimensions >= 2
+    :return: a Point
+    """
+    # pylint: disable=import-outside-toplevel
+    if dimensions == 3:
+        from pyske.core.util.point_3D import Point_3D as PointClass
+    else:
+        from pyske.core.util.point_2D import Point_2D as PointClass
+    return PointClass
+
+def rand_point_list(cls, size, clusters, dimensions):
+    """
+    Return a randomly generated list of points.
+
+    :param cls: the class of the generated list.
+    :param size: a positive number
+        Precondition: size >= 0
+    :param clusters: number of clusters
+    :param dimensions: point dimensions
+            Precondition: dimensions >= 2
+    :return: a list of the given class
+    """
+    x, _ = make_blobs(n_samples=size, centers=clusters, n_features=dimensions)
+    x = x.tolist()
+    pointclass = select_point_dimensions(dimensions)
+    x = list(map(lambda y: pointclass(*y), x))
+    distr = Distribution().balanced(size)
+    return cls.from_seq(x).distribute(distr)
+
+def print_2D_result(clusters_list: SList[Tuple[Point_2D, int]]):
+    """
+    Print experiment of 2 dimension points k-means clustering
+    """
+    if parallel.PID == 0:
+        x = clusters_list.map(lambda pair: pair[0].x)
+        y = clusters_list.map(lambda pair: pair[0].y)
+        colors = clusters_list.map(lambda pair: pair[1])
+        plt.scatter(x, y, c=colors)
+        plt.show()
+
+def print_3D_result(clusters_list: SList[Tuple[Point_3D, int]]):
+    """
+    Print experiment of 3 dimension points k-means clustering
+    """
+    if parallel.PID == 0:
+        x = clusters_list.map(lambda pair: pair[0].x)
+        y = clusters_list.map(lambda pair: pair[0].y)
+        z = clusters_list.map(lambda pair: pair[0].z)
+        colors = clusters_list.map(lambda pair: pair[1])
+
+        # Tracé du résultat en 3D
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')  # Affichage en 3D
+        ax.scatter(x, y, z, label='Courbe', marker='d', c=colors)  # Tracé des points 3D
+        plt.title("Points 3D")
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.tight_layout()
+        plt.show()
 
 def print_experiment(result, timing, execute, iteration=None):
     """

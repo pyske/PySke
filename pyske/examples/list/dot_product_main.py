@@ -2,14 +2,13 @@
 Execution of dot_product.py
 """
 
-import argparse
 import gc
 import random
 from pyske.examples.list.dot_product import opt_dot_product, dot_product
 from pyske.core import par, Timing, PList as DPList
 from pyske.core.opt import fun as opt
 from pyske.core.opt.list import PList
-from pyske.examples.list.util import rand_list, print_experiment
+from pyske.examples.list.util import rand_list, print_experiment, dot_product_parser
 
 
 # -------------- Execution -----------------
@@ -26,12 +25,7 @@ def __main():
         return opt_dot_product(PList.raw(pl1), PList.raw(pl2), uncurry=opt.uncurry).run()
 
     # Command-line arguments parsing
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--size", help="size of the list to generate", type=int, default=1_000_000)
-    parser.add_argument("--iter", help="number of iterations", type=int, default=30)
-    parser.add_argument("--test", help="choice of the test",
-                        choices=[_DIRECT, _HAND, _EVAL, _OPT],
-                        default=_DIRECT)
+    parser = dot_product_parser()
     args = parser.parse_args()
     size = args.size
     test = args.test

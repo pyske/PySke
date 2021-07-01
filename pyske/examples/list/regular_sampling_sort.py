@@ -18,8 +18,7 @@ def bcast(input_list: PList, src_pid: int) -> PList:
     Example::
 
         >>> from pyske.core import PList, par
-        >>> bcast(PList.from_seq([42]), 0).to_seq() == \
-                list(map(lambda _: 42, par.procs()))
+        >>> bcast(PList.from_seq([42]), 0).to_seq() == list(map(lambda _: 42, par.procs()))
         True
 
     :param input_list: a parallel list.
